@@ -2,7 +2,7 @@ import argparse
 from unittest.mock import ANY, call, mock_open, patch
 
 import pytest
-from dodal.devices.zebra import DISCONNECT, IN1_TTL, SOFT_IN3
+from dodal.devices.zebra import DISCONNECT, SOFT_IN3
 
 from mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2 import (
     TTL_EIGER,
@@ -85,14 +85,14 @@ def test_enterhutch(fake_caput, RE):
 @pytest.mark.parametrize(
     "laser_mode, det_type, expected_in1, expected_out",
     [
-        ("laseron", Eiger(), IN1_TTL, SOFT_IN3),
-        ("laseroff", Eiger(), DISCONNECT, DISCONNECT),
-        ("laseron", Pilatus(), IN1_TTL, SOFT_IN3),
-        ("laseroff", Pilatus(), DISCONNECT, DISCONNECT),
+        ("laseron", Eiger(), "Yes", SOFT_IN3),
+        ("laseroff", Eiger(), "No", DISCONNECT),
+        ("laseron", Pilatus(), "Yes", SOFT_IN3),
+        ("laseroff", Pilatus(), "No", DISCONNECT),
     ],
 )
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.get_detector_type")
-def test_laser_check(
+async def test_laser_check(
     fake_det, laser_mode, expected_in1, expected_out, det_type, dummy_parser, zebra, RE
 ):
     fake_det.return_value = det_type
@@ -100,8 +100,8 @@ def test_laser_check(
     RE(laser_check(fake_args, zebra))
 
     TTL = TTL_EIGER if isinstance(det_type, Pilatus) else TTL_PILATUS
-    assert zebra.inputs.soft_in_1.get() == expected_in1
-    assert zebra.output.out_pvs[TTL].get() == expected_out
+    assert await zebra.inputs.soft_in_1.get_value() == expected_in1
+    assert await zebra.output.out_pvs[TTL].get_value() == expected_out
 
 
 @patch(

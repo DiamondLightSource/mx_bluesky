@@ -21,23 +21,18 @@ from dodal.devices.zebra import (
     IN3_TTL,
     OR1,
     PC_ARM,
-    PC_ARM_SOURCE_SOFT,
     PC_GATE,
-    PC_GATE_SOURCE_EXTERNAL,
-    PC_GATE_SOURCE_POSITION,
-    PC_GATE_SOURCE_TIME,
     PC_PULSE,
-    PC_PULSE_SOURCE_EXTERNAL,
-    PC_PULSE_SOURCE_POSITION,
-    PC_PULSE_SOURCE_TIME,
     PULSE1,
     PULSE2,
     SOFT_IN2,
     SOFT_IN3,
     ArmDemand,
-    FastShutterAction,
+    ArmSource,
     I24Axes,
     RotationDirection,
+    SoftInState,
+    TrigSource,
     Zebra,
 )
 
@@ -46,8 +41,8 @@ TTL_EIGER = 1
 TTL_PILATUS = 2
 
 SHUTTER_MODE = {
-    "manual": DISCONNECT,
-    "auto": IN1_TTL,
+    "manual": SoftInState.NO,
+    "auto": SoftInState.YES,
 }
 
 GATE_START = 1.0
@@ -84,12 +79,12 @@ def disarm_zebra(zebra: Zebra):
 
 
 def open_fast_shutter(zebra: Zebra):
-    yield from bps.abs_set(zebra.inputs.soft_in_2, FastShutterAction.OPEN, wait=True)
+    yield from bps.abs_set(zebra.inputs.soft_in_2, SoftInState.YES, wait=True)
     logger.info("Fast shutter open.")
 
 
 def close_fast_shutter(zebra: Zebra):
-    yield from bps.abs_set(zebra.inputs.soft_in_2, FastShutterAction.CLOSE, wait=True)
+    yield from bps.abs_set(zebra.inputs.soft_in_2, SoftInState.NO, wait=True)
     logger.info("Fast shutter closed.")
 
 
@@ -126,8 +121,8 @@ def setup_zebra_for_quickshot_plan(
         num_images (float): Number of images to be collected.
     """
     logger.info("Setup ZEBRA for quickshot collection.")
-    yield from bps.abs_set(zebra.pc.arm_source, PC_ARM_SOURCE_SOFT, group=group)
-    yield from setup_pc_sources(zebra, PC_GATE_SOURCE_TIME, PC_PULSE_SOURCE_EXTERNAL)
+    yield from bps.abs_set(zebra.pc.arm_source, ArmSource.SOFT, group=group)
+    yield from setup_pc_sources(zebra, TrigSource.TIME, TrigSource.EXTERNAL)
 
     gate_width = exp_time * num_images + 0.5
     logger.info(f"Gate start set to {GATE_START}, with width {gate_width}.")
@@ -146,11 +141,19 @@ def set_logic_gates_for_porto_triggering(
     zebra: Zebra, group: str = "porto_logic_gates"
 ):
     # To OUT2_TTL
-    yield from bps.abs_set(zebra.logic_gates.and_gate_3.source_1, SOFT_IN2, group=group)
-    yield from bps.abs_set(zebra.logic_gates.and_gate_3.source_2, PULSE1, group=group)
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[3].sources[1], SOFT_IN2, group=group
+    )
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[3].sources[2], PULSE1, group=group
+    )
     # To OUT1_TTL
-    yield from bps.abs_set(zebra.logic_gates.and_gate_4.source_1, SOFT_IN2, group=group)
-    yield from bps.abs_set(zebra.logic_gates.and_gate_4.source_2, PULSE2, group=group)
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[4].sources[1], SOFT_IN2, group=group
+    )
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[4].sources[2], PULSE2, group=group
+    )
     yield from bps.wait(group=group)
 
 
@@ -202,7 +205,7 @@ def setup_zebra_for_extruder_with_pump_probe_plan(
     yield from set_shutter_mode(zebra, "manual")
 
     # Set gate to "Time" and pulse source to "External"
-    yield from setup_pc_sources(zebra, PC_GATE_SOURCE_TIME, PC_PULSE_SOURCE_EXTERNAL)
+    yield from setup_pc_sources(zebra, TrigSource.TIME, TrigSource.EXTERNAL)
 
     # Logic gates
     yield from set_logic_gates_for_porto_triggering(zebra)
@@ -295,11 +298,15 @@ def setup_zebra_for_fastchip_plan(
 
     yield from set_shutter_mode(zebra, "manual")
 
-    yield from setup_pc_sources(zebra, PC_GATE_SOURCE_EXTERNAL, PC_PULSE_SOURCE_TIME)
+    yield from setup_pc_sources(zebra, TrigSource.EXTERNAL, TrigSource.TIME)
 
     # Logic Gates
-    yield from bps.abs_set(zebra.logic_gates.and_gate_3.source_1, SOFT_IN2, group=group)
-    yield from bps.abs_set(zebra.logic_gates.and_gate_3.source_2, PC_PULSE, group=group)
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[3].sources[1], SOFT_IN2, group=group
+    )
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[3].sources[2], PC_PULSE, group=group
+    )
 
     yield from bps.abs_set(zebra.pc.gate_input, IN3_TTL, group=group)
 
@@ -338,9 +345,9 @@ def reset_pc_gate_and_pulse(zebra: Zebra, group: str = "reset_pc"):
 
 def reset_output_panel(zebra: Zebra, group: str = "reset_zebra_outputs"):
     # Reset TTL out
-    yield from bps.abs_set(zebra.output.out_2, PC_GATE, group=group)
-    yield from bps.abs_set(zebra.output.out_3, DISCONNECT, group=group)
-    yield from bps.abs_set(zebra.output.out_4, OR1, group=group)
+    yield from bps.abs_set(zebra.output.out_pvs[2], PC_GATE, group=group)
+    yield from bps.abs_set(zebra.output.out_pvs[3], DISCONNECT, group=group)
+    yield from bps.abs_set(zebra.output.out_pvs[4], OR1, group=group)
 
     yield from bps.abs_set(zebra.output.pulse_1.input, DISCONNECT, group=group)
     yield from bps.abs_set(zebra.output.pulse_2.input, DISCONNECT, group=group)
@@ -358,17 +365,19 @@ def zebra_return_to_normal_plan(
     yield from bps.abs_set(zebra.pc.reset, 1, group=group)
 
     # Reset PC_GATE and PC_SOURCE to "Position"
-    yield from setup_pc_sources(
-        zebra, PC_GATE_SOURCE_POSITION, PC_PULSE_SOURCE_POSITION
-    )
+    yield from setup_pc_sources(zebra, TrigSource.POSITION, TrigSource.POSITION)
 
     yield from bps.abs_set(zebra.pc.gate_input, SOFT_IN3, group=group)
     yield from bps.abs_set(zebra.pc.num_gates, 1, group=group)
     yield from bps.abs_set(zebra.pc.pulse_input, DISCONNECT, group=group)
 
     # Logic Gates
-    yield from bps.abs_set(zebra.logic_gates.and_gate_3.source_1, PC_ARM, group=group)
-    yield from bps.abs_set(zebra.logic_gates.and_gate_3.source_2, IN1_TTL, group=group)
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[3].sources[1], PC_ARM, group=group
+    )
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[3].sources[2], IN1_TTL, group=group
+    )
 
     # Reset TTL out
     yield from reset_output_panel(zebra)

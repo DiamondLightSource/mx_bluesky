@@ -21,7 +21,7 @@ dependencies = [
     "matplotlib",
     "requests",
     "opencv-python",
-    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@328330036a23cae8748e84a26eb9b77ad113f8a5",
+    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@11762077dfc804cedea45ca0c1b6e471773225c2",
 ]
 dynamic = ["version"]
 license.file = "LICENSE"
@@ -37,6 +37,7 @@ dev = [
     "pre-commit",
     "pydata-sphinx-theme>=0.12",
     "pytest-cov",
+    "pytest-asyncio",
     "ruff",
     "sphinx-autobuild",
     "sphinx-copybutton",
@@ -84,6 +85,7 @@ lint.select = [
 
 [tool.pytest.ini_options]
 # Run pytest with all our checkers, and don't spam us with massive tracebacks on error
+asyncio_mode = "auto"
 addopts = """
     --tb=native -vv --doctest-modules --doctest-glob="*.rst"
     --cov=mx_bluesky --cov-report term --cov-report xml:cov.xml
