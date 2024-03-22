@@ -70,6 +70,9 @@ lockfiles/
 # ruff cache
 .ruff_cache/
 
+# Temporary files
+tmp/
+
 # EDM screens
 edm/
 edm_serial/

@@ -1,3 +1,4 @@
+import logging
 import os
 import pathlib
 import pprint
@@ -8,6 +9,8 @@ import requests
 from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, MappingType
 from mx_bluesky.I24.serial.setup_beamline import Eiger, caget, cagetstring, pv
 from mx_bluesky.I24.serial.setup_beamline.setup_detector import get_detector_type
+
+logger = logging.getLogger("I24ssx.nexus_writer")
 
 
 def call_nexgen(
@@ -62,16 +65,16 @@ def call_nexgen(
     meta_h5 = pathlib.Path(visit) / sub_dir / f"{filename_prefix}_meta.h5"
     t0 = time.time()
     max_wait = 60  # seconds
-    print(f"Watching for {meta_h5}")
+    logger.info(f"Watching for {meta_h5}")
     while time.time() - t0 < max_wait:
         if meta_h5.exists():
-            print(f"Found {meta_h5} after {time.time() - t0:.1f} seconds")
+            logger.info(f"Found {meta_h5} after {time.time() - t0:.1f} seconds")
             time.sleep(5)
             break
-        print(f"Waiting for {meta_h5}")
+        logger.debug(f"Waiting for {meta_h5}")
         time.sleep(1)
     if not meta_h5.exists():
-        print(f"Giving up waiting for {meta_h5} after {max_wait} seconds")
+        logger.warning(f"Giving up waiting for {meta_h5} after {max_wait} seconds")
         return False
 
     # filepath = visit + sub_dir
@@ -80,8 +83,9 @@ def call_nexgen(
     wavelength = float(caget(pv.dcm_lambda))
 
     if det_type == Eiger.name:
-        print("nexgen here")
-        print(chip_prog_dict)
+        logger.debug(
+            f"Call to nexgen server with the following chip definition: \n{chip_prog_dict}"
+        )
 
         access_token = pathlib.Path("/scratch/ssx_nexgen.key").read_text().strip()
         url = "https://ssx-nexgen.diamond.ac.uk/ssx_eiger/write"
@@ -104,10 +108,10 @@ def call_nexgen(
             "visitpath": os.fspath(meta_h5.parent),
             "wavelength": wavelength,
         }
-        print(f"Sending POST request to {url} with payload:")
-        pprint.pprint(payload)
+        logger.info(f"Sending POST request to {url} with payload:")
+        logger.info(pprint.pformat(payload))
         response = requests.post(url, headers=headers, json=payload)
-        print(f"Response: {response.text} (status code: {response.status_code})")
+        logger.info(f"Response: {response.text} (status code: {response.status_code})")
         # the following will raise an error if the request was unsuccessful
         return response.status_code == requests.codes.ok
     return False

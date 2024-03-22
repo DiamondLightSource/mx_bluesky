@@ -188,7 +188,7 @@ def modechange(action):
 
 def beamline(action, args_list=None):
     logger.debug("***** Entering Beamline")
-    logger.info("beamline - %s" % action)
+    logger.info("Setup beamline - %s" % action)
     if args_list:
         for arg in args_list:
             logger.debug("Argument: %s" % arg)
@@ -220,7 +220,7 @@ def beamline(action, args_list=None):
 
 def pilatus(action, args_list=None):
     logger.debug("***** Entering Pilatus")
-    logger.info("pilatus - %s" % action)
+    logger.info("Setup pilatus - %s" % action)
     if args_list:
         for arg in args_list:
             logger.debug("Argument: %s" % arg)
@@ -239,12 +239,12 @@ def pilatus(action, args_list=None):
         [filepath, filename, total_numb_imgs, exptime] = args_list
         rampath = filepath.replace("dls/i24/data", "ramdisk")
         acqtime = float(exptime) - 0.001
-        logger.info("Filepath was set as %s" % filepath)
-        logger.info("Rampath set as %s" % rampath)
-        logger.info("Filename set as %s" % filename)
-        logger.info("total_numb_imgs %s" % total_numb_imgs)
-        logger.info("Exposure time set as %s s" % exptime)
-        logger.info("Acquire time set as %s s" % acqtime)
+        logger.debug("Filepath was set as %s" % filepath)
+        logger.debug("Rampath set as %s" % rampath)
+        logger.debug("Filename set as %s" % filename)
+        logger.debug("total_numb_imgs %s" % total_numb_imgs)
+        logger.debug("Exposure time set as %s s" % exptime)
+        logger.debug("Acquire time set as %s s" % acqtime)
         caput(pv.pilat_startangle, 0.0)
         caput(pv.pilat_angleincr, 0.0)
         caput(pv.pilat_omegaincr, 0.0)
@@ -259,7 +259,7 @@ def pilatus(action, args_list=None):
 
     # Quick set of images no coordinated motion
     elif action == "quickshot":
-        print("quickshot")
+        logger.debug("quickshot")
         [filepath, filename, num_imgs, exptime] = args_list
         rampath = filepath.replace("dls/i24/data", "ramdisk")
         caput(pv.pilat_filepath, rampath)
@@ -269,13 +269,13 @@ def pilatus(action, args_list=None):
         acqtime = float(exptime) - 0.001
         caput(pv.pilat_acquiretime, str(acqtime))
         caput(pv.pilat_acquireperiod, str(exptime))
-        logger.info("Filepath was set as %s" % filepath)
-        logger.info("Rampath set as %s" % rampath)
-        logger.info("Filename set as %s" % filename)
-        logger.info("num_imgs %s" % num_imgs)
-        logger.info("Exposure time set as %s s" % exptime)
-        logger.info("Acquire time set as %s s" % acqtime)
-        logger.info("Pilatus takes time apprx 2sec")
+        logger.debug("Filepath was set as %s" % filepath)
+        logger.debug("Rampath set as %s" % rampath)
+        logger.debug("Filename set as %s" % filename)
+        logger.debug("num_imgs %s" % num_imgs)
+        logger.debug("Exposure time set as %s s" % exptime)
+        logger.debug("Acquire time set as %s s" % acqtime)
+        logger.debug("Pilatus takes time apprx 2sec")
         sleep(2)
         caput(pv.pilat_delaytime, 0.00)
         caput(pv.pilat_numimages, str(num_imgs))
@@ -284,7 +284,7 @@ def pilatus(action, args_list=None):
         sleep(0.2)
 
     elif action == "quickshot-internaltrig":
-        print("quickshot")
+        logger.debug("quickshot-internaltrig")
         [filepath, filename, num_imgs, exptime] = args_list
         rampath = filepath.replace("dls/i24/data", "ramdisk")
         caput(pv.pilat_filepath, rampath)
@@ -294,13 +294,13 @@ def pilatus(action, args_list=None):
         acqtime = float(exptime) - 0.001
         caput(pv.pilat_acquiretime, str(acqtime))
         caput(pv.pilat_acquireperiod, str(exptime))
-        logger.info("Filepath was set as %s" % filepath)
-        logger.info("Rampath set as %s" % rampath)
-        logger.info("Filename set as %s" % filename)
-        logger.info("num_imgs %s" % num_imgs)
-        logger.info("Exposure time set as %s s" % exptime)
-        logger.info("Acquire time set as %s s" % acqtime)
-        logger.info("Pilatus takes time apprx 2sec")
+        logger.debug("Filepath was set as %s" % filepath)
+        logger.debug("Rampath set as %s" % rampath)
+        logger.debug("Filename set as %s" % filename)
+        logger.debug("num_imgs %s" % num_imgs)
+        logger.debug("Exposure time set as %s s" % exptime)
+        logger.debug("Acquire time set as %s s" % acqtime)
+        logger.debug("Pilatus takes time apprx 2sec")
         sleep(2)
         caput(pv.pilat_delaytime, 0.00)
         caput(pv.pilat_numimages, str(num_imgs))
@@ -320,7 +320,7 @@ def pilatus(action, args_list=None):
 
 def eiger(action, args_list=None):
     logger.debug("***** Entering Eiger")
-    logger.info("eiger - %s" % action)
+    logger.info("Setup eiger - %s" % action)
     if args_list:
         for arg in args_list:
             logger.debug("Argument: %s" % arg)
@@ -348,7 +348,7 @@ def eiger(action, args_list=None):
     # Quick set of images no coordinated motion
     if action == "quickshot":
         # Sends a single trigger to start data collection
-        logger.info("Eiger quickshot")
+        logger.debug("Eiger quickshot")
         [filepath, filename, num_imgs, exptime] = args_list
         filename = filename + "_" + str(caget(pv.eiger_seqID))
         caput(pv.eiger_ODfilepath, filepath)
@@ -357,11 +357,11 @@ def eiger(action, args_list=None):
         sleep(0.1)
         acqtime = float(exptime) - 0.0000001
         caput(pv.eiger_acquiretime, str(acqtime))
-        logger.info("Filepath was set as %s" % filepath)
-        logger.info("Filename set as %s" % filename)
-        logger.info("num_imgs %s" % num_imgs)
-        logger.info("Exposure time set as %s s" % exptime)
-        logger.info("Acquire time set as %s s" % acqtime)
+        logger.debug("Filepath was set as %s" % filepath)
+        logger.debug("Filename set as %s" % filename)
+        logger.debug("num_imgs %s" % num_imgs)
+        logger.debug("Exposure time set as %s s" % exptime)
+        logger.debug("Acquire time set as %s s" % acqtime)
         caput(pv.eiger_acquireperiod, str(exptime))
         caput(pv.eiger_numimages, str(num_imgs))
         caput(pv.eiger_imagemode, "Continuous")
@@ -399,11 +399,11 @@ def eiger(action, args_list=None):
         sleep(0.1)
         acqtime = float(exptime) - 0.0000001
         caput(pv.eiger_acquiretime, str(acqtime))
-        logger.info("Filepath was set as %s" % filepath)
-        logger.info("Filename set as %s" % filename)
-        logger.info("num_imgs %s" % num_imgs)
-        logger.info("Exposure time set as %s s" % exptime)
-        logger.info("Acquire time set as %s s" % acqtime)
+        logger.debug("Filepath was set as %s" % filepath)
+        logger.debug("Filename set as %s" % filename)
+        logger.debug("num_imgs %s" % num_imgs)
+        logger.debug("Exposure time set as %s s" % exptime)
+        logger.debug("Acquire time set as %s s" % acqtime)
         caput(pv.eiger_acquireperiod, str(exptime))
         caput(pv.eiger_numimages, 1)
         caput(pv.eiger_imagemode, "Continuous")

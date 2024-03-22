@@ -500,13 +500,13 @@ def finish_i24(chip_prog_dict: Dict, start_time: str, zebra: Zebra):
     wavelength = float(caget(pv.dcm_lambda))
 
     if det_type == "pilatus":
-        logger.info("Finish I24 Pilatus")
+        logger.debug("Finish I24 Pilatus")
         filename = filename + "_" + caget(pv.pilat_filenum)
         yield from reset_zebra_when_collection_done_plan(zebra)
         sup.pilatus("return-to-normal")
         sleep(0.2)
     elif det_type == "eiger":
-        logger.info("Finish I24 Eiger")
+        logger.debug("Finish I24 Eiger")
         yield from reset_zebra_when_collection_done_plan(zebra)
         sup.eiger("return-to-normal")
         filename = cagetstring(pv.eiger_ODfilenameRBV)
@@ -514,11 +514,11 @@ def finish_i24(chip_prog_dict: Dict, start_time: str, zebra: Zebra):
     # Detector independent moves
     logger.info("Move chip back to home position by setting PMAC_STRING pv.")
     caput(pv.me14e_pmac_str, "!x0y0z0")
-    logger.debug("Closing shutter")
+    logger.info("Closing shutter")
     caput("BL24I-PS-SHTR-01:CON", "Close")
 
     end_time = time.ctime()
-    logger.info("Collection end time %s" % end_time)
+    logger.debug("Collection end time %s" % end_time)
 
     # Copy parameter file and eventual chip map to collection directory
     copy_files_to_data_location(Path(visit + sub_dir), map_type=map_type)
@@ -575,18 +575,23 @@ def main():
         det_type,
     ) = scrape_parameter_file()
 
-    logger.info("Chip name is %s" % chip_name)
-    logger.info("visit = %s" % visit)
-    logger.info("sub_dir = %s" % sub_dir)
-    logger.info("n_exposures = %s" % n_exposures)
-    logger.info("chip_type = %s" % chip_type)
-    logger.info("map_type = %s" % map_type)
-    logger.info("dcdetdist = %s" % dcdetdist)
-    logger.info("exptime = %s" % exptime)
-    logger.info("pump_repeat = %s" % pump_repeat)
-    logger.info("pumpexptime = %s" % pumpexptime)
-    logger.info("pumpdelay = %s" % pumpdelay)
-    logger.info("prepumpexptime = %s" % prepumpexptime)
+    log_msg = f"""
+            Parameters for I24 serial collection: \n
+                Chip name is {chip_name}
+                visit = {visit}
+                directory = {sub_dir}
+                n_exposures = {n_exposures}
+                chip_type = {chip_type}
+                map_type = {map_type}
+                det_dist = {dcdetdist}
+                exp_time = {exptime}
+                det_type = {det_type.name}
+                pump_repeat = {pump_repeat}
+                pump_exp = {pumpexptime}
+                pump_delay = {pumpdelay}
+                prepumpexptime = {prepumpexptime}
+        """
+    logger.info(log_msg)
     logger.info("Getting Program Dictionary")
 
     # If alignment type is Oxford inner it is still an Oxford type chip
@@ -615,11 +620,11 @@ def main():
     prog_num = get_prog_num(chip_type, map_type, pump_repeat)
 
     # Now ready for data collection. Open fast shutter (zebra gate)
-    logger.debug("Opening fast shutter.")
+    logger.info("Opening fast shutter.")
     yield from open_fast_shutter(zebra)
 
     logger.info("Run PMAC with program number %d" % prog_num)
-    logger.info("pmac str = &2b%dr" % prog_num)
+    logger.debug("pmac str = &2b%dr" % prog_num)
     caput(pv.me14e_pmac_str, "&2b%dr" % prog_num)
     sleep(1.0)
 
@@ -679,9 +684,9 @@ def main():
                 break
     else:
         aborted = True
-        logger.info("Data Collection ended due to GP 9 not equalling 0")
+        logger.warning("Data Collection ended due to GP 9 not equalling 0")
 
-    logger.debug("Closing fast shutter")
+    logger.info("Closing fast shutter")
     yield from close_fast_shutter(zebra)
     sleep(2.0)
 
@@ -700,10 +705,10 @@ def main():
     logger.debug("Notify DCID of end of collection.")
     dcid.notify_end()
 
-    logger.info("Quick summary of settings")
-    logger.info("Chip name = %s sub_dir = %s" % (chip_name, sub_dir))
-    logger.info("Start Time = % s" % start_time)
-    logger.info("End Time = %s" % end_time)
+    logger.debug("Quick summary of settings")
+    logger.debug("Chip name = %s sub_dir = %s" % (chip_name, sub_dir))
+    logger.debug("Start Time = % s" % start_time)
+    logger.debug("End Time = %s" % end_time)
 
 
 if __name__ == "__main__":

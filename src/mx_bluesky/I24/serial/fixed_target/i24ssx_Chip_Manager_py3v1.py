@@ -51,7 +51,7 @@ def setup_logging():
 @log.log_on_entry
 def initialise():
     # commented out filter lines 230719 as this stage not connected
-    logger.info("Setting VMAX VELO ACCL HHL LLM pvs")
+    logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
 
     caput(pv.me14e_stage_x + ".VMAX", 20)
     caput(pv.me14e_stage_y + ".VMAX", 20)
@@ -142,7 +142,7 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
             # Note for future reference. Appending underscore causes more hassle and
             # high probability of users accidentally overwriting data. Use a dash
             filename = filename + "-"
-            logger.info(
+            logger.debug(
                 "Requested filename ends in a number. Appended dash: %s" % filename
             )
 
@@ -165,23 +165,26 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
         f.write("det_type \t%s\n" % str(det_type))
         f.write("checkerpattern \t%s\n" % str(checkerpattern))
 
-    logger.info("Information written to file")
-    logger.info(f"visit: {visit}")
-    logger.info(f"filename: {chip_name}")
-    logger.info(f"protein_name: {protein_name}")
-    logger.info(f"n_exposures: {n_exposures}")
-    logger.info(f"chip_type: {chip_type}")
-    logger.info(f"map_type: {map_type}")
-    logger.info(f"pump_repeat: {pump_repeat}")
-    logger.info(f"pumpexptime: {pumpexptime}")
-    logger.info(f"pumpdelay: {pumpdelay}")
-    logger.info(f"prepumpexptime: {prepumpexptime}")
-    logger.info(f"detector type: {str(det_type)}")
-    logger.info(f"checker pattern: {checkerpattern}")
+    log_msg = f"""
+            Information written to file \n
+                visit: {visit}
+                filename: {chip_name}
+                protein_name: {protein_name}
+                n_exposures: {n_exposures}
+                chip_type: {chip_type}
+                map_type: {map_type}
+                pump_repeat: {pump_repeat}
+                pumpexptime: {pumpexptime}
+                pumpdelay: {pumpdelay}
+                prepumpexptime: {prepumpexptime}
+                detector type: {str(det_type)}
+                checker pattern: {checkerpattern}
+        """
+    logger.info(log_msg)
     if map_type == MappingType.Full:
         # This step creates some header files (.addr, .spec), containing the parameters,
         # that are only needed when full mapping is in use.
-        logger.debug("Running start up now.")
+        logger.info("Full mapping in use. Running start up now.")
         startup.run()
 
 
@@ -246,7 +249,7 @@ def save_screen_map(litemap_path: Path | str = LITEMAP_PATH):
 
     logger.info("Saving %s currentchip.map" % litemap_path.as_posix())
     with open(litemap_path / "currentchip.map", "w") as f:
-        logger.info("Printing only blocks with block_val == 1")
+        logger.debug("Printing only blocks with block_val == 1")
         for x in range(1, 82):
             block_str = "ME14E-MO-IOC-01:GP%i" % (x + 10)
             block_val = int(caget(block_str))
@@ -564,7 +567,7 @@ def load_lite_map(litemap_path: Path | str = LITEMAP_PATH):
 
     litemap_fid = str(caget(pv.me14e_gp5)) + ".lite"
     logger.info("Please wait, loading LITE map")
-    logger.info("Loading Lite Map")
+    logger.debug("Loading Lite Map")
     logger.info("Opening %s" % (litemap_path / litemap_fid))
     with open(litemap_path / litemap_fid, "r") as fh:
         f = fh.readlines()
@@ -727,7 +730,7 @@ def scrape_mtr_directions(param_path: Path | str = CS_FILES_PATH):
             mtr3_dir = float(line.split("=")[1])
         else:
             continue
-    logger.info("mt1_dir %s mtr2_dir %s mtr3_dir %s" % (mtr1_dir, mtr2_dir, mtr3_dir))
+    logger.debug("mt1_dir %s mtr2_dir %s mtr3_dir %s" % (mtr1_dir, mtr2_dir, mtr3_dir))
     return mtr1_dir, mtr2_dir, mtr3_dir
 
 
@@ -919,7 +922,7 @@ def cs_maker(pmac: PMAC = None):
     sqfact2 = np.sqrt(x2factor**2 + y2factor**2 + z2factor**2) / scaley
     sqfact3 = np.sqrt(x3factor**2 + y3factor**2 + z3factor**2) / scalez
     logger.info("%1.4f \n %1.4f \n %1.4f" % (sqfact1, sqfact2, sqfact3))
-    logger.info("Long wait, please be patient")
+    logger.debug("Long wait, please be patient")
     pmac.pmac_string.set("!x0y0z0").wait()
     sleep(2.5)
     pmac.pmac_string.set("&2").wait()
@@ -930,7 +933,7 @@ def cs_maker(pmac: PMAC = None):
     sleep(0.1)
     pmac.home_stages()
     sleep(0.1)
-    logger.info("Chip_type is %s" % chip_type)
+    logger.debug("Chip_type is %s" % chip_type)
     if chip_type == 0:
         pmac.pmac_string.set("!x0.4y0.4").wait()
         sleep(0.1)
@@ -1007,7 +1010,7 @@ def block_check():
                     sleep(1.0)
                     break
                 block, x, y = entry
-                logger.info("Block: %s -> (x=%s y=%s)" % (block, x, y))
+                logger.debug("Block: %s -> (x=%s y=%s)" % (block, x, y))
                 caput(pv.me14e_pmac_str, "!x%sy%s" % (x, y))
                 time.sleep(0.4)
         else:
