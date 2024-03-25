@@ -13,6 +13,7 @@ import shutil
 import sys
 import time
 from pathlib import Path
+from pprint import pformat
 from time import sleep
 
 import numpy as np
@@ -112,26 +113,12 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
     param_path = _coerce_to_path(param_path)
     param_path.mkdir(parents=True, exist_ok=True)
 
-    param_fid = "parameters.txt"
+    param_fid = "parameters.json"
     logger.info("Writing Parameter File: %s" % (param_path / param_fid).as_posix())
 
-    visit = caget(pv.me14e_gp100)
-
     filename = caget(pv.me14e_chip_name)
-
-    exptime = caget(pv.me14e_exptime)
-    dcdetdist = caget(pv.me14e_dcdetdist)
-    protein_name = caget(pv.me14e_filepath)
-    pump_repeat = caget(pv.me14e_gp4)
-    pumpexptime = caget(pv.me14e_gp103)
-    pumpdelay = caget(pv.me14e_gp110)
-    prepumpexptime = caget(pv.me14e_gp109)
-    n_exposures = caget(pv.me14e_gp3)
-    map_type = caget(pv.me14e_gp2)
-    chip_type = caget(pv.me14e_gp1)
     det_type = get_detector_type()
-
-    checkerpattern = bool(caget(pv.me14e_gp111))
+    map_type = caget(pv.me14e_gp2)
 
     # If file name ends in a digit this causes processing/pilatus pain.
     # Append an underscore
@@ -146,38 +133,29 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
                 "Requested filename ends in a number. Appended dash: %s" % filename
             )
 
-    # historical - use chip_name instead of filename
-    chip_name = filename
+    params_dict = {
+        "visit": caget(pv.me14e_gp100),
+        "directory": caget(pv.me14e_filepath),
+        "filename": filename,
+        "exposure_time_s": caget(pv.me14e_exptime),
+        "detector_distance_mm": caget(pv.me14e_dcdetdist),
+        "detector_name": str(det_type),
+        "num_exposures": caget(pv.me14e_gp3),
+        "chip_type": caget(pv.me14e_gp1),
+        "map_type": map_type,
+        "pump_repeat": caget(pv.me14e_gp4),
+        "checker_pattern": bool(caget(pv.me14e_gp111)),
+        "laser_dwell_s": caget(pv.me14e_gp103),
+        "laser_delay_s": caget(pv.me14e_gp110),
+        "pre_pump_exposure_s": caget(pv.me14e_gp109),
+    }
 
     with open(param_path / param_fid, "w") as f:
-        f.write("visit \t\t%s\n" % visit)
-        f.write("chip_name \t%s\n" % chip_name)
-        f.write("protein_name \t%s\n" % protein_name)
-        f.write("n_exposures \t%s\n" % n_exposures)
-        f.write("chip_type \t%s\n" % chip_type)
-        f.write("map_type \t%s\n" % map_type)
-        f.write("pump_repeat \t%s\n" % pump_repeat)
-        f.write("pumpexptime \t%s\n" % pumpexptime)
-        f.write("pumpdelay \t%s\n" % pumpdelay)
-        f.write("prepumpexptime \t%s\n" % prepumpexptime)
-        f.write("exptime \t%s\n" % exptime)
-        f.write("dcdetdist \t%s\n" % dcdetdist)
-        f.write("det_type \t%s\n" % str(det_type))
-        f.write("checkerpattern \t%s\n" % str(checkerpattern))
+        json.dump(params_dict, f, indent=4)
 
-    logger.info("Information written to file")
-    logger.info(f"visit: {visit}")
-    logger.info(f"filename: {chip_name}")
-    logger.info(f"protein_name: {protein_name}")
-    logger.info(f"n_exposures: {n_exposures}")
-    logger.info(f"chip_type: {chip_type}")
-    logger.info(f"map_type: {map_type}")
-    logger.info(f"pump_repeat: {pump_repeat}")
-    logger.info(f"pumpexptime: {pumpexptime}")
-    logger.info(f"pumpdelay: {pumpdelay}")
-    logger.info(f"prepumpexptime: {prepumpexptime}")
-    logger.info(f"detector type: {str(det_type)}")
-    logger.info(f"checker pattern: {checkerpattern}")
+    logger.info("Information written to file \n")
+    logger.info(pformat(params_dict))
+
     if map_type == MappingType.Full:
         # This step creates some header files (.addr, .spec), containing the parameters,
         # that are only needed when full mapping is in use.
@@ -580,20 +558,13 @@ def load_lite_map(litemap_path: Path | str = LITEMAP_PATH):
 
 @log.log_on_entry
 def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
-    (
-        chip_name,
-        visit,
-        sub_dir,
-        n_exposures,
-        chip_type,
-        map_type,
-    ) = startup.scrape_parameter_file()
+    params = startup.read_parameter_file()
     fullmap_path = _coerce_to_path(fullmap_path)
 
     fullmap_fid = fullmap_path / f"{str(caget(pv.me14e_gp5))}.spec"
     logger.info("Opening %s" % fullmap_fid)
-    mapping.plot_file(fullmap_fid, chip_type)
-    mapping.convert_chip_to_hex(fullmap_fid, chip_type)
+    mapping.plot_file(fullmap_fid, params.chip_type.value)
+    mapping.convert_chip_to_hex(fullmap_fid, params.chip_type.value)
     shutil.copy2(fullmap_fid.with_suffix(".full"), fullmap_path / "currentchip.full")
     logger.info(
         "Copying %s to %s"
@@ -613,7 +584,7 @@ def moveto(place: str = "origin", pmac: PMAC = None):
         return
 
     chip_type = int(caget(pv.me14e_gp1))
-    logger.info(f"Chip type is {chip_type}")
+    logger.info(f"Chip type is {ChipType(chip_type)}")
     if chip_type not in list(ChipType):
         logger.warning("Unknown chip_type move")
         return

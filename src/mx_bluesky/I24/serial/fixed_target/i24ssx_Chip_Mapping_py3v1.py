@@ -3,6 +3,7 @@ Chip mapping utilities for fixed target
 
 This version changed to python3 March2020 by RLO
 """
+
 import logging
 import time
 
@@ -16,7 +17,7 @@ from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1 import (
     get_format,
     get_shot_order,
     get_xy,
-    scrape_parameter_file,
+    read_parameter_file,
     write_file,
 )
 from mx_bluesky.I24.serial.parameters.constants import PARAM_FILE_PATH_FT
@@ -141,24 +142,17 @@ def convert_chip_to_hex(fid, chip_type):
 
 def main():
     setup_logging()
-    (
-        chip_name,
-        visit,
-        sub_dir,
-        n_exposures,
-        chip_type,
-        map_type,
-    ) = scrape_parameter_file()
+    params = read_parameter_file()
 
     check_files([".spec"])
     write_file(suffix=".spec", order="shot")
 
     logger.info("PARAMETER PATH = %s" % PARAM_FILE_PATH_FT)
-    fid = PARAM_FILE_PATH_FT / f"{chip_name}.spec"
+    fid = PARAM_FILE_PATH_FT / f"{params.filename}.spec"
     logger.info("FID = %s" % fid)
 
-    plot_file(fid, chip_type)
-    convert_chip_to_hex(fid, chip_type)
+    plot_file(fid, params.chip_type.value)
+    convert_chip_to_hex(fid, params.chip_type.value)
 
 
 if __name__ == "__main__":
