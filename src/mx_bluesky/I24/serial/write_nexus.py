@@ -3,66 +3,51 @@ import os
 import pathlib
 import pprint
 import time
+from datetime import datetime
+from typing import Dict, Literal, Optional
 
 import requests
 
 from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, MappingType
+from mx_bluesky.I24.serial.parameters import ExtruderParameters, FixedTargetParameters
 from mx_bluesky.I24.serial.setup_beamline import Eiger, caget, cagetstring, pv
-from mx_bluesky.I24.serial.setup_beamline.setup_detector import get_detector_type
 
 logger = logging.getLogger("I24ssx.nexus_writer")
 
 
 def call_nexgen(
-    chip_prog_dict,
-    start_time,
-    param_file_tuple,
-    expt_type="fixed-target",
-    total_numb_imgs=None,
+    chip_prog_dict: Dict,
+    start_time: datetime,
+    parameters: ExtruderParameters | FixedTargetParameters,
+    expt_type: Literal["fixed-target", "extruder"] = "fixed-target",
+    total_numb_imgs: Optional[int] = None,
 ):
-    det_type = get_detector_type()
+    det_type = parameters.detector_name
     print(f"det_type: {det_type}")
 
-    if expt_type == "fixed-target":
-        (
-            chip_name,
-            visit,
-            sub_dir,
-            n_exposures,
-            chip_type,
-            map_type,
-            pump_repeat,
-            pumpexptime,
-            pumpdelay,
-            exptime,
-            dcdetdist,
-            prepumpexptime,
-            det_type,
-        ) = param_file_tuple
-        if map_type == MappingType.NoMap or chip_type == ChipType.Custom:
-            currentchipmap = "fullchip"
+    if expt_type == "fixed-target" and isinstance(parameters, FixedTargetParameters):
+        if (
+            parameters.map_type == MappingType.NoMap
+            or parameters.chip_type == ChipType.Custom
+        ):
+            # NOTE Nexgen server is still on nexgen v0.7.2 (fully working for ssx)
+            # Will need to be updated, for correctness sake map needs to be None.
+            currentchipmap = None
         else:
             currentchipmap = "/dls_sw/i24/scripts/fastchips/litemaps/currentchip.map"
-    elif expt_type == "extruder":
+        pump_status = bool(parameters.pump_repeat)
+    elif expt_type == "extruder" and isinstance(parameters, ExtruderParameters):
         # chip_prog_dict should be None for extruder (passed as input for now)
-        (
-            visit,
-            sub_dir,
-            filename,
-            num_imgs,
-            exptime,
-            dcdetdist,
-            det_type,
-            pump_status,
-            pumpexptime,
-            pumpdelay,
-        ) = param_file_tuple
-        total_numb_imgs = num_imgs
+        total_numb_imgs = parameters.num_images
         currentchipmap = None
-        pump_repeat = "0" if pump_status == "false" else "1"
+        pump_status = parameters.pump_status
 
     filename_prefix = cagetstring(pv.eiger_ODfilenameRBV)
-    meta_h5 = pathlib.Path(visit) / sub_dir / f"{filename_prefix}_meta.h5"
+    meta_h5 = (
+        pathlib.Path(parameters.visit)
+        / parameters.directory
+        / f"{filename_prefix}_meta.h5"
+    )
     t0 = time.time()
     max_wait = 60  # seconds
     logger.info(f"Watching for {meta_h5}")
@@ -77,8 +62,6 @@ def call_nexgen(
         logger.warning(f"Giving up waiting for {meta_h5} after {max_wait} seconds")
         return False
 
-    # filepath = visit + sub_dir
-    # filename = chip_name
     transmission = (float(caget(pv.pilat_filtertrasm)),)
     wavelength = float(caget(pv.dcm_lambda))
 
@@ -96,14 +79,14 @@ def call_nexgen(
             "beam_center": [caget(pv.eiger_beamx), caget(pv.eiger_beamy)],
             "chipmap": currentchipmap,
             "chip_info": chip_prog_dict,
-            "det_dist": dcdetdist,
-            "exp_time": exptime,
+            "det_dist": parameters.detector_distance_mm,
+            "exp_time": parameters.exposure_time_s,
             "expt_type": expt_type,
             "filename": filename_prefix,
             "num_imgs": int(total_numb_imgs),
-            "pump_status": bool(float(pump_repeat)),
-            "pump_exp": pumpexptime,
-            "pump_delay": pumpdelay,
+            "pump_status": pump_status,
+            "pump_exp": parameters.laser_dwell_s,
+            "pump_delay": parameters.laser_delay_s,
             "transmission": transmission[0],
             "visitpath": os.fspath(meta_h5.parent),
             "wavelength": wavelength,

@@ -34,6 +34,7 @@ def _params_file_location() -> Path:
     return filepath
 
 
+PARAM_FILE_NAME = "parameters.json"
 PARAM_FILE_PATH = _params_file_location()
 PARAM_FILE_PATH_FT = PARAM_FILE_PATH / "fixed_target"
 LITEMAP_PATH = PARAM_FILE_PATH_FT / "litemaps"

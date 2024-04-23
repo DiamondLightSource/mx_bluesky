@@ -1,4 +1,4 @@
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -7,34 +7,7 @@ from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1 import (
     fiducials,
     get_format,
     pathli,
-    scrape_parameter_file,
 )
-
-params_file_str = """visit foo
-sub_dir bar
-chip_name chip
-protein_name protK
-n_exposures 1
-chip_type 0
-map_type 0
-dcdetdist 100
-det_type eiger
-exptime 0.01
-pump_repeat 0
-pumpexptime 0
-prepumpexptime 0
-pumpdelay 0"""
-
-
-@patch(
-    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1.open",
-    mock_open(read_data=params_file_str),
-)
-def test_scrape_parameter_file():
-    res = scrape_parameter_file()
-    assert res[0] == "chip"
-    assert res[4] == 0 and res[5] == 0  # chip and map type
-    assert len(res) == 13
 
 
 def test_fiducials():
@@ -56,10 +29,10 @@ def test_get_format_for_oxford_minichip():
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1.os")
 @patch(
-    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1.open",
-    mock_open(read_data=params_file_str),
+    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1.read_parameter_file"
 )
-def test_check_files(mock_os):
+def test_check_files(fake_read_params, mock_os, dummy_params_without_pp):
+    fake_read_params.return_value = dummy_params_without_pp
     check_files("i24", [".a", ".b"])
 
 

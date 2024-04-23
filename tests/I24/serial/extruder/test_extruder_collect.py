@@ -1,5 +1,5 @@
 import argparse
-from unittest.mock import ANY, call, mock_open, patch
+from unittest.mock import ANY, call, patch
 
 import pytest
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3
@@ -11,32 +11,9 @@ from mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2 import (
     initialise_extruderi24,
     laser_check,
     run_extruderi24,
-    scrape_parameter_file,
 )
+from mx_bluesky.I24.serial.parameters import ExtruderParameters
 from mx_bluesky.I24.serial.setup_beamline import Eiger, Pilatus
-
-params_file_str = """visit foo
-directory bar
-filename boh
-num_imgs 1
-exp_time 0.1
-det_dist 100
-det_type eiger
-pump_probe false
-pump_exp 0
-pump_delay 0"""
-
-
-params_file_str_pp = """visit foo
-directory bar
-filename boh
-num_imgs 1
-exp_time 0.1
-det_dist 100
-det_type pilatus
-pump_probe true
-pump_exp 0.01
-pump_delay 0.005"""
 
 
 @pytest.fixture
@@ -51,16 +28,36 @@ def dummy_parser():
     yield parser
 
 
-@patch(
-    "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.open",
-    mock_open(read_data=params_file_str),
-)
-def test_scrape_parameter_file():
-    res = scrape_parameter_file()
-    assert res[0] == "foo"
-    assert len(res) == 10
-    # Checking correct types
-    assert res[3] == 1 and res[4] == 0.1
+@pytest.fixture
+def dummy_params():
+    params = {
+        "visit": "foo",
+        "directory": "bar",
+        "filename": "protein",
+        "exposure_time_s": 0.1,
+        "detector_distance_mm": 100,
+        "detector_name": "eiger",
+        "num_images": 10,
+        "pump_status": False,
+    }
+    return ExtruderParameters(**params)
+
+
+@pytest.fixture
+def dummy_params_pp():
+    params_pp = {
+        "visit": "foo",
+        "directory": "bar",
+        "filename": "protein",
+        "exposure_time_s": 0.1,
+        "detector_distance_mm": 100,
+        "detector_name": "pilatus",
+        "num_images": 10,
+        "pump_status": True,
+        "laser_dwell_s": 0.01,
+        "laser_delay_s": 0.005,
+    }
+    return ExtruderParameters(**params_pp)
 
 
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caget")
@@ -105,8 +102,7 @@ async def test_laser_check(
 
 
 @patch(
-    "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.open",
-    mock_open(read_data=params_file_str),
+    "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.write_parameter_file",
 )
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.shutil")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.sleep")
@@ -119,7 +115,11 @@ async def test_laser_check(
 @patch(
     "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_zebra_for_quickshot_plan"
 )
+@patch(
+    "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.ExtruderParameters"
+)
 def test_run_extruder_quickshot_with_eiger(
+    mock_params,
     mock_quickshot_plan,
     fake_det,
     fake_sup,
@@ -129,9 +129,12 @@ def test_run_extruder_quickshot_with_eiger(
     fake_dcid,
     fake_sleep,
     fake_shutil,
+    fake_write_params,
     RE,
     zebra,
+    dummy_params,
 ):
+    mock_params.from_file.return_value = dummy_params
     fake_det.return_value = Eiger()
     RE(run_extruderi24())
     assert fake_nexgen.call_count == 1
@@ -141,10 +144,6 @@ def test_run_extruder_quickshot_with_eiger(
     mock_quickshot_plan.assert_called_once()
 
 
-@patch(
-    "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.open",
-    mock_open(read_data=params_file_str_pp),
-)
 @patch(
     "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.write_parameter_file"
 )
@@ -161,7 +160,11 @@ def test_run_extruder_quickshot_with_eiger(
 @patch(
     "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.reset_zebra_when_collection_done_plan"
 )
+@patch(
+    "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.ExtruderParameters"
+)
 def test_run_extruder_pump_probe_with_pilatus(
+    mock_params,
     mock_reset_zebra_plan,
     mock_pp_plan,
     fake_det,
@@ -174,7 +177,9 @@ def test_run_extruder_pump_probe_with_pilatus(
     fake_write_params,
     RE,
     zebra,
+    dummy_params_pp,
 ):
+    mock_params.from_file.return_value = dummy_params_pp
     # fake_i24.zebra.return_value = MagicMock()
     fake_det.return_value = Pilatus()
     RE(run_extruderi24())

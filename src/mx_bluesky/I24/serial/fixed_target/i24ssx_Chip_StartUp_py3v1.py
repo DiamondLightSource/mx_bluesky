@@ -1,23 +1,22 @@
 """
 Startup utilities for chip
-
-This version changed to python3 March2020 by RLO
 """
-from __future__ import annotations
 
 import logging
 import os
 import string
 import time
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 import numpy as np
 
 from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType
+from mx_bluesky.I24.serial.parameters import FixedTargetParameters
 from mx_bluesky.I24.serial.parameters.constants import (
     HEADER_FILES_PATH,
+    PARAM_FILE_NAME,
     PARAM_FILE_PATH_FT,
 )
 
@@ -30,89 +29,12 @@ def setup_logging():
     log.config(logfile)
 
 
-def scrape_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
+def read_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
     if not isinstance(param_path, Path):
         param_path = Path(param_path)
-
-    with open(param_path / "parameters.txt", "r") as filein:
-        f = filein.readlines()
-    for line in f:
-        entry = line.rstrip().split()
-        if "chip_name" in entry[0].lower():
-            chip_name = entry[1]
-        elif line.startswith("visit"):
-            visit = entry[1]
-        elif line.startswith("sub_dir"):
-            sub_dir = entry[1]
-        elif line.startswith("protein_name"):
-            sub_dir = entry[1]
-        elif "n_exposures" in entry[0].lower():
-            n_exposures = int(entry[1])
-        elif "chip_type" in entry[0].lower():
-            chip_type = int(entry[1])
-        elif "map_type" in entry[0].lower():
-            map_type = int(entry[1])
-        elif "pump_repeat" in entry[0].lower():
-            pump_repeat = int(entry[1])
-
-    for line in f:
-        entry = line.rstrip().split()
-        if "pumpexptime" == entry[0].lower().strip():
-            pumpexptime = float(entry[1])
-        if "exptime" in entry[0].lower():
-            exptime = float(entry[1])
-        if "dcdetdist" in entry[0].lower():
-            dcdetdist = float(entry[1])
-        if "prepumpexptime" in entry[0].lower():
-            prepumpexptime = float(entry[1])
-        if "pumpdelay" in entry[0].lower():
-            pumpdelay = float(entry[1])
-        if "det_type" in entry[0].lower():
-            det_type = entry[1]
-    return (
-        chip_name,
-        visit,
-        sub_dir,
-        n_exposures,
-        chip_type,
-        map_type,
-        pump_repeat,
-        pumpexptime,
-        pumpdelay,
-        exptime,
-        dcdetdist,
-        prepumpexptime,
-        det_type,
-    )
-
-
-def read_parameters(
-    param_path: Path | str = PARAM_FILE_PATH_FT, filename: str | None = None
-) -> Dict[str, str]:
-    """
-    Read the parameter file into a lookup dictionary.
-
-    Does the same thing as scrape_parameter_file except doesn't rely on you
-    getting the order of arguments right every time (or having to load every one
-    if you don't need them all).
-
-    Args:
-        filename: The file to read. If None, will load from default location.
-
-    Returns:
-        A dictionary with a string entry for every key in the file.
-    """
-    if not isinstance(param_path, Path):
-        param_path = Path(param_path)
-    if filename is None:
-        filename = "parameters.txt"
-    datafile = param_path / filename
-    data = datafile.read_text()
-    args = {}
-    for line in data.splitlines():
-        key, value = line.split(maxsplit=1)
-        args[key.lower()] = value
-    return args
+    params_file = param_path / PARAM_FILE_NAME
+    params = FixedTargetParameters.from_file(params_file)
+    return params
 
 
 @log.log_on_entry
@@ -123,12 +45,12 @@ def fiducials(chip_type: int):
     elif chip_type == ChipType.Custom:
         logger.warning("No fiducials for custom chip")
     else:
-        logger.warning("Unknown chip_type, %s, in fiducials" % chip_type)
+        logger.warning(f"Unknown chip_type, {chip_type}, in fiducials")
     return fiducial_list
 
 
 @log.log_on_entry
-def get_format(chip_type: int):
+def get_format(chip_type: ChipType):
     if chip_type == ChipType.Oxford:
         w2w = 0.125
         b2b_horz = 0.800
@@ -145,15 +67,15 @@ def get_format(chip_type: int):
         b2b_vert = 0
         chip_format = [1, 1, 20, 20]
     else:
-        msg = "Unknown chip_type, %s" % chip_type
+        msg = f"Unknown chip_type, {chip_type}"
         logger.error(msg)
         raise ValueError(msg)
     cell_format = chip_format + [w2w, b2b_horz, b2b_vert]
-    logger.info("Cell format for chip type %s: %s" % (chip_type, cell_format))
+    logger.info(f"Cell format for chip type {str(chip_type)}: {cell_format}")
     return cell_format
 
 
-def get_xy(addr: str, chip_type: int):
+def get_xy(addr: str, chip_type: ChipType):
     entry = addr.split("_")[-2:]
     R, C = entry[0][0], entry[0][1]
     r2, c2 = entry[1][0], entry[1][1]
@@ -232,7 +154,7 @@ def zippum(list_1_args, list_2_args):
     return zipped_list
 
 
-def get_alphanumeric(chip_type):
+def get_alphanumeric(chip_type: ChipType):
     cell_format = get_format(chip_type)
     blk_num = cell_format[0]
     wnd_num = cell_format[2]
@@ -256,7 +178,7 @@ def get_alphanumeric(chip_type):
 
 
 @log.log_on_entry
-def get_shot_order(chip_type):
+def get_shot_order(chip_type: ChipType):
     cell_format = get_format(chip_type)
     blk_num = cell_format[0]
     wnd_num = cell_format[2]
@@ -302,36 +224,24 @@ def write_file(
     save_path: Path = HEADER_FILES_PATH,
 ):
     if location == "i24":
-        (
-            chip_name,
-            visit,
-            sub_dir,
-            n_exposures,
-            chip_type,
-            map_type,
-            pump_repeat,
-            pumpexptime,
-            exptime,
-            dcdetdist,
-            prepumpexptime,
-        ) = scrape_parameter_file(param_file_path)
+        params = read_parameter_file(param_file_path)
     else:
-        msg = "Unknown location, %s" % location
+        msg = f"Unknown location, {location}"
         logger.error(msg)
         raise ValueError(msg)
-    chip_file_path = save_path / f"chips/{sub_dir}/{chip_name}{suffix}"
+    chip_file_path = save_path / f"chips/{params.directory}/{params.filename}{suffix}"
 
-    fiducial_list = fiducials(chip_type)
+    fiducial_list = fiducials(params.chip_type.value)
     if order == "alphanumeric":
-        addr_list = get_alphanumeric(chip_type)
+        addr_list = get_alphanumeric(params.chip_type)
 
     elif order == "shot":
-        addr_list = get_shot_order(chip_type)
+        addr_list = get_shot_order(params.chip_type)
 
     with open(chip_file_path, "a") as g:
         for addr in addr_list:
-            xtal_name = "_".join([chip_name, addr])
-            (x, y) = get_xy(xtal_name, chip_type)
+            xtal_name = "_".join([params.filename, addr])
+            (x, y) = get_xy(xtal_name, params.chip_type)
             if addr in fiducial_list:
                 pres = "0"
             else:
@@ -353,26 +263,12 @@ def check_files(
     save_path: Path = HEADER_FILES_PATH,
 ):
     if location == "i24":
-        (
-            chip_name,
-            visit,
-            sub_dir,
-            n_exposures,
-            chip_type,
-            map_type,
-            exptime,
-            pump_repeat,
-            pumpdelay,
-            pumpexptime,
-            dcdetdist,
-            prepumpexptime,
-            det_type,
-        ) = scrape_parameter_file(param_path=param_file_path)
+        params = read_parameter_file(param_file_path)
     else:
-        msg = "Unknown location, %s" % location
+        msg = f"Unknown location, {location}"
         logger.error(msg)
         raise ValueError(msg)
-    chip_file_path = save_path / f"chips/{sub_dir}/{chip_name}"
+    chip_file_path = save_path / f"chips/{params.directory}/{params.filename}"
 
     try:
         os.stat(chip_file_path)
@@ -383,10 +279,10 @@ def check_files(
         if full_fid.is_file():
             time_str = time.strftime("%Y%m%d_%H%M%S_")
             timestamp_fid = (  # noqa: F841
-                full_fid.parent / f"{time_str}_{chip_name}{full_fid.suffix}"
+                full_fid.parent / f"{time_str}_{params.filename}{full_fid.suffix}"
             )
             # FIXME hack / fix. Actually move the file
-            logger.info("File %s Already Exists" % full_fid)
+            logger.info(f"File {full_fid} Already Exists")
     logger.debug("Check files done")
     return 1
 
@@ -399,22 +295,8 @@ def write_headers(
     save_path: Path = HEADER_FILES_PATH,
 ):
     if location == "i24":
-        (
-            chip_name,
-            visit,
-            sub_dir,
-            n_exposures,
-            chip_type,
-            map_type,
-            pump_repeat,
-            pumpexptime,
-            pumpdelay,
-            exptime,
-            dcdetdist,
-            prepumpexptime,
-            det_type,
-        ) = scrape_parameter_file(param_path=PARAM_FILE_PATH_FT)
-        chip_file_path = save_path / f"chips/{sub_dir}/{chip_name}"
+        params = read_parameter_file(param_file_path)
+        chip_file_path = save_path / f"chips/{params.directory}/{params.filename}"
 
         for suffix in suffix_list:
             full_fid = chip_file_path.with_suffix(suffix)
@@ -422,18 +304,18 @@ def write_headers(
                 g.write(
                     "#23456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n#\n"
                 )
-                g.write("#&i24\tchip_name    = %s\n" % chip_name)
-                g.write("#&i24\tvisit        = %s\n" % visit)
-                g.write("#&i24\tsub_dir      = %s\n" % sub_dir)
-                g.write("#&i24\tn_exposures  = %s\n" % n_exposures)
-                g.write("#&i24\tchip_type    = %s\n" % chip_type)
-                g.write("#&i24\tmap_type     = %s\n" % map_type)
-                g.write("#&i24\tpump_repeat  = %s\n" % pump_repeat)
-                g.write("#&i24\tpumpexptime  = %s\n" % pumpexptime)
-                g.write("#&i24\texptime      = %s\n" % exptime)
-                g.write("#&i24\tdcdetdist    = %s\n" % dcdetdist)
-                g.write("#&i24\tprepumpexptime  = %s\n" % prepumpexptime)
-                g.write("#&i24\tdet_Type     = %s\n" % det_type)
+                g.write(f"#&i24\tchip_name    = {params.filename}\n")
+                g.write(f"#&i24\tvisit        = {params.visit}\n")
+                g.write(f"#&i24\tsub_dir      = {params.directory}\n")
+                g.write(f"#&i24\tn_exposures  = {params.num_exposures}\n")
+                g.write(f"#&i24\tchip_type    = {params.chip_type.value}\n")
+                g.write(f"#&i24\tmap_type     = {params.map_type.value}\n")
+                g.write(f"#&i24\tpump_repeat  = {params.pump_repeat.value}\n")
+                g.write(f"#&i24\tpumpexptime  = {params.laser_dwell_s}\n")
+                g.write(f"#&i24\texptime      = {params.laser_delay_s}\n")
+                g.write(f"#&i24\tdcdetdist    = {params.detector_distance_mm}\n")
+                g.write(f"#&i24\tprepumpexptime  = {params.pre_pump_exposure_s}\n")
+                g.write(f"#&i24\tdet_Type     = {params.detector_name}\n")
                 g.write("#\n")
                 g.write(
                     "#XtalAddr      XCoord  YCoord  ZCoord  Present Shot  Spare04 Spare03 Spare02 Spare01\n"

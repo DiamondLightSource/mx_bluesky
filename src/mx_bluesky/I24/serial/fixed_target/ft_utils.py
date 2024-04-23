@@ -5,6 +5,7 @@ The enum values should not be changed unless they are also modified in the drop 
 menu in the edm screen, as their order should always match.
 New ones may be added if needed in the future.
 """
+
 from enum import Enum, IntEnum
 
 
@@ -12,6 +13,10 @@ class MappingType(IntEnum):
     NoMap = 0
     Lite = 1
     Full = 2
+
+    def __str__(self) -> str:
+        """Returns the mapping."""
+        return self.name
 
 
 # FIXME See https://github.com/DiamondLightSource/mx_bluesky/issues/77

@@ -20,6 +20,7 @@ dependencies = [
     "matplotlib",
     "requests",
     "opencv-python",
+    "pydantic",
     "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@main",
     "blueapi",
 ]

@@ -4,8 +4,6 @@ Cleaner abstractions of the PV table.
 Takes the PV tables from I24's setup_beamline and wraps a slightly more
 abstract wrapper around them.
 """
-from __future__ import annotations
-
 from typing import Union
 
 from mx_bluesky.I24.serial.setup_beamline import pv

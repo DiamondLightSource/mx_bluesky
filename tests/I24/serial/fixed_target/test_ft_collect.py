@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, call, mock_open, patch
 import pytest
 from dodal.devices.zebra import Zebra
 
+from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, MappingType
 from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1 import (
     datasetsizei24,
     get_chip_prog_values,
@@ -11,23 +12,6 @@ from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1 import (
     start_i24,
 )
 
-params = {
-    "chip_name": "chip",
-    "visit": "foo",
-    "sub_dir": "bar",
-    "n_exposures": 1,
-    "chip_type": 0,
-    "map_type": 1,
-    "pump_repeat": 0,
-    "pumpexptime": 0,
-    "pumpdelay": 0,
-    "exptime": 0.01,
-    "dcdetdist": 100,
-    "prepumpexptime": 0,
-    "det_type": "eiger",
-}
-
-
 chipmap_str = """01status    P3011       1
 02status    P3021       0
 03status    P3031       0
@@ -35,21 +19,14 @@ chipmap_str = """01status    P3011       1
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caput")
-@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caget")
-@patch(
-    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.scrape_parameter_file"
-)
-def test_datasetsizei24_for_one_block_and_two_exposures(
-    fake_params, fake_caget, fake_caput
-):
-    fake_params.return_value = tuple(params.values())
-    fake_caget.return_value = 2
+def test_datasetsizei24_for_one_block_and_two_exposures(fake_caput):
     with patch(
         "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.open",
         mock_open(read_data=chipmap_str),
     ):
-        tot_num_imgs = datasetsizei24()
+        tot_num_imgs = datasetsizei24(2, ChipType.Oxford, MappingType.Lite)
     assert tot_num_imgs == 800
+    fake_caput.assert_called_once_with("ME14E-MO-IOC-01:GP10", 800)
 
 
 def test_get_chip_prog_values():
@@ -122,11 +99,7 @@ def test_load_motion_program_data(
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caget")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sup")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sleep")
-@patch(
-    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.scrape_parameter_file"
-)
 def test_start_i24_with_eiger(
-    fake_params,
     fake_sleep,
     fake_sup,
     fake_caget,
@@ -135,10 +108,10 @@ def test_start_i24_with_eiger(
     fake_size,
     zebra: Zebra,
     RE,
+    dummy_params_without_pp,
 ):
     fake_size.return_value = 800
-    fake_params.return_value = tuple(params.values())
-    RE(start_i24(zebra))
+    RE(start_i24(zebra, dummy_params_without_pp))
     assert fake_sup.beamline.call_count == 2
     assert fake_sup.eiger.call_count == 1
     # Pilatus gets called for hack to create directory
