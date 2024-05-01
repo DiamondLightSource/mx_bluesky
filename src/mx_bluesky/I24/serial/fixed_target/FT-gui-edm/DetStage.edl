@@ -113,7 +113,7 @@ font "arial-medium-r-18.0"
 buttonLabel "Move Stage"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/setup_beamline/setup_detector.py \"Serial Fixed\""
+  0 "blueapi controller run setup_detector '{"detector_stage": "detector_motion", "expt_type": "Serial Fixed"}'
 }
 endObjectProperties
 
