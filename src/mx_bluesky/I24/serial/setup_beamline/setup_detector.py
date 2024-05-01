@@ -1,12 +1,14 @@
 """
 Utilities for defining the detector in use, and moving the stage.
 """
+
 import argparse
 import logging
 import time
 from enum import IntEnum
 
 import bluesky.plan_stubs as bps
+from blueapi.core import MsgGenerator
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
@@ -61,7 +63,7 @@ def get_detector_type() -> Detector:
         raise UnknownDetectorType("Detector not found.")
 
 
-def _move_detector_stage(detector_stage: DetectorMotion, target: float):
+def _move_detector_stage(detector_stage: DetectorMotion, target: float) -> MsgGenerator:
     logger.info(f"Moving detector stage to target position: {target}.")
     yield from bps.abs_set(
         detector_stage.y,
@@ -93,7 +95,9 @@ def _get_requested_detector(det_type_pv: str) -> str:
             raise
 
 
-def setup_detector_stage(detector_stage: DetectorMotion, expt_type: SSXType):
+def setup_detector_stage(
+    detector_stage: DetectorMotion, expt_type: SSXType
+) -> MsgGenerator:
     # Grab the correct PV depending on experiment
     # Its value is set with MUX on edm screen
     det_type_pv = EXPT_TYPE_DETECTOR_PVS[expt_type]
