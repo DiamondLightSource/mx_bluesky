@@ -3,13 +3,7 @@ import subprocess
 from os import environ
 from pathlib import Path
 
-from mx_bluesky.I24.serial import log
-
-
-def setup_logging():
-    logger = logging.getLogger("I24ssx")
-    log.config("edm_screen.log")
-    return logger
+logger = logging.getLogger("I24ssx.run")
 
 
 def get_location(default: str = "dev") -> str:
@@ -21,32 +15,18 @@ def get_edm_path() -> Path:
 
 
 def run_extruder():
-    logger = setup_logging()
     loc = get_location()
-    logger.info(f"Running on {loc}.")
+    logger.debug(f"Running on {loc}.")
     edm_path = get_edm_path()
-    logger.info("Starting extruder edm screen...")
-    subprocess.run(
-        [
-            "edm",
-            "-x",
-            edm_path / "EX-gui/DiamondExtruder-I24-py3v1.edl",
-        ]
-    )
-    logger.info("Edm screen closed.")
+    filepath = Path(__file__).parent
+    logger.debug(f"Running {filepath}/run_extruder.sh")
+    subprocess.run(["sh", filepath / "run_extruder.sh", edm_path.as_posix()])
 
 
 def run_fixed_target():
-    logger = setup_logging()
     loc = get_location()
     logger.info(f"Running on {loc}.")
     edm_path = get_edm_path()
-    logger.info("Starting fixed target edm screen...")
-    subprocess.run(
-        [
-            "edm",
-            "-x",
-            edm_path / "FT-gui/DiamondChipI24-py3v1.edl",
-        ]
-    )
-    logger.info("Edm screen closed.")
+    filepath = Path(__file__).parent
+    logger.debug(f"Running {filepath}/run_fixed_target.sh")
+    subprocess.run(["sh", filepath / "run_fixed_target.sh", edm_path.as_posix()])
