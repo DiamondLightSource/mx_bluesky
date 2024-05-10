@@ -370,7 +370,7 @@ font "arial-medium-r-24.0"
 buttonLabel "Start"
 numCmds 1
 command {
-  0 "blueapi controller run run_extruder"
+  0 "blueapi controller run run_extruder_plan"
 }
 endObjectProperties
 
