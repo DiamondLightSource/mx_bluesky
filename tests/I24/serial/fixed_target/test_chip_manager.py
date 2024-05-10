@@ -61,11 +61,11 @@ def test_moveto_chip_unknown(fake_pmac: MagicMock):
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
-def test_moveto_preset(fake_caput: MagicMock, fake_pmac: MagicMock):
-    moveto_preset("zero", fake_pmac)
+def test_moveto_preset(fake_caput: MagicMock, fake_pmac: MagicMock, RE):
+    RE(moveto_preset("zero", fake_pmac))
     fake_pmac.pmac_string.assert_has_calls([call.set("!x0y0z0"), call.set().wait()])
 
-    moveto_preset("load_position", fake_pmac)
+    RE(moveto_preset("load_position", fake_pmac))
     assert fake_caput.call_count == 3
 
 
@@ -83,8 +83,9 @@ def test_moveto_preset_with_pmac_move(
     expected_num_caput: int,
     expected_pmac_move: List,
     fake_pmac: MagicMock,
+    RE,
 ):
-    moveto_preset(pos_request, fake_pmac)
+    RE(moveto_preset(pos_request, fake_pmac))
     assert fake_caput.call_count == expected_num_caput
 
     fake_pmac.x.assert_has_calls([call.move(expected_pmac_move[0], wait=False)])
@@ -178,11 +179,12 @@ def test_cs_maker_raises_error_for_invalid_json(
     fake_dir: MagicMock,
     fake_caget: MagicMock,
     fake_pmac: MagicMock,
+    RE,
 ):
     fake_dir.return_value = (1, 1, 1)
     fake_fid.return_value = (0, 0, 0)
     with pytest.raises(json.JSONDecodeError):
-        cs_maker(fake_pmac)
+        RE(cs_maker(fake_pmac))
 
 
 @patch(
@@ -201,11 +203,12 @@ def test_cs_maker_raises_error_for_missing_key_in_json(
     fake_dir: MagicMock,
     fake_caget: MagicMock,
     fake_pmac: MagicMock,
+    RE,
 ):
     fake_dir.return_value = (1, 1, 1)
     fake_fid.return_value = (0, 0, 0)
     with pytest.raises(KeyError):
-        cs_maker(fake_pmac)
+        RE(cs_maker(fake_pmac))
 
 
 @patch(
@@ -224,11 +227,12 @@ def test_cs_maker_raises_error_for_wrong_direction_in_json(
     fake_dir: MagicMock,
     fake_caget: MagicMock,
     fake_pmac: MagicMock,
+    RE,
 ):
     fake_dir.return_value = (1, 1, 1)
     fake_fid.return_value = (0, 0, 0)
     with pytest.raises(ValueError):
-        cs_maker(fake_pmac)
+        RE(cs_maker(fake_pmac))
 
 
 @patch(

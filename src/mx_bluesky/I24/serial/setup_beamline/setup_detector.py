@@ -14,7 +14,7 @@ from dodal.beamlines import i24
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 
 from mx_bluesky.I24.serial import log
-from mx_bluesky.I24.serial.parameters.constants import SSXType
+from mx_bluesky.I24.serial.parameters import SSXType
 from mx_bluesky.I24.serial.setup_beamline import pv
 from mx_bluesky.I24.serial.setup_beamline.ca import caget
 from mx_bluesky.I24.serial.setup_beamline.pv_abstract import (
