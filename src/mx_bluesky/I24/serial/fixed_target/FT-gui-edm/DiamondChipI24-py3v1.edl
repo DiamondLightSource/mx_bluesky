@@ -323,7 +323,7 @@ font "helvetica-bold-r-24.0"
 buttonLabel "Start"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Collect_py3v1.py"
+  0 "blueapi controller run run_fixed_target_plan"
 }
 endObjectProperties
 
