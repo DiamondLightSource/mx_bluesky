@@ -4,7 +4,6 @@ This version in python3 new Feb2021 by RLO
     - March 21 added logging and Eiger functionality
 """
 
-import argparse
 import json
 import logging
 import re
@@ -18,7 +17,7 @@ from time import sleep
 from typing import Optional
 
 import bluesky.plan_stubs as bps
-from bluesky.run_engine import RunEngine
+from blueapi.core import MsgGenerator
 from dodal.beamlines import i24
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3, Zebra
 
@@ -65,7 +64,7 @@ def _coerce_to_path(path: Path | str) -> Path:
 
 
 @log.log_on_entry
-def initialise_extruderi24(args=None):
+def initialise_extruder() -> MsgGenerator:
     logger.info("Initialise Parameters for extruder data collection on I24.")
 
     visit = caget(pv.ioc12_gp1)
@@ -89,7 +88,7 @@ def initialise_extruderi24(args=None):
 
 
 @log.log_on_entry
-def laser_check(args, zebra: Optional[Zebra] = None):
+def laser_check(mode: str, zebra: Optional[Zebra] = None) -> MsgGenerator:
     """Plan to open the shutter and check the laser beam from the viewer by pressing \
         'Laser On' and 'Laser Off' buttons on the edm.
 
@@ -105,7 +104,6 @@ def laser_check(args, zebra: Optional[Zebra] = None):
     """
     if not zebra:
         zebra = i24.zebra()
-    mode = args.place
     logger.debug(f"Laser check: {mode}")
 
     det_type = get_detector_type()
@@ -121,7 +119,7 @@ def laser_check(args, zebra: Optional[Zebra] = None):
 
 
 @log.log_on_entry
-def enter_hutch(args=None):
+def enter_hutch() -> MsgGenerator:
     """Move the detector stage before entering hutch."""
     caput(pv.det_z, SAFE_DET_Z)
     logger.debug("Detector moved.")
@@ -173,7 +171,8 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH):
 
 
 @log.log_on_entry
-def run_extruderi24(args=None):
+def run_extruder() -> MsgGenerator:
+    # TODO have devices as input
     # Get dodal devices
     zebra = i24.zebra()
     start_time = datetime.now()
@@ -427,42 +426,5 @@ def run_extruderi24(args=None):
 
 
 if __name__ == "__main__":
+    # TODO figure out how to set setup_logging in the plans
     setup_logging()
-    RE = RunEngine()
-
-    parser = argparse.ArgumentParser(usage=usage, description=__doc__)
-    subparsers = parser.add_subparsers(
-        help="Choose command.",
-        required=True,
-        dest="sub-command",
-    )
-
-    parser_init = subparsers.add_parser(
-        "initialise",
-        description="Initialise extruder on beamline I24.",
-    )
-    parser_init.set_defaults(func=initialise_extruderi24)
-    parser_run = subparsers.add_parser(
-        "run",
-        description="Run extruder on I24.",
-    )
-    parser_run.set_defaults(func=run_extruderi24)
-    parser_mv = subparsers.add_parser(
-        "laser_check",
-        description="Move extruder to requested setting on I24.",
-    )
-    parser_mv.add_argument(
-        "place",
-        type=str,
-        choices=["laseron", "laseroff"],
-        help="Requested setting.",
-    )
-    parser_mv.set_defaults(func=laser_check)
-    parser_hutch = subparsers.add_parser(
-        "enterhutch",
-        description="Move the detector stage before entering hutch.",
-    )
-    parser_hutch.set_defaults(func=enter_hutch)
-
-    args = parser.parse_args()
-    RE(args.func(args))
