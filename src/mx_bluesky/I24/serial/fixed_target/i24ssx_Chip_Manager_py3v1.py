@@ -14,7 +14,9 @@ from pathlib import Path
 from pprint import pformat
 from time import sleep
 
+import bluesky.plan_stubs as bps
 import numpy as np
+from blueapi.core import MsgGenerator
 from dodal.beamlines import i24
 from dodal.devices.i24.pmac import PMAC
 
@@ -606,7 +608,7 @@ def moveto(place: str = "origin", pmac: PMAC = None):
 
 
 @log.log_on_entry
-def moveto_preset(place: str, pmac: PMAC = None):
+def moveto_preset(place: str, pmac: PMAC = None) -> MsgGenerator:
     if not PMAC:
         pmac = i24.pmac()
 
@@ -637,6 +639,7 @@ def moveto_preset(place: str, pmac: PMAC = None):
     elif place == "microdrop_position":
         logger.info("microdrop align position")
         move_xyz(6.0, -7.8, 0.0)
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -747,7 +750,7 @@ def scrape_mtr_fiducials(point: int, param_path: Path | str = CS_FILES_PATH):
 
 
 @log.log_on_entry
-def cs_maker(pmac: PMAC = None):
+def cs_maker(pmac: PMAC = None) -> MsgGenerator:
     """
     Coordinate system.
 
@@ -909,6 +912,7 @@ def cs_maker(pmac: PMAC = None):
     else:
         pmac.home_stages()
     logger.debug("CSmaker done.")
+    yield from bps.null()
 
 
 def cs_reset(pmac: PMAC = None):
@@ -1005,9 +1009,6 @@ def parse_args_and_run_parsed_function(args):
     )
     parser_moveto.add_argument("place", type=str)
     parser_moveto.set_defaults(func=moveto)
-    parser_preset = subparsers.add_parser("preset_pos")
-    parser_preset.add_argument("place", type=str)
-    parser_preset.set_defaults(func=moveto_preset)
     parser_laser = subparsers.add_parser("laser_control")
     parser_laser.add_argument("laser_setting", type=str)
     parser_laser.set_defaults(func=laser_control)

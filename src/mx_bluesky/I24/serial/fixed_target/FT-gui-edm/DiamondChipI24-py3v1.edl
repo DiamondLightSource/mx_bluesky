@@ -280,7 +280,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py preset_pos load_position"
+  0 "blueapi controller run moveto_preset '{"place": "load_position", "pmac": "pmac"}'"
 }
 endObjectProperties
 
@@ -301,7 +301,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py preset_pos collect_position"
+  0 "blueapi controller run moveto_preset '{"place": "collect_position", "pmac": "pmac"}'"
 }
 endObjectProperties
 
@@ -615,7 +615,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py cs_maker"
+  0 "blueapi controller run cs_maker '{"pmac": "pmac"}'"
 }
 endObjectProperties
 
@@ -1051,7 +1051,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py preset_pos zero"
+  0 "blueapi controller run moveto_preset '{"place": "zero", "pmac": "pmac"}'"
 }
 endObjectProperties
 
@@ -3897,7 +3897,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py preset_pos microdrop_position"
+  0 "blueapi controller run moveto_preset '{"place": "microdrop_position", "pmac": "pmac"}'"
 }
 endObjectProperties
 
