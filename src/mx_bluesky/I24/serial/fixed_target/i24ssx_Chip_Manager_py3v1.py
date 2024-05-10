@@ -51,7 +51,7 @@ def setup_logging():
 
 
 @log.log_on_entry
-def initialise():
+def initialise_stages() -> MsgGenerator:
     # commented out filter lines 230719 as this stage not connected
     logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
 
@@ -107,6 +107,7 @@ def initialise():
     caput(pv.me14e_gp101, det_type.name)
 
     logger.info("Initialisation Complete")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -1000,10 +1001,6 @@ def parse_args_and_run_parsed_function(args):
         required=True,
         dest="sub-command",
     )
-    parser_init = subparsers.add_parser(
-        "initialise",
-    )
-    parser_init.set_defaults(func=initialise)
     parser_moveto = subparsers.add_parser(
         "moveto",
     )
@@ -1015,8 +1012,6 @@ def parse_args_and_run_parsed_function(args):
     parser_fid = subparsers.add_parser("fiducial")
     parser_fid.add_argument("point", type=int)
     parser_fid.set_defaults(func=fiducial)
-    parser_csm = subparsers.add_parser("cs_maker")
-    parser_csm.set_defaults(func=cs_maker)
     parser_pp = subparsers.add_parser("pumpprobe_calc")
     parser_pp.set_defaults(func=pumpprobe_calc)
     parser_write = subparsers.add_parser("write_parameter_file")

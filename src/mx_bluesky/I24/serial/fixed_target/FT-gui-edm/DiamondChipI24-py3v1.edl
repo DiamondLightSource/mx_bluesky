@@ -1199,7 +1199,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py initialise"
+  0 "blueapi controller run initialise_stages"
 }
 endObjectProperties
 
