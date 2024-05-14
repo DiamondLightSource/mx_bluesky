@@ -8,6 +8,7 @@ from .fixed_target.i24ssx_Chip_Collect_py3v1 import run_fixed_target_plan
 from .fixed_target.i24ssx_Chip_Manager_py3v1 import (
     block_check,
     cs_maker,
+    cs_reset,
     fiducial,
     initialise_stages,
     moveto,
@@ -27,6 +28,7 @@ __all__ = [
     "moveto_preset",
     "block_check",
     "cs_maker",
+    "cs_reset",
     "fiducial",
     "initialise_stages",
     "write_parameter_file",

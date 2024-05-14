@@ -147,8 +147,8 @@ def test_scrape_mtr_fiducials():
     assert res == (0.0, 1.0, 0.0)
 
 
-def test_cs_reset(fake_pmac: MagicMock):
-    cs_reset(fake_pmac)
+def test_cs_reset(fake_pmac: MagicMock, RE):
+    RE(cs_reset(fake_pmac))
     fake_pmac.pmac_string.assert_has_calls(
         [
             call.set("&2"),

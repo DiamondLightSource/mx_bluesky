@@ -919,7 +919,7 @@ def cs_maker(pmac: PMAC = None) -> MsgGenerator:
     yield from bps.null()
 
 
-def cs_reset(pmac: PMAC = None):
+def cs_reset(pmac: PMAC = None) -> MsgGenerator:
     """Used to clear CS when using Custom Chip"""
     if not pmac:
         pmac = i24.pmac()
@@ -933,6 +933,7 @@ def cs_reset(pmac: PMAC = None):
     pmac.pmac_string.set(cs2).wait()
     pmac.pmac_string.set(cs3).wait()
     logger.debug("CSreset Done")
+    yield from bps.null()
 
 
 @log.log_on_entry

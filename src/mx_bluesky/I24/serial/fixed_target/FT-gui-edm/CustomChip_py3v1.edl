@@ -690,7 +690,7 @@ botShadowColor index 11
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py cs_reset"
+  0 "blueapi controller run cs_reset '{"pmac": "pmac"}'"
 }
 endObjectProperties
 
