@@ -9,10 +9,15 @@ from .fixed_target.i24ssx_Chip_Manager_py3v1 import (
     block_check,
     cs_maker,
     cs_reset,
+    define_current_chip,
     fiducial,
     initialise_stages,
+    load_lite_map,
+    load_stock_map,
     moveto,
     moveto_preset,
+    save_screen_map,
+    upload_parameters,
     write_parameter_file,
 )
 from .setup_beamline.setup_detector import setup_detector_stage
@@ -29,7 +34,12 @@ __all__ = [
     "block_check",
     "cs_maker",
     "cs_reset",
+    "define_current_chip",
     "fiducial",
     "initialise_stages",
+    "load_lite_map",
+    "load_stock_map",
+    "save_screen_map",
+    "upload_parameters",
     "write_parameter_file",
 ]

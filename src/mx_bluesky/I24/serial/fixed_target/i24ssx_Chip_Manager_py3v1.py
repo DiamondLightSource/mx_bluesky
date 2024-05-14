@@ -196,9 +196,9 @@ def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
 def define_current_chip(
     chipid: str = "oxford",
     param_path: Path | str = PVAR_FILE_PATH,
-):
+) -> MsgGenerator:
     logger.debug("Run load stock map for just the first block")
-    load_stock_map("Just The First Block")
+    yield from load_stock_map("Just The First Block")
     """
     Not sure what this is for:
     print 'Setting Mapping Type to Lite'
@@ -219,10 +219,11 @@ def define_current_chip(
             line_from_file = line.rstrip("\n")
             logger.info("%s" % line_from_file)
             caput(pv.me14e_pmac_str, line_from_file)
+    yield from bps.null()
 
 
 @log.log_on_entry
-def save_screen_map(litemap_path: Path | str = LITEMAP_PATH):
+def save_screen_map(litemap_path: Path | str = LITEMAP_PATH) -> MsgGenerator:
     litemap_path = _coerce_to_path(litemap_path)
     litemap_path.mkdir(parents=True, exist_ok=True)
 
@@ -236,14 +237,14 @@ def save_screen_map(litemap_path: Path | str = LITEMAP_PATH):
                 logger.info("%s %d" % (block_str, block_val))
             line = "%02dstatus    P3%02d1 \t%s\n" % (x, x, block_val)
             f.write(line)
-    return 0
+    yield from bps.null()
 
 
 @log.log_on_entry
 def upload_parameters(
     chipid: str = "oxford",
     litemap_path: Path | str = LITEMAP_PATH,
-):
+) -> MsgGenerator:
     logger.info("Uploading Parameters to the GeoBrick")
     if chipid == "oxford":
         caput(pv.me14e_gp1, 0)
@@ -275,6 +276,7 @@ def upload_parameters(
 
     logger.warning("Automatic Setting Mapping Type to Lite has been disabled")
     logger.debug("Upload parameters done.")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -297,7 +299,7 @@ def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
 
 
 @log.log_on_entry
-def load_stock_map(map_choice: str = "clear"):
+def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
     logger.info("Adjusting Lite Map EDM Screen")
     logger.debug("Please wait, adjusting lite map")
     #
@@ -494,12 +496,13 @@ def load_stock_map(map_choice: str = "clear"):
         pvar = "ME14E-MO-IOC-01:GP" + str(i + 10)
         caput(pvar, 1)
     logger.debug("Load stock map done.")
+    yield from bps.null()
 
 
 @log.log_on_entry
-def load_lite_map(litemap_path: Path | str = LITEMAP_PATH):
+def load_lite_map(litemap_path: Path | str = LITEMAP_PATH) -> MsgGenerator:
     logger.debug("Run load stock map with 'clear' setting.")
-    load_stock_map("clear")
+    yield from load_stock_map("clear")
     # fmt: off
     # Oxford_block_dict is wrong (columns and rows need to flip) added in script below to generate it automatically however kept this for backwards compatiability/reference
     oxford_block_dict = {   # noqa: F841
@@ -558,6 +561,7 @@ def load_lite_map(litemap_path: Path | str = LITEMAP_PATH):
         pvar = "ME14E-MO-IOC-01:GP" + str(int(block_num) + 10)
         logger.info("Block: %s \tScanned: %s \tPVAR: %s" % (block_name, yesno, pvar))
     logger.debug("Load lite map done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -1011,25 +1015,10 @@ def parse_args_and_run_parsed_function(args):
     parser_laser.set_defaults(func=laser_control)
     parser_pp = subparsers.add_parser("pumpprobe_calc")
     parser_pp.set_defaults(func=pumpprobe_calc)
-    parser_def = subparsers.add_parser("define_current_chip")
-    parser_def.add_argument("chipid", type=str)
-    parser_def.set_defaults(func=define_current_chip)
-    parser_stockmap = subparsers.add_parser("load_stock_map")
-    parser_stockmap.add_argument("map_choice", type=str)
-    parser_stockmap.set_defaults(func=load_stock_map)
-    parser_litemap = subparsers.add_parser("load_lite_map")
-    parser_litemap.set_defaults(func=load_lite_map)
     parser_fullmap = subparsers.add_parser("load_full_map")
     parser_fullmap.set_defaults(func=load_full_map)
-    parser_save = subparsers.add_parser("save_screen_map")
-    parser_save.set_defaults(func=save_screen_map)
     parser_upld = subparsers.add_parser("upload_full")
     parser_upld.set_defaults(func=upload_full)
-    parser_params = subparsers.add_parser("upload_parameters")
-    parser_params.add_argument("chipid", type=str)
-    parser_params.set_defaults(func=upload_parameters)
-    parser_csr = subparsers.add_parser("cs_reset")
-    parser_csr.set_defaults(func=cs_reset)
 
     args = parser.parse_args(args)
 
@@ -1040,5 +1029,7 @@ def parse_args_and_run_parsed_function(args):
 
 if __name__ == "__main__":
     setup_logging()
+    # TODO have this in each function
+    # Really tempted to make a wrapper ...
 
     parse_args_and_run_parsed_function(sys.argv[1:])

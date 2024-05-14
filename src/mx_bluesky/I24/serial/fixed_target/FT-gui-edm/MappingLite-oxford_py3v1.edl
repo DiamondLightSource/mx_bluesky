@@ -40,7 +40,7 @@ font "helvetica-medium-r-14.0"
 buttonLabel "Load Map File"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py load_lite_map"
+  0 "blueapi controller run load_lite_map"
 }
 endObjectProperties
 
@@ -197,7 +197,7 @@ font "arial-medium-r-18.0"
 buttonLabel "Save Screen Map"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py save_screen_map"
+  0 "blueapi controller run save_screen_map"
 }
 endObjectProperties
 
@@ -219,7 +219,7 @@ font "arial-medium-r-18.0"
 buttonLabel "Upload Parameters"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py upload_parameters oxford"
+  0 "blueapi controller run upload_parameters '{"chipid": "oxford"}'"
 }
 endObjectProperties
 
@@ -2168,7 +2168,7 @@ botShadowColor index 11
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py load_stock_map clear"
+  0 "blueapi controller run load_stock_map '{"map_choice": "clear"}'"
 }
 endObjectProperties
 
@@ -2189,7 +2189,7 @@ botShadowColor index 11
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py load_stock_map x88"
+  0 "blueapi controller run load_stock_map '{"map_choice": "x88"}'"
 }
 endObjectProperties
 
@@ -2276,7 +2276,7 @@ botShadowColor index 11
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py load_stock_map x66"
+  0 "blueapi controller run load_stock_map '{"map_choice": "x66"}'"
 }
 endObjectProperties
 
@@ -2334,7 +2334,7 @@ botShadowColor index 11
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py load_stock_map x44"
+  0 "blueapi controller run load_stock_map '{"map_choice": "x44"}'"
 }
 endObjectProperties
 
@@ -2410,7 +2410,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Define Chip In PMAC"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py define_current_chip oxford"
+  0 "blueapi controller run define_current_chip '{"chipid": "oxford"}'"
 }
 endObjectProperties
 
@@ -2566,7 +2566,7 @@ botShadowColor index 11
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py load_stock_map half1"
+  0 "blueapi controller run load_stock_map '{"map_choice": "half1"}'"
 }
 endObjectProperties
 
@@ -2645,7 +2645,7 @@ botShadowColor index 11
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py load_stock_map half2"
+  0 "blueapi controller run load_stock_map '{"map_choice": "half2"}'"
 }
 endObjectProperties
 

@@ -12,7 +12,6 @@ from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1 import (
     laser_control,
     moveto,
     moveto_preset,
-    parse_args_and_run_parsed_function,
     pumpprobe_calc,
     scrape_mtr_directions,
     scrape_mtr_fiducials,
@@ -233,17 +232,6 @@ def test_cs_maker_raises_error_for_wrong_direction_in_json(
     fake_fid.return_value = (0, 0, 0)
     with pytest.raises(ValueError):
         RE(cs_maker(fake_pmac))
-
-
-@patch(
-    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.define_current_chip",
-    autospec=True,
-)
-def test_arg_parser_runs_define_current_chip_function_as_expected(
-    mock_define_current_chip: MagicMock,
-):
-    parse_args_and_run_parsed_function(["define_current_chip", "chip_id"])
-    mock_define_current_chip.assert_called_once_with("chip_id")
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
