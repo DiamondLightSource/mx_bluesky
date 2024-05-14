@@ -2,6 +2,7 @@
 Move on click gui for fixed targets at I24
 Robin Owen 12 Jan 2021
 """
+
 import logging
 
 import cv2 as cv
@@ -127,6 +128,7 @@ def update_ui(oav, frame):
 
 
 def start_viewer(oav1: str = OAV1_CAM):
+    # TODO get devices as input arg
     # Get PMAC device
     print("Creating dodal devices")
     pmac = i24.pmac()

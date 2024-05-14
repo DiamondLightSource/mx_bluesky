@@ -578,7 +578,7 @@ def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
 
 
 @log.log_on_entry
-def moveto(place: str = "origin", pmac: PMAC = None):
+def moveto(place: str = "origin", pmac: PMAC = None) -> MsgGenerator:
     if not pmac:
         pmac = i24.pmac()
     logger.info(f"Move to: {place}")
@@ -607,6 +607,7 @@ def moveto(place: str = "origin", pmac: PMAC = None):
         move_xy(chip_move, 0.0)
     if place == Fiducials.fid2:
         move_xy(0.0, chip_move)
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -708,7 +709,7 @@ def scrape_mtr_directions(param_path: Path | str = CS_FILES_PATH):
 
 
 @log.log_on_entry
-def fiducial(point: int = 1, param_path: Path | str = CS_FILES_PATH):
+def fiducial(point: int = 1, param_path: Path | str = CS_FILES_PATH) -> MsgGenerator:
     scale = 10000.0  # noqa: F841
     param_path = _coerce_to_path(param_path)
 
@@ -738,6 +739,7 @@ def fiducial(point: int = 1, param_path: Path | str = CS_FILES_PATH):
         f.write("MTR2\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_2, raw_2, mtr2_dir, f_y))
         f.write("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
     logger.info(f"Fiducial {point} set.")
+    yield from bps.null()
 
 
 def scrape_mtr_fiducials(point: int, param_path: Path | str = CS_FILES_PATH):
@@ -1003,21 +1005,11 @@ def parse_args_and_run_parsed_function(args):
         required=True,
         dest="sub-command",
     )
-    parser_moveto = subparsers.add_parser(
-        "moveto",
-    )
-    parser_moveto.add_argument("place", type=str)
-    parser_moveto.set_defaults(func=moveto)
     parser_laser = subparsers.add_parser("laser_control")
     parser_laser.add_argument("laser_setting", type=str)
     parser_laser.set_defaults(func=laser_control)
-    parser_fid = subparsers.add_parser("fiducial")
-    parser_fid.add_argument("point", type=int)
-    parser_fid.set_defaults(func=fiducial)
     parser_pp = subparsers.add_parser("pumpprobe_calc")
     parser_pp.set_defaults(func=pumpprobe_calc)
-    parser_write = subparsers.add_parser("write_parameter_file")
-    parser_write.set_defaults(func=write_parameter_file)
     parser_def = subparsers.add_parser("define_current_chip")
     parser_def.add_argument("chipid", type=str)
     parser_def.set_defaults(func=define_current_chip)
@@ -1037,8 +1029,6 @@ def parse_args_and_run_parsed_function(args):
     parser_params.set_defaults(func=upload_parameters)
     parser_csr = subparsers.add_parser("cs_reset")
     parser_csr.set_defaults(func=cs_reset)
-    parser_block = subparsers.add_parser("block_check")
-    parser_block.set_defaults(func=block_check)
 
     args = parser.parse_args(args)
 

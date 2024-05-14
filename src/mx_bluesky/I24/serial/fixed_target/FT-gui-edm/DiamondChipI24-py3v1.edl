@@ -3019,7 +3019,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Set Fiducial 2"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py fiducial 2"
+  0 "blueapi controller run fiducial '{"point": "2"}'"
 }
 endObjectProperties
 
@@ -3041,7 +3041,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Goto Fiducial 2"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto f2"
+  0 "blueapi controller run moveto '{"place": "f2", "pmac": "pmac"}'"
 }
 endObjectProperties
 
@@ -3085,7 +3085,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Set Fiducial 1"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py fiducial 1"
+  0 "blueapi controller run fiducial '{"point": "1"}'"
 }
 endObjectProperties
 
@@ -3107,7 +3107,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Goto Fiducial 1"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto f1"
+  0 "blueapi controller run moveto '{"place": "f1", "pmac": "pmac"}'"
 }
 endObjectProperties
 
@@ -3855,7 +3855,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto zero"
+  0 "blueapi controller run moveto '{"place": "zero", "pmac": "pmac"}'"
 }
 endObjectProperties
 

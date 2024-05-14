@@ -38,25 +38,25 @@ def fake_pmac() -> MagicMock:
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_moveto_oxford_origin(fake_caget: MagicMock, fake_pmac: MagicMock):
+def test_moveto_oxford_origin(fake_caget: MagicMock, fake_pmac: MagicMock, RE):
     fake_caget.return_value = 0
-    moveto(Fiducials.origin, fake_pmac)
+    RE(moveto(Fiducials.origin, fake_pmac))
     assert fake_caget.call_count == 1
     fake_pmac.x.assert_has_calls([call.move(0.0, wait=False)])
     fake_pmac.y.assert_has_calls([call.move(0.0, wait=False)])
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_moveto_oxford_inner_f1(fake_caget: MagicMock, fake_pmac: MagicMock):
+def test_moveto_oxford_inner_f1(fake_caget: MagicMock, fake_pmac: MagicMock, RE):
     fake_caget.return_value = 1
-    moveto(Fiducials.fid1, fake_pmac)
+    RE(moveto(Fiducials.fid1, fake_pmac))
     assert fake_caget.call_count == 1
     fake_pmac.x.assert_has_calls([call.move(24.60, wait=False)])
     fake_pmac.y.assert_has_calls([call.move(0.0, wait=False)])
 
 
-def test_moveto_chip_unknown(fake_pmac: MagicMock):
-    moveto("zero", fake_pmac)
+def test_moveto_chip_unknown(fake_pmac: MagicMock, RE):
+    RE(moveto("zero", fake_pmac))
     fake_pmac.pmac_string.assert_has_calls([call.set("!x0y0z0"), call.set().wait()])
 
 
@@ -233,15 +233,6 @@ def test_cs_maker_raises_error_for_wrong_direction_in_json(
     fake_fid.return_value = (0, 0, 0)
     with pytest.raises(ValueError):
         RE(cs_maker(fake_pmac))
-
-
-@patch(
-    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.fiducial",
-    autospec=True,
-)
-def test_arg_parser_runs_fiducial_function_as_expected(mock_fiducial: MagicMock):
-    parse_args_and_run_parsed_function(["fiducial", "2"])
-    mock_fiducial.assert_called_once_with(2)
 
 
 @patch(
