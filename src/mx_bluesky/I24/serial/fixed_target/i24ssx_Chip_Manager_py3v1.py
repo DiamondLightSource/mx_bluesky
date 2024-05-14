@@ -650,7 +650,7 @@ def moveto_preset(place: str, pmac: PMAC = None) -> MsgGenerator:
 
 
 @log.log_on_entry
-def laser_control(laser_setting: str, pmac: PMAC = None):
+def laser_control(laser_setting: str, pmac: PMAC = None) -> MsgGenerator:
     logger.info("Move to: %s" % laser_setting)
     if not pmac:
         pmac = i24.pmac()
@@ -690,6 +690,7 @@ def laser_control(laser_setting: str, pmac: PMAC = None):
         sleep(int(float(led_burn_time)))
         logger.info("Laser 2 off")
         pmac.pmac_string.set(" M812=0 M811=1").wait()
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -941,7 +942,8 @@ def cs_reset(pmac: PMAC = None) -> MsgGenerator:
 
 
 @log.log_on_entry
-def pumpprobe_calc():
+def pumpprobe_calc() -> MsgGenerator:
+    # TODO Maybe - grab from params ?
     logger.info("Calculate and show exposure and dwell time for each option.")
     exptime = float(caget(pv.me14e_exptime))
     pumpexptime = float(caget(pv.me14e_gp103))
@@ -965,6 +967,7 @@ def pumpprobe_calc():
         logger.info("Repeat (%s): %s s" % (pv_name, rounded))
     # logger.info("repeat10 (%s): %s s" % (pv.me14e_gp108, round(repeat10, 4)))
     logger.debug("PP calculations done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -1010,11 +1013,6 @@ def parse_args_and_run_parsed_function(args):
         required=True,
         dest="sub-command",
     )
-    parser_laser = subparsers.add_parser("laser_control")
-    parser_laser.add_argument("laser_setting", type=str)
-    parser_laser.set_defaults(func=laser_control)
-    parser_pp = subparsers.add_parser("pumpprobe_calc")
-    parser_pp.set_defaults(func=pumpprobe_calc)
     parser_fullmap = subparsers.add_parser("load_full_map")
     parser_fullmap.set_defaults(func=load_full_map)
     parser_upld = subparsers.add_parser("upload_full")

@@ -102,9 +102,9 @@ def test_moveto_preset_with_pmac_move(
     ],
 )
 def test_laser_control_on_and_off(
-    laser_setting: str, expected_pmac_string: str, fake_pmac: MagicMock
+    laser_setting: str, expected_pmac_string: str, fake_pmac: MagicMock, RE
 ):
-    laser_control(laser_setting, fake_pmac)
+    RE(laser_control(laser_setting, fake_pmac))
 
     fake_pmac.pmac_string.assert_has_calls(
         [call.set(expected_pmac_string), call.set().wait()]
@@ -112,9 +112,9 @@ def test_laser_control_on_and_off(
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_laser_control_burn_setting(fake_caget: MagicMock, fake_pmac: MagicMock):
+def test_laser_control_burn_setting(fake_caget: MagicMock, fake_pmac: MagicMock, RE):
     fake_caget.return_value = 0.1
-    laser_control("laser1burn", fake_pmac)
+    RE(laser_control("laser1burn", fake_pmac))
 
     fake_pmac.pmac_string.assert_has_calls(
         [
@@ -236,9 +236,9 @@ def test_cs_maker_raises_error_for_wrong_direction_in_json(
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_pumpprobe_calc(fake_caget: MagicMock, fake_caput: MagicMock):
+def test_pumpprobe_calc(fake_caget: MagicMock, fake_caput: MagicMock, RE):
     fake_caget.side_effect = [0.01, 0.005]
-    pumpprobe_calc()
+    RE(pumpprobe_calc())
     assert fake_caget.call_count == 2
     assert fake_caput.call_count == 5
     fake_caput.assert_has_calls(
