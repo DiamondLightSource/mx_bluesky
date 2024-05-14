@@ -111,7 +111,7 @@ def initialise_stages() -> MsgGenerator:
 
 
 @log.log_on_entry
-def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
+def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT) -> MsgGenerator:
     param_path = _coerce_to_path(param_path)
     param_path.mkdir(parents=True, exist_ok=True)
 
@@ -164,6 +164,7 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
         # that are only needed when full mapping is in use.
         logger.info("Full mapping in use. Running start up now.")
         startup.run()
+    yield from bps.null()
 
 
 def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
@@ -960,7 +961,7 @@ def pumpprobe_calc():
 
 
 @log.log_on_entry
-def block_check():
+def block_check() -> MsgGenerator:
     caput(pv.me14e_gp9, 0)
     while True:
         if int(caget(pv.me14e_gp9)) == 0:
@@ -991,6 +992,7 @@ def block_check():
             break
         break
     logger.debug("Block check done")
+    yield from bps.null()
 
 
 def parse_args_and_run_parsed_function(args):

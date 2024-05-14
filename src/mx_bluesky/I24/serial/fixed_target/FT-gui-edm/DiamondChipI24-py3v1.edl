@@ -1467,7 +1467,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py write_parameter_file"
+  0 "blueapi controller run write_parameter_file"
 }
 endObjectProperties
 
@@ -1645,7 +1645,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py block_check "
+  0 "blueapi controller run block_check"
 }
 endObjectProperties
 
