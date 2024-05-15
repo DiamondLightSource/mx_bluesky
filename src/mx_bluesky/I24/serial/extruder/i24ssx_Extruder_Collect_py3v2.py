@@ -65,6 +65,7 @@ def _coerce_to_path(path: Path | str) -> Path:
 
 @log.log_on_entry
 def initialise_extruder() -> MsgGenerator:
+    setup_logging()
     logger.info("Initialise Parameters for extruder data collection on I24.")
 
     visit = caget(pv.ioc12_gp1)
@@ -102,6 +103,7 @@ def laser_check(mode: str, zebra: Optional[Zebra] = None) -> MsgGenerator:
     detector in use is the Eiger, the Pilatus cable is repurposed to trigger the light \
     source, and viceversa.
     """
+    setup_logging()
     if not zebra:
         zebra = i24.zebra()
     logger.debug(f"Laser check: {mode}")
@@ -121,6 +123,7 @@ def laser_check(mode: str, zebra: Optional[Zebra] = None) -> MsgGenerator:
 @log.log_on_entry
 def enter_hutch() -> MsgGenerator:
     """Move the detector stage before entering hutch."""
+    setup_logging()
     caput(pv.det_z, SAFE_DET_Z)
     logger.debug("Detector moved.")
     yield from bps.null()
@@ -172,6 +175,7 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH):
 
 @log.log_on_entry
 def run_extruder_plan(zebra: Zebra) -> MsgGenerator:
+    setup_logging()
     start_time = datetime.now()
     logger.info("Collection start time: %s" % start_time.ctime())
 
@@ -420,8 +424,3 @@ def run_extruder_plan(zebra: Zebra) -> MsgGenerator:
     # Copy parameter file
     shutil.copy2(PARAM_FILE_PATH / PARAM_FILE_NAME, Path(filepath) / PARAM_FILE_NAME)
     return 1
-
-
-if __name__ == "__main__":
-    # TODO figure out how to set setup_logging in the plans
-    setup_logging()

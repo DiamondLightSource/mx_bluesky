@@ -166,7 +166,6 @@ def test_run_extruder_pump_probe_with_pilatus(
     dummy_params_pp,
 ):
     mock_params.from_file.return_value = dummy_params_pp
-    # fake_i24.zebra.return_value = MagicMock()
     fake_det.return_value = Pilatus()
     RE(run_extruder_plan(zebra))
     assert fake_dcid.call_count == 1

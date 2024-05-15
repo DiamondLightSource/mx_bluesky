@@ -88,7 +88,6 @@ def test_load_motion_program_data(
     test_dict = {"N_EXPOSURES": [0, 1]}
     fake_caget.return_value = checker
     fake_pmac = MagicMock()
-    # fake_pmac.pmac_string = MagicMock()
     load_motion_program_data(fake_pmac, test_dict, map_type, pump_repeat)
     call_list = []
     for i in expected_calls:
