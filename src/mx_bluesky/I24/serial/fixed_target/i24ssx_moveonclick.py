@@ -7,6 +7,7 @@ import logging
 
 import bluesky.plan_stubs as bps
 import cv2 as cv
+from blueapi.core import MsgGenerator
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.oav.oav_detector import OAV
 
@@ -128,7 +129,7 @@ def update_ui(oav, frame):
     cv.imshow("OAV1view", frame)
 
 
-def start_viewer(oav: OAV, pmac: PMAC, oav1: str = OAV1_CAM):
+def start_viewer(oav: OAV, pmac: PMAC, oav1: str = OAV1_CAM) -> MsgGenerator:
     # Create a video caputure from OAV1
     cap = cv.VideoCapture(oav1)
 
