@@ -122,7 +122,7 @@ def test_run_extruder_quickshot_with_eiger(
 ):
     mock_params.from_file.return_value = dummy_params
     fake_det.return_value = Eiger()
-    RE(run_extruder_plan())
+    RE(run_extruder_plan(zebra))
     assert fake_nexgen.call_count == 1
     assert fake_dcid.call_count == 1
     # Check temporary piilatus hack is in there
@@ -168,7 +168,7 @@ def test_run_extruder_pump_probe_with_pilatus(
     mock_params.from_file.return_value = dummy_params_pp
     # fake_i24.zebra.return_value = MagicMock()
     fake_det.return_value = Pilatus()
-    RE(run_extruder_plan())
+    RE(run_extruder_plan(zebra))
     assert fake_dcid.call_count == 1
     mock_pp_plan.assert_called_once()
     mock_reset_zebra_plan.assert_called_once()

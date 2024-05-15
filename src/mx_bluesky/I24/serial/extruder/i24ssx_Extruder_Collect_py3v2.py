@@ -171,10 +171,7 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH):
 
 
 @log.log_on_entry
-def run_extruder_plan() -> MsgGenerator:
-    # TODO have devices as input
-    # Get dodal devices
-    zebra = i24.zebra()
+def run_extruder_plan(zebra: Zebra) -> MsgGenerator:
     start_time = datetime.now()
     logger.info("Collection start time: %s" % start_time.ctime())
 
