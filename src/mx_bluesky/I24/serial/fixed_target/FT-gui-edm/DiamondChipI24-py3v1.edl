@@ -3834,7 +3834,7 @@ font "arial-bold-r-14.0"
 buttonLabel "Move on Click"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_moveonclick.py"
+  0 "blueapi controller run start_viewer '{"oav": "oav", "pmac": "pmac"}'"
 }
 endObjectProperties
 
