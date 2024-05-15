@@ -51,7 +51,10 @@ def dummy_params_pp():
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.get_detector_type")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.logger")
-def test_initialise_extruder(fake_log, fake_det, fake_caput, fake_caget, RE):
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_looging")
+def test_initialise_extruder(
+    fake_log_setup, fake_log, fake_det, fake_caput, fake_caget, RE
+):
     fake_caget.return_value = "/path/to/visit"
     fake_det.return_value = Eiger()
     RE(initialise_extruder())
@@ -60,7 +63,8 @@ def test_initialise_extruder(fake_log, fake_det, fake_caput, fake_caget, RE):
 
 
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
-def test_enterhutch(fake_caput, RE):
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_looging")
+def test_enterhutch(fake_log_setup, fake_caput, RE):
     RE(enter_hutch())
     assert fake_caput.call_count == 1
     fake_caput.assert_has_calls([call(ANY, 1480)])
@@ -76,8 +80,16 @@ def test_enterhutch(fake_caput, RE):
     ],
 )
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.get_detector_type")
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_looging")
 async def test_laser_check(
-    fake_det, laser_mode, expected_in1, expected_out, det_type, zebra, RE
+    fake_log_setup,
+    fake_det,
+    laser_mode,
+    expected_in1,
+    expected_out,
+    det_type,
+    zebra,
+    RE,
 ):
     fake_det.return_value = det_type
     RE(laser_check(laser_mode, zebra))
@@ -104,7 +116,9 @@ async def test_laser_check(
 @patch(
     "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.ExtruderParameters"
 )
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_looging")
 def test_run_extruder_quickshot_with_eiger(
+    fake_log_setup,
     mock_params,
     mock_quickshot_plan,
     fake_det,
@@ -149,7 +163,9 @@ def test_run_extruder_quickshot_with_eiger(
 @patch(
     "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.ExtruderParameters"
 )
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_looging")
 def test_run_extruder_pump_probe_with_pilatus(
+    fake_log_setup,
     mock_params,
     mock_reset_zebra_plan,
     mock_pp_plan,
