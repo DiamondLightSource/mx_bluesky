@@ -943,7 +943,6 @@ def cs_reset(pmac: PMAC = None) -> MsgGenerator:
 
 @log.log_on_entry
 def pumpprobe_calc() -> MsgGenerator:
-    # TODO Maybe - grab from params ?
     logger.info("Calculate and show exposure and dwell time for each option.")
     exptime = float(caget(pv.me14e_exptime))
     pumpexptime = float(caget(pv.me14e_gp103))

@@ -14,7 +14,6 @@ from typing import Dict, List
 
 import numpy as np
 from blueapi.core import MsgGenerator
-from dodal.beamlines import i24
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 
@@ -536,12 +535,8 @@ def finish_i24(
     return end_time
 
 
-def run_fixed_target_plan() -> MsgGenerator:
+def run_fixed_target_plan(zebra: Zebra, pmac: PMAC) -> MsgGenerator:
     setup_logging()
-    # TODO add devices as input
-    # Dodal devices
-    pmac = i24.pmac()
-    zebra = i24.zebra()
     # ABORT BUTTON
     logger.info("Running a chip collection on I24")
     caput(pv.me14e_gp9, 0)
