@@ -1,10 +1,43 @@
 import logging
 from time import sleep
 
+import bluesky.plan_stubs as bps
+from dodal.devices.i24.aperture import Aperture, ApPosition
+from dodal.devices.i24.beamstop import Beamstop, BSPositions
+from dodal.devices.i24.dual_backlight import DualBacklight
+from dodal.devices.i24.I24_detector_motion import DetectorMotion
+
 from mx_bluesky.I24.serial.setup_beamline import pv
 from mx_bluesky.I24.serial.setup_beamline.ca import caget, caput
 
 logger = logging.getLogger("I24ssx.sup")
+
+
+def setup_beamline_for_collection_plan(
+    aperture: Aperture,
+    backlight: DualBacklight,
+    beamstop: Beamstop,
+    group: str = "setup_beamline_collect",
+    wait: bool = True,
+):
+    logger.debug("Setup beamline: collect.")
+    yield from bps.abs_set(aperture.pos.pos_select, ApPosition.IN, group=group)
+    yield from bps.abs_set(backlight.pos1.pos_level, "Out", group=group)
+    yield from bps.abs_set(beamstop.pos_select, BSPositions.DATACOLLECTION)
+    yield from bps.abs_set(beamstop.roty, 0, group=group)
+
+    if wait:
+        yield from bps.wait(group=group)
+
+
+def setup_beamline_for_quickshot_plan(
+    detector_stage: DetectorMotion,
+    detector_distance: float,
+    wait: bool = True,
+):
+    logger.debug("Setup beamline: quickshot.")
+    logger.debug(f"Waiting for detector move. Detector distance: {detector_distance}")
+    yield from bps.abs_set(detector_stage.z, detector_distance, wait=wait)
 
 
 def modechange(action):
