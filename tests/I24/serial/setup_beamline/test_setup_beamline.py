@@ -5,6 +5,21 @@ import pytest
 from mx_bluesky.I24.serial.setup_beamline import setup_beamline
 
 
+async def test_setup_beamline_for_collection_plan(aperture, backlight, beamstop, RE):
+    RE(setup_beamline.setup_beamline_for_collection_plan(aperture, backlight, beamstop))
+
+    assert await aperture.pos.pos_select.get_value() == "In"
+    assert await beamstop.pos_select.get_value() == "Data Collection"
+    # assert await beamstop.roty.user_readback.get() == 0 # Ah nope
+
+
+def test_setup_beamline_for_quickshot_plan(detector_stage, RE):
+    det_dist = 100
+    RE(setup_beamline.setup_beamline_for_quickshot_plan(detector_stage, det_dist))
+
+    assert detector_stage.z.user_readback.get() == det_dist
+
+
 @patch("mx_bluesky.I24.serial.setup_beamline.setup_beamline.caput")
 def test_beamline_collect(fake_caput):
     setup_beamline.beamline("collect")
