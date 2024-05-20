@@ -324,13 +324,26 @@ def datasetsizei24(n_exposures: int, chip_type: ChipType, map_type: MappingType)
 @log.log_on_entry
 def start_i24(zebra: Zebra, parameters: FixedTargetParameters):
     """Returns a tuple of (start_time, dcid)"""
+    # Get other dodal devices
+    # TODO these should probably got somewhere else
+    aperture = i24.aperture()
+    backlight = i24.backlight()
+    beamstop = i24.beamstop()
+    detector_stage = i24.detector_motion()
+
     logger.info("Start I24 data collection.")
     start_time = datetime.now()
     logger.info("Collection start time %s" % start_time.ctime())
 
     logger.debug("Set up beamline")
-    sup.beamline("collect")
-    sup.beamline("quickshot", [parameters.detector_distance_mm])
+    yield from sup.setup_beamline_for_collection_plan(
+        aperture, backlight, beamstop, wait=True
+    )
+
+    yield from sup.setup_beamline_for_quickshot_plan(
+        detector_stage, parameters.detector_distance_mm, wait=True
+    )
+
     logger.debug("Set up beamline DONE")
 
     total_numb_imgs = datasetsizei24(

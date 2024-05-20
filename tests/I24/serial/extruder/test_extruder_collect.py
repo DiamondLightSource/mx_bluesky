@@ -132,6 +132,10 @@ def test_run_extruder_quickshot_with_eiger(
     fake_write_params,
     RE,
     zebra,
+    aperture,
+    backlight,
+    beamstop,
+    detector_stage,
     dummy_params,
 ):
     mock_params.from_file.return_value = dummy_params
@@ -139,6 +143,7 @@ def test_run_extruder_quickshot_with_eiger(
     RE(run_extruderi24())
     assert fake_nexgen.call_count == 1
     assert fake_dcid.call_count == 1
+    assert fake_sup.setup_beamline_for_collection_plan.call_count == 1
     # Check temporary piilatus hack is in there
     assert fake_sup.pilatus.call_count == 2
     mock_quickshot_plan.assert_called_once()
@@ -177,6 +182,10 @@ def test_run_extruder_pump_probe_with_pilatus(
     fake_write_params,
     RE,
     zebra,
+    aperture,
+    backlight,
+    beamstop,
+    detector_stage,
     dummy_params_pp,
 ):
     mock_params.from_file.return_value = dummy_params_pp
@@ -184,5 +193,6 @@ def test_run_extruder_pump_probe_with_pilatus(
     fake_det.return_value = Pilatus()
     RE(run_extruderi24())
     assert fake_dcid.call_count == 1
+    assert fake_sup.setup_beamline_for_quickshot_plan.call_count == 1
     mock_pp_plan.assert_called_once()
     mock_reset_zebra_plan.assert_called_once()

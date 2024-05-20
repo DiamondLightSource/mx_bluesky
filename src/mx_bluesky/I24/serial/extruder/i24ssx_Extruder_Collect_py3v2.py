@@ -176,6 +176,11 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH):
 def run_extruderi24(args=None):
     # Get dodal devices
     zebra = i24.zebra()
+    aperture = i24.aperture()
+    backlight = i24.backlight()
+    beamstop = i24.beamstop()
+    detector_stage = i24.detector_motion()
+
     start_time = datetime.now()
     logger.info("Collection start time: %s" % start_time.ctime())
 
@@ -190,8 +195,13 @@ def run_extruderi24(args=None):
     logger.debug("Open hutch shutter sleep for 2sec")
     sleep(2.0)
 
-    sup.beamline("collect")
-    sup.beamline("quickshot", [parameters.detector_distance_mm])
+    yield from sup.setup_beamline_for_collection_plan(
+        aperture, backlight, beamstop, wait=True
+    )
+
+    yield from sup.setup_beamline_for_quickshot_plan(
+        detector_stage, parameters.detector_distance_mm, wait=True
+    )
 
     # Set the abort PV to zero
     caput(pv.ioc12_gp8, 0)

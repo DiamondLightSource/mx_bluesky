@@ -108,12 +108,17 @@ def test_start_i24_with_eiger(
     fake_size,
     zebra: Zebra,
     RE,
+    aperture,
+    backlight,
+    beamstop,
+    detector_stage,
     dummy_params_without_pp,
 ):
     fake_size.return_value = 800
     RE(start_i24(zebra, dummy_params_without_pp))
-    assert fake_sup.beamline.call_count == 2
     assert fake_sup.eiger.call_count == 1
+    assert fake_sup.setup_beamline_for_collection_plan.call_count == 1
+    assert fake_sup.setup_beamline_for_quickshot_plan.call_count == 1
     # Pilatus gets called for hack to create directory
     assert fake_sup.pilatus.call_count == 2
     assert fake_dcid.call_count == 1

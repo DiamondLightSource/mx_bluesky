@@ -23,8 +23,10 @@ def setup_beamline_for_collection_plan(
     logger.debug("Setup beamline: collect.")
     yield from bps.abs_set(aperture.pos.pos_select, ApPosition.IN, group=group)
     yield from bps.abs_set(backlight.pos1.pos_level, "Out", group=group)
+    yield from bps.sleep(3)  # Not sure needed - to test
     yield from bps.abs_set(beamstop.pos_select, BSPositions.DATACOLLECTION)
     yield from bps.abs_set(beamstop.roty, 0, group=group)
+    yield from bps.sleep(4)  # Not sure needed - to test
 
     if wait:
         yield from bps.wait(group=group)
@@ -36,8 +38,11 @@ def setup_beamline_for_quickshot_plan(
     wait: bool = True,
 ):
     logger.debug("Setup beamline: quickshot.")
-    logger.debug(f"Waiting for detector move. Detector distance: {detector_distance}")
+    logger.debug(
+        f"Waiting for detector move. Detector distance: {detector_distance} mm."
+    )
     yield from bps.abs_set(detector_stage.z, detector_distance, wait=wait)
+    yield from bps.sleep(0.1)
 
 
 def modechange(action):
@@ -216,38 +221,6 @@ def modechange(action):
         logger.debug("Switch To Pin Done")
     else:
         logger.debug("Unknown action: %s" % action)
-    return 1
-
-
-def beamline(action, args_list=None):
-    logger.debug("***** Entering Beamline")
-    logger.info("Setup beamline - %s" % action)
-    if args_list:
-        for arg in args_list:
-            logger.debug("Argument: %s" % arg)
-
-    if action == "collect":
-        caput(pv.aptr1_mp_select, "In")
-        caput(pv.bl_mp_select, "Out")
-        sleep(3)
-        caput(pv.bs_mp_select, "Data Collection")
-        caput(pv.bs_roty, 0)
-        sleep(4)
-
-    elif action == "quickshot":
-        det_dist = args_list[0]
-        caput(pv.det_z, det_dist)
-        logger.info("Waiting on detector")
-        logger.debug("Detector distance: %s" % det_dist)
-        logger.debug("det_z: %s" % caget(pv.det_z + ".RBV"))
-        while str(int(float(caget(pv.det_z + ".RBV")))) != str(int(float(det_dist))):
-            caput(pv.det_z, det_dist)
-            sleep(0.2)
-
-    else:
-        logger.warning("Unknown action for beamline method", action)
-    sleep(0.1)
-    logger.debug("***** leaving beamline\n")
     return 1
 
 
