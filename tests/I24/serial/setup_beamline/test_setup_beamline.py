@@ -10,7 +10,9 @@ async def test_setup_beamline_for_collection_plan(aperture, backlight, beamstop,
 
     assert await aperture.pos.pos_select.get_value() == "In"
     assert await beamstop.pos_select.get_value() == "Data Collection"
-    # assert await beamstop.roty.user_readback.get() == 0 # Ah nope
+    assert await beamstop.roty.user_readback.get_value() == 0
+
+    assert backlight.pos1.pos_level.get() == "Out"
 
 
 def test_setup_beamline_for_quickshot_plan(detector_stage, RE):

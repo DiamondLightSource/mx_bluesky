@@ -62,8 +62,16 @@ def backlight() -> DualBacklight:
 def beamstop() -> Beamstop:
     RunEngine()
     beamstop = i24.beamstop(fake_with_ophyd_sim=True)
-    # TODO add mock motor bit
-    return beamstop
+
+    async def mock_set(motor, val):
+        await motor._backend.put(val)
+
+    def patch_motor(motor):
+        return patch.object(motor, "set", partial(mock_set, motor))
+
+    with patch_motor(beamstop.roty):
+        return beamstop
+    # return beamstop
 
 
 @pytest.fixture
