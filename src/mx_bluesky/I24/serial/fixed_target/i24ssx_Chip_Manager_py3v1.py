@@ -14,6 +14,7 @@ from pathlib import Path
 from pprint import pformat
 from time import sleep
 
+import bluesky.plan_stubs as bps
 import numpy as np
 from dodal.beamlines import i24
 from dodal.devices.i24.pmac import PMAC
@@ -580,7 +581,7 @@ def moveto(place: str = "origin", pmac: PMAC = None):
     logger.info(f"Move to: {place}")
     if place == Fiducials.zero:
         logger.info("Chip aspecific move.")
-        pmac.pmac_string.set("!x0y0z0").wait()
+        yield from bps.abs_set(pmac.pmac_string, "!x0y0z0", wait=True)
         return
 
     chip_type = int(caget(pv.me14e_gp1))
@@ -592,17 +593,12 @@ def moveto(place: str = "origin", pmac: PMAC = None):
     logger.info(f"{str(ChipType(chip_type))} Move")
     chip_move = ChipType(chip_type).get_approx_chip_size()
 
-    def move_xy(x, y):
-        move_status = pmac.x.move(x, wait=False)
-        move_status &= pmac.y.move(y, wait=False)
-        move_status.wait()
-
     if place == Fiducials.origin:
-        move_xy(0.0, 0.0)
+        yield from bps.abs_set(pmac.stages, (0.0, 0.0), wait=True)
     if place == Fiducials.fid1:
-        move_xy(chip_move, 0.0)
+        yield from bps.abs_set(pmac.stages, (chip_move, 0.0), wait=True)
     if place == Fiducials.fid2:
-        move_xy(0.0, chip_move)
+        yield from bps.abs_set(pmac.stages, (0.0, chip_move), wait=True)
 
 
 @log.log_on_entry
@@ -610,16 +606,10 @@ def moveto_preset(place: str, pmac: PMAC = None):
     if not PMAC:
         pmac = i24.pmac()
 
-    def move_xyz(x, y, z):
-        move_status = pmac.x.move(x, wait=False)
-        move_status &= pmac.y.move(y, wait=False)
-        move_status &= pmac.z.move(z, wait=False)
-        move_status.wait()
-
     # Non Chip Specific Move
     if place == "zero":
         logger.info("Moving to %s" % place)
-        pmac.pmac_string.set("!x0y0z0").wait()
+        yield from bps.abs_set(pmac.pmac_string, "!x0y0z0", wait=True)
 
     elif place == "load_position":
         logger.info("load position")
@@ -630,13 +620,13 @@ def moveto_preset(place: str, pmac: PMAC = None):
     elif place == "collect_position":
         logger.info("collect position")
         caput(pv.me14e_filter, 20)
-        move_xyz(0.0, 0.0, 0.0)
+        yield from bps.abs_set(pmac.stages, (0.0, 0.0, 0.0), wait=True)
         caput(pv.bs_mp_select, "Data Collection")
         caput(pv.bl_mp_select, "In")
 
     elif place == "microdrop_position":
         logger.info("microdrop align position")
-        move_xyz(6.0, -7.8, 0.0)
+        yield from bps.abs_set(pmac.stages, (6.0, -7.8, 0.0), wait=True)
 
 
 @log.log_on_entry

@@ -38,34 +38,34 @@ def fake_pmac() -> MagicMock:
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_moveto_oxford_origin(fake_caget: MagicMock, fake_pmac: MagicMock):
+async def test_moveto_oxford_origin(fake_caget: MagicMock, pmac: PMAC, RE):
     fake_caget.return_value = 0
-    moveto(Fiducials.origin, fake_pmac)
+    RE(moveto(Fiducials.origin, pmac))
     assert fake_caget.call_count == 1
-    fake_pmac.x.assert_has_calls([call.move(0.0, wait=False)])
-    fake_pmac.y.assert_has_calls([call.move(0.0, wait=False)])
+    assert await pmac.stages.x.user_readback.get_value() == 0.0
+    assert await pmac.stages.y.user_readback.get_value() == 0.0
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_moveto_oxford_inner_f1(fake_caget: MagicMock, fake_pmac: MagicMock):
+async def test_moveto_oxford_inner_f1(fake_caget: MagicMock, pmac: PMAC, RE):
     fake_caget.return_value = 1
-    moveto(Fiducials.fid1, fake_pmac)
+    RE(moveto(Fiducials.fid1, pmac))
     assert fake_caget.call_count == 1
-    fake_pmac.x.assert_has_calls([call.move(24.60, wait=False)])
-    fake_pmac.y.assert_has_calls([call.move(0.0, wait=False)])
+    assert await pmac.stages.x.user_readback.get_value() == 24.60
+    assert await pmac.stages.y.user_readback.get_value() == 0.0
 
 
-def test_moveto_chip_unknown(fake_pmac: MagicMock):
-    moveto("zero", fake_pmac)
-    fake_pmac.pmac_string.assert_has_calls([call.set("!x0y0z0"), call.set().wait()])
+async def test_moveto_chip_aspecific(pmac: PMAC, RE):
+    RE(moveto("zero", pmac))
+    assert await pmac.pmac_string.get_value() == "!x0y0z0"
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
-def test_moveto_preset(fake_caput: MagicMock, fake_pmac: MagicMock):
-    moveto_preset("zero", fake_pmac)
-    fake_pmac.pmac_string.assert_has_calls([call.set("!x0y0z0"), call.set().wait()])
+async def test_moveto_preset(fake_caput: MagicMock, pmac: PMAC, RE):
+    RE(moveto_preset("zero", pmac))
+    assert await pmac.pmac_string.get_value() == "!x0y0z0"
 
-    moveto_preset("load_position", fake_pmac)
+    RE(moveto_preset("load_position", pmac))
     assert fake_caput.call_count == 3
 
 
@@ -77,19 +77,20 @@ def test_moveto_preset(fake_caput: MagicMock, fake_pmac: MagicMock):
     ],
 )
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
-def test_moveto_preset_with_pmac_move(
+async def test_moveto_preset_with_pmac_move(
     fake_caput: MagicMock,
     pos_request: str,
     expected_num_caput: int,
     expected_pmac_move: List,
-    fake_pmac: MagicMock,
+    pmac: PMAC,
+    RE,
 ):
-    moveto_preset(pos_request, fake_pmac)
+    RE(moveto_preset(pos_request, pmac))
     assert fake_caput.call_count == expected_num_caput
 
-    fake_pmac.x.assert_has_calls([call.move(expected_pmac_move[0], wait=False)])
-    fake_pmac.y.assert_has_calls([call.move(expected_pmac_move[1], wait=False)])
-    fake_pmac.z.assert_has_calls([call.move(expected_pmac_move[2], wait=False)])
+    assert await pmac.stages.x.user_readback.get_value() == expected_pmac_move[0]
+    assert await pmac.stages.y.user_readback.get_value() == expected_pmac_move[1]
+    assert await pmac.stages.z.user_readback.get_value() == expected_pmac_move[2]
 
 
 @pytest.mark.parametrize(
