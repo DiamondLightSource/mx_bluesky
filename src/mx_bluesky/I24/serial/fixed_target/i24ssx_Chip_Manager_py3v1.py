@@ -16,6 +16,7 @@ from time import sleep
 
 import bluesky.plan_stubs as bps
 import numpy as np
+from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
 from dodal.devices.i24.pmac import PMAC
 
@@ -106,6 +107,7 @@ def initialise():
     caput(pv.me14e_gp101, det_type.name)
 
     logger.info("Initialisation Complete")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -162,6 +164,7 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
         # that are only needed when full mapping is in use.
         logger.info("Full mapping in use. Running start up now.")
         startup.run()
+    yield from bps.null()
 
 
 def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
@@ -191,8 +194,7 @@ def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
 
 @log.log_on_entry
 def define_current_chip(
-    chipid: str = "oxford",
-    param_path: Path | str = PVAR_FILE_PATH,
+    chipid: str = "oxford", param_path: Path | str = PVAR_FILE_PATH, pmac: PMAC = None
 ):
     logger.debug("Run load stock map for just the first block")
     load_stock_map("Just The First Block")
@@ -201,6 +203,8 @@ def define_current_chip(
     print 'Setting Mapping Type to Lite'
     caput(pv.me14e_gp2, 1)
     """
+    if not pmac:
+        pmac = i24.pmac()
     chip_type = int(caget(pv.me14e_gp1))
     logger.info("Chip type:%s Chipid:%s" % (chip_type, chipid))
     if chipid == "oxford":
@@ -215,7 +219,7 @@ def define_current_chip(
                 continue
             line_from_file = line.rstrip("\n")
             logger.info("%s" % line_from_file)
-            caput(pv.me14e_pmac_str, line_from_file)
+            yield from bps.abs_set(pmac.pmac_string, line_from_file)
 
 
 @log.log_on_entry
@@ -233,6 +237,7 @@ def save_screen_map(litemap_path: Path | str = LITEMAP_PATH):
                 logger.info("%s %d" % (block_str, block_val))
             line = "%02dstatus    P3%02d1 \t%s\n" % (x, x, block_val)
             f.write(line)
+    yield from bps.null()
     return 0
 
 
@@ -272,6 +277,7 @@ def upload_parameters(
 
     logger.warning("Automatic Setting Mapping Type to Lite has been disabled")
     logger.debug("Upload parameters done.")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -291,6 +297,7 @@ def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
         caput(pv.me14e_pmac_str, writeline)
         sleep(0.02)
     logger.debug("Upload fullmap done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -491,6 +498,7 @@ def load_stock_map(map_choice: str = "clear"):
         pvar = "ME14E-MO-IOC-01:GP" + str(i + 10)
         caput(pvar, 1)
     logger.debug("Load stock map done.")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -555,6 +563,7 @@ def load_lite_map(litemap_path: Path | str = LITEMAP_PATH):
         pvar = "ME14E-MO-IOC-01:GP" + str(int(block_num) + 10)
         logger.info("Block: %s \tScanned: %s \tPVAR: %s" % (block_name, yesno, pvar))
     logger.debug("Load lite map done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -572,6 +581,7 @@ def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
         % (fullmap_fid.with_suffix(".full"), fullmap_path / "currentchip.full")
     )
     logger.debug("Load full map done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -594,11 +604,11 @@ def moveto(place: str = "origin", pmac: PMAC = None):
     chip_move = ChipType(chip_type).get_approx_chip_size()
 
     if place == Fiducials.origin:
-        yield from bps.abs_set(pmac.stages, (0.0, 0.0), wait=True)
+        yield from bps.mv(pmac.x, 0.0, pmac.y, 0.0)
     if place == Fiducials.fid1:
-        yield from bps.abs_set(pmac.stages, (chip_move, 0.0), wait=True)
+        yield from bps.mv(pmac.x, chip_move, pmac.y, 0.0)
     if place == Fiducials.fid2:
-        yield from bps.abs_set(pmac.stages, (0.0, chip_move), wait=True)
+        yield from bps.mv(pmac.x, 0.0, pmac.y, chip_move)
 
 
 @log.log_on_entry
@@ -620,13 +630,13 @@ def moveto_preset(place: str, pmac: PMAC = None):
     elif place == "collect_position":
         logger.info("collect position")
         caput(pv.me14e_filter, 20)
-        yield from bps.abs_set(pmac.stages, (0.0, 0.0, 0.0), wait=True)
+        yield from bps.mv(pmac.x, 0.0, pmac.y, 0.0, pmac.z, 0.0)
         caput(pv.bs_mp_select, "Data Collection")
         caput(pv.bl_mp_select, "In")
 
     elif place == "microdrop_position":
         logger.info("microdrop align position")
-        yield from bps.abs_set(pmac.stages, (6.0, -7.8, 0.0), wait=True)
+        yield from bps.mv(pmac.x, 6.0, pmac.y, -7.8, pmac.z, 0.0)
 
 
 @log.log_on_entry
@@ -723,6 +733,7 @@ def fiducial(point: int = 1, param_path: Path | str = CS_FILES_PATH):
         f.write("MTR2\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_2, raw_2, mtr2_dir, f_y))
         f.write("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
     logger.info(f"Fiducial {point} set.")
+    yield from bps.null()
 
 
 def scrape_mtr_fiducials(point: int, param_path: Path | str = CS_FILES_PATH):
@@ -889,15 +900,15 @@ def cs_maker(pmac: PMAC = None):
     pmac.pmac_string.set(cs3).wait()
     pmac.pmac_string.set("!x0y0z0").wait()
     sleep(0.1)
-    pmac.home_stages()
+    yield from bps.trigger(pmac.home, wait=True)
     sleep(0.1)
     logger.debug("Chip_type is %s" % chip_type)
     if chip_type == 0:
         pmac.pmac_string.set("!x0.4y0.4").wait()
         sleep(0.1)
-        pmac.home_stages()
+        yield from bps.trigger(pmac.home, wait=True)
     else:
-        pmac.home_stages()
+        yield from bps.trigger(pmac.home, wait=True)
     logger.debug("CSmaker done.")
 
 
@@ -942,6 +953,7 @@ def pumpprobe_calc():
         logger.info("Repeat (%s): %s s" % (pv_name, rounded))
     # logger.info("repeat10 (%s): %s s" % (pv.me14e_gp108, round(repeat10, 4)))
     logger.debug("PP calculations done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -976,6 +988,7 @@ def block_check():
             break
         break
     logger.debug("Block check done")
+    yield from bps.null()
 
 
 def parse_args_and_run_parsed_function(args):
@@ -1040,6 +1053,7 @@ def parse_args_and_run_parsed_function(args):
 
 
 if __name__ == "__main__":
+    RE = RunEngine()
     setup_logging()
 
-    parse_args_and_run_parsed_function(sys.argv[1:])
+    RE(parse_args_and_run_parsed_function(sys.argv[1:]))

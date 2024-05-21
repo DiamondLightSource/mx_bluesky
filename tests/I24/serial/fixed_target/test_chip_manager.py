@@ -42,8 +42,8 @@ async def test_moveto_oxford_origin(fake_caget: MagicMock, pmac: PMAC, RE):
     fake_caget.return_value = 0
     RE(moveto(Fiducials.origin, pmac))
     assert fake_caget.call_count == 1
-    assert await pmac.stages.x.user_readback.get_value() == 0.0
-    assert await pmac.stages.y.user_readback.get_value() == 0.0
+    assert await pmac.x.user_readback.get_value() == 0.0
+    assert await pmac.y.user_readback.get_value() == 0.0
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
@@ -51,8 +51,8 @@ async def test_moveto_oxford_inner_f1(fake_caget: MagicMock, pmac: PMAC, RE):
     fake_caget.return_value = 1
     RE(moveto(Fiducials.fid1, pmac))
     assert fake_caget.call_count == 1
-    assert await pmac.stages.x.user_readback.get_value() == 24.60
-    assert await pmac.stages.y.user_readback.get_value() == 0.0
+    assert await pmac.x.user_readback.get_value() == 24.60
+    assert await pmac.y.user_readback.get_value() == 0.0
 
 
 async def test_moveto_chip_aspecific(pmac: PMAC, RE):
@@ -88,9 +88,9 @@ async def test_moveto_preset_with_pmac_move(
     RE(moveto_preset(pos_request, pmac))
     assert fake_caput.call_count == expected_num_caput
 
-    assert await pmac.stages.x.user_readback.get_value() == expected_pmac_move[0]
-    assert await pmac.stages.y.user_readback.get_value() == expected_pmac_move[1]
-    assert await pmac.stages.z.user_readback.get_value() == expected_pmac_move[2]
+    assert await pmac.x.user_readback.get_value() == expected_pmac_move[0]
+    assert await pmac.y.user_readback.get_value() == expected_pmac_move[1]
+    assert await pmac.z.user_readback.get_value() == expected_pmac_move[2]
 
 
 @pytest.mark.parametrize(
