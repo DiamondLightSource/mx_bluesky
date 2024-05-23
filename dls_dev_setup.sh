@@ -4,7 +4,7 @@
 module unload controls_dev
 
 
-module load python/3.10
+module load python/3.11
 
 if [ -d "./.venv" ]
 then
