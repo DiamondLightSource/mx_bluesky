@@ -11,7 +11,7 @@ current=$( realpath "$( dirname "$0" )" )
 
 # Start the blueapi worker using the config file in this module
 echo "Starting the blueapi runner"
-blueapi -c "${current}/blueapi_config.yaml" serve
+blueapi -c "${current}/blueapi_config.yaml" serve &
 
 # Open the edm screen for an extruder serial collection
 echo "Starting extruder edm screen."
