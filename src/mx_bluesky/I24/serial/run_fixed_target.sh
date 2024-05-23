@@ -19,5 +19,5 @@ edm -x "${edm_path}/FT-gui/DiamondChipI24-py3v1.edl"
 
 echo "Edm screen closed, bye!"
 
-echo "Killing blueapi"
 pgrep blueapi | xargs kill -9
+echo "Blueapi process killed"
