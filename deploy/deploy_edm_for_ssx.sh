@@ -1,16 +1,12 @@
 #!/bin/bash
 
 # Deploy EDM screens for serial crystallography
-# Make a copy of them in edm/ and replace paths depending if in dev or beamline mode
+# Make a copy of them in edm/ and replace paths
 
 current=$( realpath "$( dirname "$0" )" )
 base=$(dirname $current)
 
-if [[ -n "${BEAMLINE}" ]]; then
-    edm_build="/dls_sw/$BEAMLINE/software/bluesky/mx_bluesky/edm_serial"
-else
-    edm_build="$base/edm_serial"
-fi
+edm_build="$base/edm_serial"
 
 echo "EDM screens for ssx will be saved in: $edm_build"
 
