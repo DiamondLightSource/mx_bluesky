@@ -34,6 +34,7 @@ cs_json = '{"scalex":1, "scaley":2, "scalez":3, "skew":-0.5, "Sx_dir":1, "Sy_dir
 @pytest.fixture
 def fake_pmac() -> MagicMock:
     mock_pmac: PMAC = MagicMock(spec=PMAC)
+    mock_pmac.pmac_string = MagicMock()
     return mock_pmac
 
 
@@ -148,6 +149,7 @@ def test_scrape_mtr_fiducials():
 
 
 def test_cs_reset(fake_pmac: MagicMock):
+    # fake_pmac.pmac_string = MagicMock()
     cs_reset(fake_pmac)
     fake_pmac.pmac_string.assert_has_calls(
         [
@@ -178,12 +180,13 @@ def test_cs_maker_raises_error_for_invalid_json(
     fake_fid: MagicMock,
     fake_dir: MagicMock,
     fake_caget: MagicMock,
-    fake_pmac: MagicMock,
+    pmac: PMAC,
+    RE,
 ):
     fake_dir.return_value = (1, 1, 1)
     fake_fid.return_value = (0, 0, 0)
     with pytest.raises(json.JSONDecodeError):
-        cs_maker(fake_pmac)
+        RE(cs_maker(pmac))
 
 
 @patch(
@@ -201,12 +204,13 @@ def test_cs_maker_raises_error_for_missing_key_in_json(
     fake_fid: MagicMock,
     fake_dir: MagicMock,
     fake_caget: MagicMock,
-    fake_pmac: MagicMock,
+    pmac: PMAC,
+    RE,
 ):
     fake_dir.return_value = (1, 1, 1)
     fake_fid.return_value = (0, 0, 0)
     with pytest.raises(KeyError):
-        cs_maker(fake_pmac)
+        RE(cs_maker(pmac))
 
 
 @patch(
@@ -224,12 +228,13 @@ def test_cs_maker_raises_error_for_wrong_direction_in_json(
     fake_fid: MagicMock,
     fake_dir: MagicMock,
     fake_caget: MagicMock,
-    fake_pmac: MagicMock,
+    pmac: PMAC,
+    RE,
 ):
     fake_dir.return_value = (1, 1, 1)
     fake_fid.return_value = (0, 0, 0)
     with pytest.raises(ValueError):
-        cs_maker(fake_pmac)
+        RE(cs_maker(pmac))
 
 
 @patch(
@@ -254,9 +259,9 @@ def test_arg_parser_runs_define_current_chip_function_as_expected(
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_pumpprobe_calc(fake_caget: MagicMock, fake_caput: MagicMock):
+def test_pumpprobe_calc(fake_caget: MagicMock, fake_caput: MagicMock, RE):
     fake_caget.side_effect = [0.01, 0.005]
-    pumpprobe_calc()
+    RE(pumpprobe_calc())
     assert fake_caget.call_count == 2
     assert fake_caput.call_count == 5
     fake_caput.assert_has_calls(
