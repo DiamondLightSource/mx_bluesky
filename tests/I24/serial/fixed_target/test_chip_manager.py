@@ -16,6 +16,7 @@ from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1 import (
     pumpprobe_calc,
     scrape_mtr_directions,
     scrape_mtr_fiducials,
+    set_pmac_strings_for_cs,
 )
 
 mtr_dir_str = """#Some words
@@ -148,21 +149,33 @@ def test_scrape_mtr_fiducials():
     assert res == (0.0, 1.0, 0.0)
 
 
-def test_cs_reset(fake_pmac: MagicMock):
-    # fake_pmac.pmac_string = MagicMock()
-    cs_reset(fake_pmac)
-    fake_pmac.pmac_string.assert_has_calls(
+def test_cs_pmac_str_set(pmac: PMAC, RE):
+    RE(
+        set_pmac_strings_for_cs(
+            pmac,
+            {
+                "cs1": "#1->-10000X+0Y+0Z",
+                "cs2": "#2->+0X+10000Y+0Z",
+                "cs3": "#3->0X+0Y+10000Z",
+            },
+        )
+    )
+    pmac.pmac_string._backend.put_mock.assert_has_calls(
         [
-            call.set("&2"),
-            call.set().wait(),
-            call.set("#1->-10000X+0Y+0Z"),
-            call.set().wait(),
-            call.set("#2->+0X+10000Y+0Z"),
-            call.set().wait(),
-            call.set("#3->0X+0Y+10000Z"),
-            call.set().wait(),
+            call("&2", wait=True, timeout=10.0),
+            call("#1->-10000X+0Y+0Z", wait=True, timeout=10.0),
+            call("#2->+0X+10000Y+0Z", wait=True, timeout=10.0),
+            call("#3->0X+0Y+10000Z", wait=True, timeout=10.0),
         ]
     )
+
+
+@patch(
+    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.set_pmac_strings_for_cs"
+)
+def test_cs_reset(mock_set_pmac_str: MagicMock, fake_pmac: MagicMock, RE):
+    RE(cs_reset(fake_pmac))
+    mock_set_pmac_str.assert_called_once()
 
 
 @patch(

@@ -591,7 +591,7 @@ def moveto(place: str = "origin", pmac: PMAC = None):
     logger.info(f"Move to: {place}")
     if place == Fiducials.zero:
         logger.info("Chip aspecific move.")
-        yield from bps.abs_set(pmac.pmac_string, "!x0y0z0", wait=True)
+        yield from bps.trigger(pmac.to_xyz_zero)
         return
 
     chip_type = int(caget(pv.me14e_gp1))
@@ -619,7 +619,7 @@ def moveto_preset(place: str, pmac: PMAC = None):
     # Non Chip Specific Move
     if place == "zero":
         logger.info("Moving to %s" % place)
-        yield from bps.abs_set(pmac.pmac_string, "!x0y0z0", wait=True)
+        yield from bps.trigger(pmac.to_xyz_zero)
 
     elif place == "load_position":
         logger.info("load position")
@@ -892,19 +892,16 @@ def cs_maker(pmac: PMAC = None):
     sqfact3 = np.sqrt(x3factor**2 + y3factor**2 + z3factor**2) / scalez
     logger.info("%1.4f \n %1.4f \n %1.4f" % (sqfact1, sqfact2, sqfact3))
     logger.debug("Long wait, please be patient")
-    pmac.pmac_string.set("!x0y0z0").wait()
+    yield from bps.trigger(pmac.to_xyz_zero)
     sleep(2.5)
-    pmac.pmac_string.set("&2").wait()
-    pmac.pmac_string.set(cs1).wait()
-    pmac.pmac_string.set(cs2).wait()
-    pmac.pmac_string.set(cs3).wait()
-    pmac.pmac_string.set("!x0y0z0").wait()
+    yield from set_pmac_strings_for_cs(pmac, {"cs1": cs1, "cs2": cs2, "cs3": cs3})
+    yield from bps.trigger(pmac.to_xyz_zero)
     sleep(0.1)
     yield from bps.trigger(pmac.home, wait=True)
     sleep(0.1)
     logger.debug("Chip_type is %s" % chip_type)
     if chip_type == 0:
-        pmac.pmac_string.set("!x0.4y0.4").wait()
+        yield from bps.abs_set(pmac.pmac_string, "!x0.4y0.4", wait=True)
         sleep(0.1)
         yield from bps.trigger(pmac.home, wait=True)
     else:
@@ -921,11 +918,15 @@ def cs_reset(pmac: PMAC = None):
     cs3 = "#3->0X+0Y+10000Z"
     strg = "\n".join([cs1, cs2, cs3])
     print(strg)
-    pmac.pmac_string.set("&2").wait()
-    pmac.pmac_string.set(cs1).wait()
-    pmac.pmac_string.set(cs2).wait()
-    pmac.pmac_string.set(cs3).wait()
+    yield from set_pmac_strings_for_cs(pmac, {"cs1": cs1, "cs2": cs2, "cs3": cs3})
     logger.debug("CSreset Done")
+
+
+def set_pmac_strings_for_cs(pmac: PMAC, cs_str: dict):
+    yield from bps.abs_set(pmac.pmac_string, "&2", wait=True)
+    yield from bps.abs_set(pmac.pmac_string, cs_str["cs1"], wait=True)
+    yield from bps.abs_set(pmac.pmac_string, cs_str["cs2"], wait=True)
+    yield from bps.abs_set(pmac.pmac_string, cs_str["cs3"], wait=True)
 
 
 @log.log_on_entry

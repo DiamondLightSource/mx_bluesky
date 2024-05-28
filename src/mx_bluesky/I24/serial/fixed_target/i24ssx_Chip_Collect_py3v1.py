@@ -12,6 +12,7 @@ from pathlib import Path
 from time import sleep
 from typing import Dict, List
 
+import bluesky.plan_stubs as bps
 import numpy as np
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
@@ -473,6 +474,7 @@ def start_i24(zebra: Zebra, parameters: FixedTargetParameters):
 @log.log_on_entry
 def finish_i24(
     zebra: Zebra,
+    pmac: PMAC,
     parameters: FixedTargetParameters,
 ):
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
@@ -499,7 +501,7 @@ def finish_i24(
 
     # Detector independent moves
     logger.info("Move chip back to home position by setting PMAC_STRING pv.")
-    caput(pv.me14e_pmac_str, "!x0y0z0")
+    yield from bps.trigger(pmac.to_xyz_zero)
     logger.info("Closing shutter")
     caput("BL24I-PS-SHTR-01:CON", "Close")
 
@@ -588,7 +590,7 @@ def main():
     start_time, dcid = yield from start_i24(zebra, parameters)
 
     logger.info("Moving to Start")
-    caput(pv.me14e_pmac_str, "!x0y0z0")
+    yield from bps.trigger(pmac.to_xyz_zero)
     sleep(2.0)
 
     prog_num = get_prog_num(
@@ -677,7 +679,7 @@ def main():
         caput(pv.eiger_acquire, 0)
         caput(pv.eiger_ODcapture, "Done")
 
-    end_time = yield from finish_i24(zebra, parameters)
+    end_time = yield from finish_i24(zebra, pmac, parameters)
     dcid.collection_complete(end_time, aborted=aborted)
     logger.debug("Notify DCID of end of collection.")
     dcid.notify_end()
