@@ -197,10 +197,10 @@ def load_motion_program_data(
         # Pump setting chosen
         prefix = 14
         logger.info(f"Setting program prefix to {prefix}")
-        pmac.pmac_string.set("P1439=0").wait()
+        yield from bps.abs_set(pmac.pmac_string, "P1439=0", wait=True)
         if bool(caget(pv.me14e_gp111)) is True:
             logger.info("Checker pattern setting enabled.")
-            pmac.pmac_string.set("P1439=1").wait()
+            yield from bps.abs_set(pmac.pmac_string, "P1439=1", wait=True)
     else:
         logger.warning(f"Unknown Pump repeat, pump_repeat = {pump_repeat}")
         return
@@ -213,9 +213,9 @@ def load_motion_program_data(
         value = str(v[1])
         s = f"P{pvar}={value}"
         logger.info("%s \t %s" % (key, s))
-        pmac.pmac_string.set(s).wait()
-        sleep(0.02)
-    sleep(0.2)
+        yield from bps.abs_set(pmac.pmac_string, s, wait=True)
+        yield from bps.sleep(0.02)
+    yield from bps.sleep(0.2)
 
 
 @log.log_on_entry
@@ -538,6 +538,12 @@ def finish_i24(
     return end_time
 
 
+def run_aborted_plan(pmac: PMAC):
+    yield from bps.abs_set(pmac.pmac_string, "A", wait=True)
+    yield from bps.sleep(1.0)
+    yield from bps.abs_set(pmac.pmac_string, "P2401=0", wait=True)
+
+
 def main():
     # Dodal devices
     pmac = i24.pmac()
@@ -583,7 +589,7 @@ def main():
         n_exposures=parameters.num_exposures,
     )
     logger.info("Loading Motion Program Data")
-    load_motion_program_data(
+    yield from load_motion_program_data(
         pmac, chip_prog_dict, parameters.map_type, parameters.pump_repeat
     )
 
@@ -603,7 +609,7 @@ def main():
 
     logger.info(f"Run PMAC with program number {prog_num}")
     logger.debug(f"pmac str = &2b{prog_num}r")
-    caput(pv.me14e_pmac_str, f"&2b{prog_num}r")
+    yield from bps.abs_set(pmac.pmac_string, f"&2b{prog_num}r", wait=True)
     sleep(1.0)
 
     # Kick off the StartOfCollect script
@@ -639,9 +645,7 @@ def main():
             if int(caget(pv.me14e_gp9)) != 0:
                 aborted = True
                 logger.warning("Data Collection Aborted")
-                caput(pv.me14e_pmac_str, "A")
-                sleep(1.0)
-                caput(pv.me14e_pmac_str, "P2401=0")
+                yield from run_aborted_plan(pmac)
                 break
             elif int(caget(pv.me14e_scanstatus)) == 0:
                 # As soon as me14e_scanstatus is set to 0, exit.
@@ -657,9 +661,7 @@ def main():
                     Something went wrong and data collection timed out. Aborting.
                     """
                 )
-                caput(pv.me14e_pmac_str, "A")
-                sleep(1.0)
-                caput(pv.me14e_pmac_str, "P2401=0")
+                yield from run_aborted_plan(pmac)
                 break
     else:
         aborted = True
