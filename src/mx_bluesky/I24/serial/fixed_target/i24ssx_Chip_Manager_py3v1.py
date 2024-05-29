@@ -18,7 +18,7 @@ import bluesky.plan_stubs as bps
 import numpy as np
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
-from dodal.devices.i24.pmac import PMAC
+from dodal.devices.i24.pmac import PMAC, LaserSettings
 
 from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_Mapping_py3v1 as mapping
@@ -245,7 +245,10 @@ def save_screen_map(litemap_path: Path | str = LITEMAP_PATH):
 def upload_parameters(
     chipid: str = "oxford",
     litemap_path: Path | str = LITEMAP_PATH,
+    pmac: PMAC = None,
 ):
+    if not pmac:
+        pmac = i24.pmac()
     logger.info("Uploading Parameters to the GeoBrick")
     if chipid == "oxford":
         caput(pv.me14e_gp1, 0)
@@ -272,7 +275,7 @@ def upload_parameters(
                 x = 1
             else:
                 x += 1
-            caput(pv.me14e_pmac_str, s)
+            yield from bps.abs_set(pmac.pmac_string, s, wait=True)
             sleep(0.02)
 
     logger.warning("Automatic Setting Mapping Type to Lite has been disabled")
@@ -281,7 +284,9 @@ def upload_parameters(
 
 
 @log.log_on_entry
-def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
+def upload_full(pmac: PMAC = None, fullmap_path: Path | str = FULLMAP_PATH):
+    if not pmac:
+        pmac = i24.pmac()
     fullmap_path = _coerce_to_path(fullmap_path)
     fullmap_path.mkdir(parents=True, exist_ok=True)
 
@@ -294,8 +299,8 @@ def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
             pmac_list.append(f.pop(0).rstrip("\n"))
         writeline = " ".join(pmac_list)
         logger.info("%s" % writeline)
-        caput(pv.me14e_pmac_str, writeline)
-        sleep(0.02)
+        yield from bps.abs_set(pmac.pmac_string, writeline, wait=True)
+        yield from bps.sleep(0.02)
     logger.debug("Upload fullmap done")
     yield from bps.null()
 
@@ -649,37 +654,37 @@ def laser_control(laser_setting: str, pmac: PMAC = None):
         # Use M712 = 0 if triggering on falling edge. M712 =1 if on rising edge
         # Be sure to also change laser1off
         # caput(pv.me14e_pmac_str, ' M712=0 M711=1')
-        pmac.pmac_string.set(" M712=1 M711=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER1ON, wait=True)
 
     elif laser_setting == "laser1off":
         logger.info("Laser 1 shutter is closed")
-        pmac.pmac_string.set(" M712=0 M711=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER1OFF, wait=True)
 
     elif laser_setting == "laser2on":
         logger.info("Laser 2 / BNC3 shutter is open")
-        pmac.pmac_string.set(" M812=1 M811=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER2ON, wait=True)
 
     elif laser_setting == "laser2off":
         logger.info("Laser 2 shutter is closed")
-        pmac.pmac_string.set(" M812=0 M811=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER2OFF, wait=True)
 
     elif laser_setting == "laser1burn":
         led_burn_time = caget(pv.me14e_gp103)
         logger.info("Laser 1  on")
         logger.info("Burn time is %s s" % led_burn_time)
-        pmac.pmac_string.set(" M712=1 M711=1").wait()
-        sleep(int(float(led_burn_time)))
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER1ON, wait=True)
+        yield from bps.sleep(led_burn_time)
         logger.info("Laser 1 off")
-        pmac.pmac_string.set(" M712=0 M711=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER1OFF, wait=True)
 
     elif laser_setting == "laser2burn":
         led_burn_time = caget(pv.me14e_gp109)
         logger.info("Laser 2 on")
         logger.info("burntime %s s" % led_burn_time)
-        pmac.pmac_string.set(" M812=1 M811=1").wait()
-        sleep(int(float(led_burn_time)))
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER2ON, wait=True)
+        yield from bps.sleep(led_burn_time)
         logger.info("Laser 2 off")
-        pmac.pmac_string.set(" M812=0 M811=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER2OFF, wait=True)
 
 
 @log.log_on_entry
@@ -958,7 +963,9 @@ def pumpprobe_calc():
 
 
 @log.log_on_entry
-def block_check():
+def block_check(pmac: PMAC = None):
+    if not pmac:
+        pmac = i24.pmac()
     caput(pv.me14e_gp9, 0)
     while True:
         if int(caget(pv.me14e_gp9)) == 0:
@@ -982,7 +989,7 @@ def block_check():
                     break
                 block, x, y = entry
                 logger.debug("Block: %s -> (x=%s y=%s)" % (block, x, y))
-                caput(pv.me14e_pmac_str, "!x%sy%s" % (x, y))
+                yield from bps.abs_set(pmac.pmac_string, f"!x{x}y{y}", wait=True)
                 time.sleep(0.4)
         else:
             logger.warning("Block Check Aborted due to GP 9 not equalling 0")

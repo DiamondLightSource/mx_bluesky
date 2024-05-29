@@ -4,6 +4,7 @@ from unittest.mock import ANY, MagicMock, call, mock_open, patch
 
 import pytest
 from dodal.devices.i24.pmac import PMAC
+from ophyd_async.core import get_mock_put
 
 from mx_bluesky.I24.serial.fixed_target.ft_utils import Fiducials
 from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1 import (
@@ -104,27 +105,28 @@ async def test_moveto_preset_with_pmac_move(
         ("laser2off", " M812=0 M811=1"),
     ],
 )
-def test_laser_control_on_and_off(
-    laser_setting: str, expected_pmac_string: str, fake_pmac: MagicMock
+async def test_laser_control_on_and_off(
+    laser_setting: str, expected_pmac_string: str, pmac: PMAC, RE
 ):
-    laser_control(laser_setting, fake_pmac)
+    RE(laser_control(laser_setting, pmac))
 
-    fake_pmac.pmac_string.assert_has_calls(
-        [call.set(expected_pmac_string), call.set().wait()]
-    )
+    assert await pmac.pmac_string.get_value() == expected_pmac_string
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_laser_control_burn_setting(fake_caget: MagicMock, fake_pmac: MagicMock):
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.bps.sleep")
+def test_laser_control_burn_setting(
+    fake_sleep: MagicMock, fake_caget: MagicMock, pmac: PMAC, RE
+):
     fake_caget.return_value = 0.1
-    laser_control("laser1burn", fake_pmac)
+    RE(laser_control("laser1burn", pmac))
 
-    fake_pmac.pmac_string.assert_has_calls(
+    fake_sleep.assert_called_once_with(0.1)
+    mock_pmac_str = get_mock_put(pmac.pmac_string)
+    mock_pmac_str.assert_has_calls(
         [
-            call.set(" M712=1 M711=1"),
-            call.set().wait(),
-            call.set(" M712=0 M711=1"),
-            call.set().wait(),
+            call(" M712=1 M711=1", wait=True, timeout=10.0),
+            call(" M712=0 M711=1", wait=True, timeout=10.0),
         ]
     )
 
@@ -160,7 +162,8 @@ def test_cs_pmac_str_set(pmac: PMAC, RE):
             },
         )
     )
-    pmac.pmac_string._backend.put_mock.assert_has_calls(
+    mock_pmac_str = get_mock_put(pmac.pmac_string)
+    mock_pmac_str.assert_has_calls(
         [
             call("&2", wait=True, timeout=10.0),
             call("#1->-10000X+0Y+0Z", wait=True, timeout=10.0),
