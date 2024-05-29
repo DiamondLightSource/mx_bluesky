@@ -15,6 +15,10 @@ mkdir .venv
 python -m venv .venv
 source .venv/bin/activate
 
+
+pip install --upgrade pip
+pip install wheel
+
 pip install -e .[dev]
 
 # Ensure we use a local version of dodal
