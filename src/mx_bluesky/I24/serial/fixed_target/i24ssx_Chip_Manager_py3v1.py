@@ -51,8 +51,9 @@ def setup_logging():
 
 
 @log.log_on_entry
-def initialise():
-    pmac = i24.pmac()
+def initialise(pmac: PMAC = None):
+    if not pmac:
+        pmac = i24.pmac()
     group = "initialise_stages"
     # commented out filter lines 230719 as this stage not connected
     logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")

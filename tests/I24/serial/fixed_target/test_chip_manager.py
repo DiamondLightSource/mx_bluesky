@@ -10,6 +10,7 @@ from mx_bluesky.I24.serial.fixed_target.ft_utils import Fiducials
 from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1 import (
     cs_maker,
     cs_reset,
+    initialise,
     laser_control,
     moveto,
     moveto_preset,
@@ -19,6 +20,7 @@ from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1 import (
     scrape_mtr_fiducials,
     set_pmac_strings_for_cs,
 )
+from mx_bluesky.I24.serial.setup_beamline import Eiger
 
 mtr_dir_str = """#Some words
 mtr1_dir=1
@@ -33,11 +35,31 @@ MTR3 0 0 -1 0"""
 cs_json = '{"scalex":1, "scaley":2, "scalez":3, "skew":-0.5, "Sx_dir":1, "Sy_dir":-1, "Sz_dir":0}'
 
 
-@pytest.fixture
-def fake_pmac() -> MagicMock:
-    mock_pmac: PMAC = MagicMock(spec=PMAC)
-    mock_pmac.pmac_string = MagicMock()
-    return mock_pmac
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.sys")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.get_detector_type")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
+async def test_initialise(
+    fake_caput: MagicMock, fake_det: MagicMock, fake_sys: MagicMock, pmac: PMAC, RE
+):
+    fake_det.return_value = Eiger()
+    RE(initialise(pmac))
+
+    fake_caput.assert_called_with(ANY, "eiger")  # last call should be detector
+
+    assert await pmac.x.velocity.get_value() == 20
+    assert await pmac.y.acceleration_time.get_value() == 0.01
+    assert await pmac.z.high_limit_travel.get_value() == 5.1
+    assert await pmac.z.low_limit_travel.get_value() == -4.1
+
+    mock_pmac_str = get_mock_put(pmac.pmac_string)
+    mock_pmac_str.assert_has_calls(
+        [
+            call("m508=100 m509=150", wait=True, timeout=10.0),
+            call("m608=100 m609=150", wait=True, timeout=10.0),
+            call("m708=100 m709=150", wait=True, timeout=10.0),
+            call("m808=100 m809=150", wait=True, timeout=10.0),
+        ]
+    )
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
@@ -176,8 +198,8 @@ def test_cs_pmac_str_set(pmac: PMAC, RE):
 @patch(
     "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.set_pmac_strings_for_cs"
 )
-def test_cs_reset(mock_set_pmac_str: MagicMock, fake_pmac: MagicMock, RE):
-    RE(cs_reset(fake_pmac))
+def test_cs_reset(mock_set_pmac_str: MagicMock, pmac: PMAC, RE):
+    RE(cs_reset(pmac))
     mock_set_pmac_str.assert_called_once()
 
 
