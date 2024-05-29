@@ -52,28 +52,30 @@ def setup_logging():
 
 @log.log_on_entry
 def initialise():
+    pmac = i24.pmac()
+    group = "initialise_stages"
     # commented out filter lines 230719 as this stage not connected
     logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
 
+    # NOTE .VMAX is read only in ohpyd_async motor.
     caput(pv.me14e_stage_x + ".VMAX", 20)
     caput(pv.me14e_stage_y + ".VMAX", 20)
     caput(pv.me14e_stage_z + ".VMAX", 20)
     # caput(pv.me14e_filter  + '.VMAX', 20)
-    caput(pv.me14e_stage_x + ".VELO", 20)
-    caput(pv.me14e_stage_y + ".VELO", 20)
-    caput(pv.me14e_stage_z + ".VELO", 20)
+    yield from bps.abs_set(pmac.x.velocity, 20, group=group)
+    yield from bps.abs_set(pmac.y.velocity, 20, group=group)
+    yield from bps.abs_set(pmac.z.velocity, 20, group=group)
     # caput(pv.me14e_filter  + '.VELO', 20)
-    caput(pv.me14e_stage_x + ".ACCL", 0.01)
-    caput(pv.me14e_stage_y + ".ACCL", 0.01)
-    caput(pv.me14e_stage_z + ".ACCL", 0.01)
+    yield from bps.abs_set(pmac.x.acceleration_time, 0.01, group=group)
+    yield from bps.abs_set(pmac.y.acceleration_time, 0.01, group=group)
+    yield from bps.abs_set(pmac.z.acceleration_time, 0.01, group=group)
     # caput(pv.me14e_filter  + '.ACCL', 0.01)
-    caput(pv.me14e_stage_x + ".HLM", 30)
-    caput(pv.me14e_stage_x + ".LLM", -29)
-    caput(pv.me14e_stage_y + ".HLM", 30)
-    caput(pv.me14e_stage_y + ".LLM", -30)
-    # caput(pv.me14e_stage_x + '.LLM', -30)
-    caput(pv.me14e_stage_z + ".HLM", 5.1)
-    caput(pv.me14e_stage_z + ".LLM", -4.1)
+    yield from bps.abs_set(pmac.x.high_limit_travel, 30, group=group)
+    yield from bps.abs_set(pmac.x.low_limit_travel, -29, group=group)
+    yield from bps.abs_set(pmac.y.high_limit_travel, 30, group=group)
+    yield from bps.abs_set(pmac.y.low_limit_travel, -30, group=group)
+    yield from bps.abs_set(pmac.z.high_limit_travel, 5.1, group=group)
+    yield from bps.abs_set(pmac.z.low_limit_travel, -4.1, group=group)
     # caput(pv.me14e_filter  + '.HLM', 45.0)
     # caput(pv.me14e_filter  + '.LLM', -45.0)
     caput(pv.me14e_gp1, 1)
@@ -84,10 +86,10 @@ def initialise():
     caput(pv.me14e_chip_name, "albion")
     caput(pv.me14e_dcdetdist, 1480)
     caput(pv.me14e_exptime, 0.01)
-    caput(pv.me14e_pmac_str, "m508=100 m509=150")
-    caput(pv.me14e_pmac_str, "m608=100 m609=150")
-    caput(pv.me14e_pmac_str, "m708=100 m709=150")
-    caput(pv.me14e_pmac_str, "m808=100 m809=150")
+    yield from bps.abs_set(pmac.pmac_string, "m508=100 m509=150", group=group)
+    yield from bps.abs_set(pmac.pmac_string, "m608=100 m609=150", group=group)
+    yield from bps.abs_set(pmac.pmac_string, "m708=100 m709=150", group=group)
+    yield from bps.abs_set(pmac.pmac_string, "m808=100 m809=150", group=group)
 
     # Define detector in use
     logger.debug("Define detector in use.")
@@ -107,7 +109,7 @@ def initialise():
     caput(pv.me14e_gp101, det_type.name)
 
     logger.info("Initialisation Complete")
-    yield from bps.null()
+    yield from bps.wait(group=group)
 
 
 @log.log_on_entry
