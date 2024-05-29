@@ -4,7 +4,7 @@
 module unload controls_dev
 
 
-module load python/3.10
+module load python/3.11
 
 if [ -d "./.venv" ]
 then
@@ -14,6 +14,10 @@ mkdir .venv
 
 python -m venv .venv
 source .venv/bin/activate
+
+
+pip install --upgrade pip
+pip install wheel
 
 pip install -e .[dev]
 
