@@ -10,6 +10,20 @@ from dodal.devices.i24.dual_backlight import DualBacklight
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.zebra import Zebra
 from ophyd.status import Status
+from ophyd_async.core import callback_on_mock_put, set_mock_value
+from ophyd_async.epics.motion import Motor
+
+
+def patch_motor(motor: Motor, initial_position: float = 0):
+    set_mock_value(motor.user_setpoint, initial_position)
+    set_mock_value(motor.user_readback, initial_position)
+    set_mock_value(motor.deadband, 0.001)
+    set_mock_value(motor.motor_done_move, 1)
+    set_mock_value(motor.velocity, 3)
+    return callback_on_mock_put(
+        motor.user_setpoint,
+        lambda pos, *args, **kwargs: set_mock_value(motor.user_readback, pos),
+    )
 
 
 @pytest.fixture
@@ -46,10 +60,11 @@ def detector_stage() -> DetectorMotion:
 
 
 @pytest.fixture
-def aperture() -> Aperture:
+def aperture():
     RunEngine()
-    aperture = i24.aperture(fake_with_ophyd_sim=True)
-    return aperture
+    aperture: Aperture = i24.aperture(fake_with_ophyd_sim=True)
+    with patch_motor(aperture.x), patch_motor(aperture.y):
+        yield aperture
 
 
 @pytest.fixture
@@ -59,19 +74,17 @@ def backlight() -> DualBacklight:
 
 
 @pytest.fixture
-def beamstop() -> Beamstop:
+def beamstop():
     RunEngine()
-    beamstop = i24.beamstop(fake_with_ophyd_sim=True)
+    beamstop: Beamstop = i24.beamstop(fake_with_ophyd_sim=True)
 
-    async def mock_set(motor, val):
-        await motor._backend.put(val)
-
-    def patch_motor(motor):
-        return patch.object(motor, "set", partial(mock_set, motor))
-
-    with patch_motor(beamstop.roty):
-        return beamstop
-    # return beamstop
+    with (
+        patch_motor(beamstop.x),
+        patch_motor(beamstop.y),
+        patch_motor(beamstop.z),
+        patch_motor(beamstop.roty),
+    ):
+        yield beamstop
 
 
 @pytest.fixture
