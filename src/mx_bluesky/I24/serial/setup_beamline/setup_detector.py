@@ -1,6 +1,7 @@
 """
 Utilities for defining the detector in use, and moving the stage.
 """
+
 import argparse
 import logging
 import time
@@ -63,11 +64,7 @@ def get_detector_type() -> Detector:
 
 def _move_detector_stage(detector_stage: DetectorMotion, target: float):
     logger.info(f"Moving detector stage to target position: {target}.")
-    yield from bps.abs_set(
-        detector_stage.y,
-        target,
-        wait=True,
-    )
+    yield from bps.mv(detector_stage.y, target)
 
 
 # Workaround in case the PV value has been set to the detector name

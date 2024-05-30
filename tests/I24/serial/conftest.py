@@ -1,5 +1,4 @@
-from functools import partial
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 from bluesky.run_engine import RunEngine
@@ -9,7 +8,6 @@ from dodal.devices.i24.beamstop import Beamstop
 from dodal.devices.i24.dual_backlight import DualBacklight
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.zebra import Zebra
-from ophyd.status import Status
 from ophyd_async.core import callback_on_mock_put, set_mock_value
 from ophyd_async.epics.motion import Motor
 
@@ -44,16 +42,8 @@ def zebra() -> Zebra:
 
 @pytest.fixture
 def detector_stage() -> DetectorMotion:
+    RunEngine()
     detector_motion = i24.detector_motion(fake_with_ophyd_sim=True)
-    detector_motion.y.user_setpoint._use_limits = False
-    detector_motion.z.user_setpoint._use_limits = False
-
-    def mock_set(motor, val):
-        motor.user_readback.sim_put(val)
-        return Status(done=True, success=True)
-
-    def patch_motor(motor):
-        return patch.object(motor, "set", partial(mock_set, motor))
 
     with patch_motor(detector_motion.y), patch_motor(detector_motion.z):
         yield detector_motion

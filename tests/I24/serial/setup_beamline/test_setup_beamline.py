@@ -15,11 +15,11 @@ async def test_setup_beamline_for_collection_plan(aperture, backlight, beamstop,
     assert backlight.pos1.pos_level.get() == "Out"
 
 
-def test_setup_beamline_for_quickshot_plan(detector_stage, RE):
+async def test_setup_beamline_for_quickshot_plan(detector_stage, RE):
     det_dist = 100
     RE(setup_beamline.setup_beamline_for_quickshot_plan(detector_stage, det_dist))
 
-    assert detector_stage.z.user_readback.get() == det_dist
+    assert await detector_stage.z.user_readback.get_value() == det_dist
 
 
 @patch("mx_bluesky.I24.serial.setup_beamline.setup_beamline.caput")

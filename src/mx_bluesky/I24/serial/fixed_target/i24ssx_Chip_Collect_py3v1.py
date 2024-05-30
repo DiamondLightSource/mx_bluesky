@@ -341,7 +341,7 @@ def start_i24(zebra: Zebra, parameters: FixedTargetParameters):
     )
 
     yield from sup.setup_beamline_for_quickshot_plan(
-        detector_stage, parameters.detector_distance_mm, wait=True
+        detector_stage, parameters.detector_distance_mm
     )
 
     logger.debug("Set up beamline DONE")

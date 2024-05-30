@@ -200,7 +200,7 @@ def run_extruderi24(args=None):
     )
 
     yield from sup.setup_beamline_for_quickshot_plan(
-        detector_stage, parameters.detector_distance_mm, wait=True
+        detector_stage, parameters.detector_distance_mm
     )
 
     # Set the abort PV to zero

@@ -41,11 +41,11 @@ def test_get_requested_detector_raises_error_for_invalid_value(fake_caget):
 
 
 @patch("mx_bluesky.I24.serial.setup_beamline.setup_detector.caget")
-def test_setup_detector_stage(fake_caget, detector_stage, RE):
+async def test_setup_detector_stage(fake_caget, detector_stage, RE):
     fake_caget.return_value = DetRequest.eiger.value
     RE(setup_detector_stage(detector_stage, SSXType.FIXED))
-    assert detector_stage.y.user_readback.get() == Eiger.det_y_target
+    assert await detector_stage.y.user_readback.get_value() == Eiger.det_y_target
 
     fake_caget.return_value = DetRequest.pilatus.value
     RE(setup_detector_stage(detector_stage, SSXType.EXTRUDER))
-    assert detector_stage.y.user_readback.get() == Pilatus.det_y_target
+    assert await detector_stage.y.user_readback.get_value() == Pilatus.det_y_target
