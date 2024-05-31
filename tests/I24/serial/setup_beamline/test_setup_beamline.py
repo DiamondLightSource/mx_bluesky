@@ -1,21 +1,27 @@
 from unittest.mock import patch
 
 import pytest
+from dodal.devices.i24.aperture import Aperture
+from dodal.devices.i24.beamstop import Beamstop
+from dodal.devices.i24.dual_backlight import DualBacklight
+from dodal.devices.i24.I24_detector_motion import DetectorMotion
 
 from mx_bluesky.I24.serial.setup_beamline import setup_beamline
 
 
-async def test_setup_beamline_for_collection_plan(aperture, backlight, beamstop, RE):
+async def test_setup_beamline_for_collection_plan(
+    aperture: Aperture, backlight: DualBacklight, beamstop: Beamstop, RE
+):
     RE(setup_beamline.setup_beamline_for_collection_plan(aperture, backlight, beamstop))
 
     assert await aperture.pos.pos_select.get_value() == "In"
     assert await beamstop.pos_select.get_value() == "Data Collection"
     assert await beamstop.roty.user_readback.get_value() == 0
 
-    assert backlight.pos1.pos_level.get() == "Out"
+    assert await backlight.pos1.pos_level.get_value() == "Out"
 
 
-async def test_setup_beamline_for_quickshot_plan(detector_stage, RE):
+async def test_setup_beamline_for_quickshot_plan(detector_stage: DetectorMotion, RE):
     det_dist = 100
     RE(setup_beamline.setup_beamline_for_quickshot_plan(detector_stage, det_dist))
 

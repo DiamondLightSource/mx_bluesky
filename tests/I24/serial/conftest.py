@@ -59,6 +59,7 @@ def aperture():
 
 @pytest.fixture
 def backlight() -> DualBacklight:
+    RunEngine()
     backlight = i24.backlight(fake_with_ophyd_sim=True)
     return backlight
 

@@ -22,7 +22,7 @@ def setup_beamline_for_collection_plan(
 ):
     logger.debug("Setup beamline: collect.")
     yield from bps.abs_set(aperture.pos.pos_select, ApPosition.IN, group=group)
-    yield from bps.abs_set(backlight.pos1.pos_level, "Out", group=group)
+    yield from bps.abs_set(backlight, "Out", group=group)
     yield from bps.sleep(3)  # Not sure needed - to test
     yield from bps.abs_set(beamstop.pos_select, BSPositions.DATACOLLECTION)
     yield from bps.abs_set(beamstop.roty, 0, group=group)
