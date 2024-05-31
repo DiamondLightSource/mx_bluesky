@@ -50,11 +50,6 @@ def test_onMouse_gets_beam_position_and_sends_correct_str(
             call(expected_ymove, wait=True, timeout=10),
         ]
     )
-    # assert_mock_put_called_with(
-    #     pmac.pmac_string,
-    #     expected_ymove,
-    #     wait=True,
-    # )
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_moveonclick.cv")
