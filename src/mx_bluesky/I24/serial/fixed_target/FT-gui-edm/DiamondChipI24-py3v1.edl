@@ -280,7 +280,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "SCRIPTS_LOCATION/run_plan.sh moveto_preset '\{\"place\":\"load_position\",\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"load_position\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -301,7 +301,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "SCRIPTS_LOCATION/run_plan.sh moveto_preset '\{\"place\":\"collect_position\",\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"collect_position\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -323,7 +323,7 @@ font "helvetica-bold-r-24.0"
 buttonLabel "Start"
 numCmds 1
 command {
-  0 "blueapi controller run run_fixed_target_plan '\{\"zebra\":\"zebra\",\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run run_fixed_target_plan '\{\"zebra\":\"zebra\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -615,7 +615,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi controller run cs_maker '\{\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run cs_maker '\{\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -1051,7 +1051,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi controller run moveto_preset '\{\"place\":\"zero\",\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"zero\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -1199,7 +1199,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi controller run initialise_stages"
+  0 "blueapi -c CONFIG_LOCATION controller run initialise_stages"
 }
 endObjectProperties
 
@@ -1467,7 +1467,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi controller run write_parameter_file"
+  0 "blueapi -c CONFIG_LOCATION controller run write_parameter_file"
 }
 endObjectProperties
 
@@ -1645,7 +1645,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi controller run block_check"
+  0 "blueapi -c CONFIG_LOCATION controller run block_check"
 }
 endObjectProperties
 
@@ -3019,7 +3019,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Set Fiducial 2"
 numCmds 1
 command {
-  0 "blueapi controller run fiducial '\{\"point\":\"2\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run fiducial '\{\"point\":\"2\"\}'"
 }
 endObjectProperties
 
@@ -3041,7 +3041,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Goto Fiducial 2"
 numCmds 1
 command {
-  0 "blueapi controller run moveto '\{\"place\":\"f2\",\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"f2\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -3085,7 +3085,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Set Fiducial 1"
 numCmds 1
 command {
-  0 "blueapi controller run fiducial '\{\"point\":\"1\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run fiducial '\{\"point\":\"1\"\}'"
 }
 endObjectProperties
 
@@ -3107,7 +3107,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Goto Fiducial 1"
 numCmds 1
 command {
-  0 "blueapi controller run moveto '\{\"place\":\"f1\",\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"f1\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -3834,7 +3834,7 @@ font "arial-bold-r-14.0"
 buttonLabel "Move on Click"
 numCmds 1
 command {
-  0 "SCRIPTS_LOCATION/run_plan.sh start_viewer '\{\"oav\":\"oav\",\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run start_viewer '\{\"oav\":\"oav\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -3855,7 +3855,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi controller run moveto '\{\"place\":\"zero\",\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"zero\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -3897,7 +3897,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi controller run moveto_preset '\{\"place\":\"microdrop_position\",\"pmac\":\"pmac\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"microdrop_position\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 

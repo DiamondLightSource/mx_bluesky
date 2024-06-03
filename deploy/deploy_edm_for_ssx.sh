@@ -23,7 +23,11 @@ ft_edm="$edm_build/FT-gui"
 mkdir $ex_edm
 mkdir $ft_edm
 
-scripts_placeholder="SCRIPTS_LOCATION"
+# Add blueapi configuration file to get stomp
+# See https://github.com/DiamondLightSource/blueapi/issues/485
+config_placeholder="CONFIG_LOCATION"
+config_loc="$base/blueapi_config.yaml"
+
 scripts_loc="$base/src/mx_bluesky/I24/serial"
 
 # Copy extruder
@@ -36,12 +40,12 @@ cp $scripts_loc/fixed_target/FT-gui-edm/*.edl $ft_edm
 echo "Setting up screen for extruder"
 for filename in $ex_edm/*.edl; do
     sed -i "s+${edm_placeholder}+${ex_edm}+g" $filename     # Fix edm paths
-    sed -i "s+${scripts_placeholder}+${scripts_loc}+g" $filename    # Fix scripts paths
+    sed -i "s+${config_placeholder}+${config_loc}+g" $filename   # Fix scripts paths
 done
 echo "Setting up screens for fixed target"
 for filename in $ft_edm/*.edl; do
     sed -i "s+${edm_placeholder}+${ft_edm}+g" $filename     # Fix edm paths
-    sed -i "s+${scripts_placeholder}+${scripts_loc}+g" $filename    # Fix scripts paths
+    sed -i "s+${config_placeholder}+${config_loc}+g" $filename   # Fix scripts paths
 done
 
 echo "EDM screen set up completed."
