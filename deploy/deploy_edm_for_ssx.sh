@@ -40,12 +40,12 @@ cp $scripts_loc/fixed_target/FT-gui-edm/*.edl $ft_edm
 echo "Setting up screen for extruder"
 for filename in $ex_edm/*.edl; do
     sed -i "s+${edm_placeholder}+${ex_edm}+g" $filename     # Fix edm paths
-    sed -i "s+${config_placeholder}+${config_loc}+g" $filename   # Fix scripts paths
+    sed -i "s+${config_placeholder}+${config_loc}+g" $filename   # Fix config paths
 done
 echo "Setting up screens for fixed target"
 for filename in $ft_edm/*.edl; do
     sed -i "s+${edm_placeholder}+${ft_edm}+g" $filename     # Fix edm paths
-    sed -i "s+${config_placeholder}+${config_loc}+g" $filename   # Fix scripts paths
+    sed -i "s+${config_placeholder}+${config_loc}+g" $filename   # Fix config paths
 done
 
 echo "EDM screen set up completed."
