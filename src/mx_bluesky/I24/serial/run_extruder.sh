@@ -6,9 +6,6 @@ edm_path=$1
 # Get the directory of this script
 current=$( realpath "$( dirname "$0" )" )
 
-# Start rabbitMQ here 
-# podman run -it --rm --net host rmohr/activemq:5.15.9-alpine
-
 # Start the blueapi worker using the config file in this module
 echo "Starting the blueapi runner"
 blueapi -c "${current}/blueapi_config.yaml" serve &
