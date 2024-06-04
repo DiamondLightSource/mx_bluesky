@@ -114,8 +114,12 @@ def initialise_stages() -> MsgGenerator:
 
 
 @log.log_on_entry
-def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT) -> MsgGenerator:
-    param_path = _coerce_to_path(param_path)
+def write_parameter_file(
+    input_param_path: Optional[str] = None,
+) -> MsgGenerator:
+    if not input_param_path:
+        input_param_path = PARAM_FILE_PATH_FT.as_posix()
+    param_path = _coerce_to_path(input_param_path)
     param_path.mkdir(parents=True, exist_ok=True)
 
     logger.info(
@@ -571,6 +575,7 @@ def load_lite_map(litemap_path: Path | str = LITEMAP_PATH) -> MsgGenerator:
 def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
     params = startup.read_parameter_file()
     fullmap_path = _coerce_to_path(fullmap_path)
+    fullmap_path.mkdir(parents=True, exist_ok=True)
 
     fullmap_fid = fullmap_path / f"{str(caget(pv.me14e_gp5))}.spec"
     logger.info("Opening %s" % fullmap_fid)
@@ -697,10 +702,10 @@ def laser_control(laser_setting: str, pmac: PMAC = None) -> MsgGenerator:
 
 
 @log.log_on_entry
-def scrape_mtr_directions(param_path: Path | str = CS_FILES_PATH):
-    param_path = _coerce_to_path(param_path)
+def scrape_mtr_directions(motor_file_path: Path | str = CS_FILES_PATH):
+    motor_file_path = _coerce_to_path(motor_file_path)
 
-    with open(param_path / "motor_direction.txt", "r") as f:
+    with open(motor_file_path / "motor_direction.txt", "r") as f:
         lines = f.readlines()
     mtr1_dir, mtr2_dir, mtr3_dir = 1.0, 1.0, 1.0
     for line in lines:
@@ -737,13 +742,17 @@ def fiducial(point: int = 1, param_path: Optional[str] = None) -> MsgGenerator:
     f_y = rbv_2
     f_z = rbv_3
 
-    logger.info("Writing Fiducial File %s/fiducial_%s.txt" % (param_path, point))
+    # TODO Find a better place for this
+    PARAM_FILE_PATH_FT.mkdir(parents=True, exist_ok=True)
+    logger.info(
+        "Writing Fiducial File %s/fiducial_%s.txt" % (PARAM_FILE_PATH_FT, point)
+    )
     logger.info("MTR\tRBV\tRAW\tCorr\tf_value")
     logger.info("MTR1\t%1.4f\t%i\t%i\t%1.4f" % (rbv_1, raw_1, mtr1_dir, f_x))
     logger.info("MTR2\t%1.4f\t%i\t%i\t%1.4f" % (rbv_2, raw_2, mtr2_dir, f_y))
     logger.info("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
 
-    with open(param_file_path / f"fiducial_{point}.txt", "w") as f:
+    with open(PARAM_FILE_PATH_FT / f"fiducial_{point}.txt", "w") as f:
         f.write("MTR\tRBV\tRAW\tCorr\tf_value\n")
         f.write("MTR1\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_1, raw_1, mtr1_dir, f_x))
         f.write("MTR2\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_2, raw_2, mtr2_dir, f_y))
@@ -752,7 +761,7 @@ def fiducial(point: int = 1, param_path: Optional[str] = None) -> MsgGenerator:
     yield from bps.null()
 
 
-def scrape_mtr_fiducials(point: int, param_path: Path | str = CS_FILES_PATH):
+def scrape_mtr_fiducials(point: int, param_path: Path | str = PARAM_FILE_PATH_FT):
     param_path = _coerce_to_path(param_path)
 
     with open(param_path / f"fiducial_{point}.txt", "r") as f:
@@ -926,16 +935,16 @@ def cs_maker(pmac: PMAC = None) -> MsgGenerator:
     else:
         pmac.home_stages()
     logger.debug("CSmaker done.")
-    yield from bps.null()
+    yield from bps.sleep(5)
 
 
 def cs_reset(pmac: PMAC = None) -> MsgGenerator:
     """Used to clear CS when using Custom Chip"""
     if not pmac:
         pmac = i24.pmac()
-    cs1 = "#1->-10000X+0Y+0Z"
-    cs2 = "#2->+0X+10000Y+0Z"
-    cs3 = "#3->0X+0Y+10000Z"
+    cs1 = "#1->10000X+0Y+0Z"
+    cs2 = "#2->+0X-10000Y+0Z"
+    cs3 = "#3->0X+0Y-10000Z"
     strg = "\n".join([cs1, cs2, cs3])
     print(strg)
     pmac.pmac_string.set("&2").wait()
