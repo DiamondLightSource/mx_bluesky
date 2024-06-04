@@ -722,13 +722,10 @@ def scrape_mtr_directions(motor_file_path: Path | str = CS_FILES_PATH):
 
 
 @log.log_on_entry
-def fiducial(point: int = 1, param_path: Optional[str] = None) -> MsgGenerator:
-    if not param_path:
-        param_path = CS_FILES_PATH.as_posix()
+def fiducial(point: int = 1) -> MsgGenerator:
     scale = 10000.0  # noqa: F841
-    param_file_path = _coerce_to_path(param_path)
 
-    mtr1_dir, mtr2_dir, mtr3_dir = scrape_mtr_directions(param_file_path)
+    mtr1_dir, mtr2_dir, mtr3_dir = scrape_mtr_directions(CS_FILES_PATH)
 
     rbv_1 = float(caget(pv.me14e_stage_x + ".RBV"))
     rbv_2 = float(caget(pv.me14e_stage_y + ".RBV"))
@@ -742,17 +739,15 @@ def fiducial(point: int = 1, param_path: Optional[str] = None) -> MsgGenerator:
     f_y = rbv_2
     f_z = rbv_3
 
-    # TODO Find a better place for this
-    PARAM_FILE_PATH_FT.mkdir(parents=True, exist_ok=True)
-    logger.info(
-        "Writing Fiducial File %s/fiducial_%s.txt" % (PARAM_FILE_PATH_FT, point)
-    )
+    output_param_path = PARAM_FILE_PATH_FT
+    output_param_path.mkdir(parents=True, exist_ok=True)
+    logger.info("Writing Fiducial File %s/fiducial_%s.txt" % (output_param_path, point))
     logger.info("MTR\tRBV\tRAW\tCorr\tf_value")
     logger.info("MTR1\t%1.4f\t%i\t%i\t%1.4f" % (rbv_1, raw_1, mtr1_dir, f_x))
     logger.info("MTR2\t%1.4f\t%i\t%i\t%1.4f" % (rbv_2, raw_2, mtr2_dir, f_y))
     logger.info("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
 
-    with open(PARAM_FILE_PATH_FT / f"fiducial_{point}.txt", "w") as f:
+    with open(output_param_path / f"fiducial_{point}.txt", "w") as f:
         f.write("MTR\tRBV\tRAW\tCorr\tf_value\n")
         f.write("MTR1\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_1, raw_1, mtr1_dir, f_x))
         f.write("MTR2\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_2, raw_2, mtr2_dir, f_y))
