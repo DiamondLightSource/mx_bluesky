@@ -22,6 +22,7 @@ dependencies = [
     "opencv-python",
     "pydantic",
     "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@main",
+    "blueapi>=0.4.3-a3",
 ]
 dynamic = ["version"]
 license.file = "LICENSE"
@@ -72,7 +73,7 @@ ignore_missing_imports = true # Ignore missing stubs in imported modules
 src = ["src", "tests"]
 line-length = 88
 lint.extend-ignore = [
-    "E501", # Line too long
+    #"E501", # Line too long
     "F811", # support typing.overload decorator
 ]
 lint.select = [
