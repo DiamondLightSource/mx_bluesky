@@ -53,6 +53,7 @@ def setup_logging():
 
 @log.log_on_entry
 def initialise_stages() -> MsgGenerator:
+    setup_logging()
     # commented out filter lines 230719 as this stage not connected
     logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
 
@@ -115,6 +116,7 @@ def initialise_stages() -> MsgGenerator:
 def write_parameter_file(
     input_param_path: Optional[str] = None,
 ) -> MsgGenerator:
+    setup_logging()
     if not input_param_path:
         input_param_path = PARAM_FILE_PATH_FT.as_posix()
     param_path = _coerce_to_path(input_param_path)
@@ -202,6 +204,7 @@ def define_current_chip(
     chipid: str = "oxford",
     pvar_path: Optional[str] = None,
 ) -> MsgGenerator:
+    setup_logging()
     logger.debug("Run load stock map for just the first block")
     if not pvar_path:
         pvar_path = PVAR_FILE_PATH.as_posix()
@@ -231,6 +234,7 @@ def define_current_chip(
 
 @log.log_on_entry
 def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
+    setup_logging()
     if not map_path:
         map_path = LITEMAP_PATH.as_posix()
     litemap_path = _coerce_to_path(map_path)
@@ -254,6 +258,7 @@ def upload_parameters(
     chipid: str = "oxford",
     map_path: Optional[str] = None,
 ) -> MsgGenerator:
+    setup_logging()
     logger.info("Uploading Parameters to the GeoBrick")
     if chipid == "oxford":
         caput(pv.me14e_gp1, 0)
@@ -311,6 +316,7 @@ def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
 
 @log.log_on_entry
 def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
+    setup_logging()
     logger.info("Adjusting Lite Map EDM Screen")
     logger.debug("Please wait, adjusting lite map")
     #
@@ -512,6 +518,7 @@ def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
 
 @log.log_on_entry
 def load_lite_map(map_path: Optional[str] = None) -> MsgGenerator:
+    setup_logging()
     logger.debug("Run load stock map with 'clear' setting.")
     yield from load_stock_map("clear")
     # fmt: off
@@ -597,6 +604,7 @@ def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
 
 @log.log_on_entry
 def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
+    setup_logging()
     logger.info(f"Move to: {place}")
     if place == Fiducials.zero:
         logger.info("Chip aspecific move.")
@@ -628,6 +636,8 @@ def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
 @log.log_on_entry
 def moveto_preset(place: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
+    setup_logging()
+
     def move_xyz(x, y, z):
         move_status = pmac.x.move(x, wait=False)
         move_status &= pmac.y.move(y, wait=False)
@@ -660,6 +670,7 @@ def moveto_preset(place: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
 @log.log_on_entry
 def laser_control(laser_setting: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
+    setup_logging()
     logger.info("Move to: %s" % laser_setting)
     if laser_setting == "laser1on":  # these are in laser edm
         logger.info("Laser 1 /BNC2 shutter is open")
@@ -722,6 +733,7 @@ def scrape_mtr_directions(motor_file_path: Path | str = CS_FILES_PATH):
 
 @log.log_on_entry
 def fiducial(point: int = 1) -> MsgGenerator:
+    setup_logging()
     scale = 10000.0  # noqa: F841
 
     mtr1_dir, mtr2_dir, mtr3_dir = scrape_mtr_directions(CS_FILES_PATH)
@@ -797,6 +809,7 @@ def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     This should be measured in situ prior to expriment, ie. measure by hand using
     opposite and adjacent RBV after calibration of scale factors.
     """
+    setup_logging()
     chip_type = int(caget(pv.me14e_gp1))
     fiducial_dict = {}
     fiducial_dict[0] = [25.400, 25.400]
@@ -931,6 +944,7 @@ def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
 def cs_reset(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     """Used to clear CS when using Custom Chip"""
+    setup_logging()
     cs1 = "#1->10000X+0Y+0Z"
     cs2 = "#2->+0X-10000Y+0Z"
     cs3 = "#3->0X+0Y-10000Z"
@@ -946,6 +960,7 @@ def cs_reset(pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
 @log.log_on_entry
 def pumpprobe_calc() -> MsgGenerator:
+    setup_logging()
     logger.info("Calculate and show exposure and dwell time for each option.")
     exptime = float(caget(pv.me14e_exptime))
     pumpexptime = float(caget(pv.me14e_gp103))
@@ -974,6 +989,7 @@ def pumpprobe_calc() -> MsgGenerator:
 
 @log.log_on_entry
 def block_check() -> MsgGenerator:
+    setup_logging()
     caput(pv.me14e_gp9, 0)
     while True:
         if int(caget(pv.me14e_gp9)) == 0:
@@ -1029,9 +1045,7 @@ def parse_args_and_run_parsed_function(args):
 
 if __name__ == "__main__":
     setup_logging()
-    # TODO have this in each function
-    # Really tempted to make a wrapper ...
-    # Logging issue on blueapi see
+    # This is now in all functions. TODO See logging issue on blueapi
     # https://github.com/DiamondLightSource/blueapi/issues/494
 
     parse_args_and_run_parsed_function(sys.argv[1:])

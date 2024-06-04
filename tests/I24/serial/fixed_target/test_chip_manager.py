@@ -36,8 +36,11 @@ def fake_pmac() -> MagicMock:
     return mock_pmac
 
 
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_moveto_oxford_origin(fake_caget: MagicMock, fake_pmac: MagicMock, RE):
+def test_moveto_oxford_origin(
+    fake_caget: MagicMock, fake_log: MagicMock, fake_pmac: MagicMock, RE
+):
     fake_caget.return_value = 0
     RE(moveto(Fiducials.origin, fake_pmac))
     assert fake_caget.call_count == 1
@@ -45,8 +48,11 @@ def test_moveto_oxford_origin(fake_caget: MagicMock, fake_pmac: MagicMock, RE):
     fake_pmac.y.assert_has_calls([call.move(0.0, wait=False)])
 
 
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_moveto_oxford_inner_f1(fake_caget: MagicMock, fake_pmac: MagicMock, RE):
+def test_moveto_oxford_inner_f1(
+    fake_caget: MagicMock, fake_log: MagicMock, fake_pmac: MagicMock, RE
+):
     fake_caget.return_value = 1
     RE(moveto(Fiducials.fid1, fake_pmac))
     assert fake_caget.call_count == 1
@@ -54,13 +60,17 @@ def test_moveto_oxford_inner_f1(fake_caget: MagicMock, fake_pmac: MagicMock, RE)
     fake_pmac.y.assert_has_calls([call.move(0.0, wait=False)])
 
 
-def test_moveto_chip_unknown(fake_pmac: MagicMock, RE):
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
+def test_moveto_chip_unknown(fake_log: MagicMock, fake_pmac: MagicMock, RE):
     RE(moveto("zero", fake_pmac))
     fake_pmac.pmac_string.assert_has_calls([call.set("!x0y0z0"), call.set().wait()])
 
 
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
-def test_moveto_preset(fake_caput: MagicMock, fake_pmac: MagicMock, RE):
+def test_moveto_preset(
+    fake_caput: MagicMock, fake_log: MagicMock, fake_pmac: MagicMock, RE
+):
     RE(moveto_preset("zero", fake_pmac))
     fake_pmac.pmac_string.assert_has_calls([call.set("!x0y0z0"), call.set().wait()])
 
@@ -75,9 +85,11 @@ def test_moveto_preset(fake_caput: MagicMock, fake_pmac: MagicMock, RE):
         ("microdrop_position", 0, [6.0, -7.8, 0.0]),
     ],
 )
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
 def test_moveto_preset_with_pmac_move(
     fake_caput: MagicMock,
+    fake_log: MagicMock,
     pos_request: str,
     expected_num_caput: int,
     expected_pmac_move: List,
@@ -101,8 +113,13 @@ def test_moveto_preset_with_pmac_move(
         ("laser2off", " M812=0 M811=1"),
     ],
 )
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 def test_laser_control_on_and_off(
-    laser_setting: str, expected_pmac_string: str, fake_pmac: MagicMock, RE
+    fake_log: MagicMock,
+    laser_setting: str,
+    expected_pmac_string: str,
+    fake_pmac: MagicMock,
+    RE,
 ):
     RE(laser_control(laser_setting, fake_pmac))
 
@@ -111,8 +128,11 @@ def test_laser_control_on_and_off(
     )
 
 
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_laser_control_burn_setting(fake_caget: MagicMock, fake_pmac: MagicMock, RE):
+def test_laser_control_burn_setting(
+    fake_caget: MagicMock, fake_log: MagicMock, fake_pmac: MagicMock, RE
+):
     fake_caget.return_value = 0.1
     RE(laser_control("laser1burn", fake_pmac))
 
@@ -146,7 +166,8 @@ def test_scrape_mtr_fiducials():
     assert res == (0.0, 1.0, 0.0)
 
 
-def test_cs_reset(fake_pmac: MagicMock, RE):
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
+def test_cs_reset(fake_log: MagicMock, fake_pmac: MagicMock, RE):
     RE(cs_reset(fake_pmac))
     fake_pmac.pmac_string.assert_has_calls(
         [
@@ -173,7 +194,9 @@ def test_cs_reset(fake_pmac: MagicMock, RE):
 @patch(
     "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.scrape_mtr_fiducials"
 )
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 def test_cs_maker_raises_error_for_invalid_json(
+    fake_log: MagicMock,
     fake_fid: MagicMock,
     fake_dir: MagicMock,
     fake_caget: MagicMock,
@@ -197,7 +220,9 @@ def test_cs_maker_raises_error_for_invalid_json(
 @patch(
     "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.scrape_mtr_fiducials"
 )
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 def test_cs_maker_raises_error_for_missing_key_in_json(
+    fake_log: MagicMock,
     fake_fid: MagicMock,
     fake_dir: MagicMock,
     fake_caget: MagicMock,
@@ -221,7 +246,9 @@ def test_cs_maker_raises_error_for_missing_key_in_json(
 @patch(
     "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.scrape_mtr_fiducials"
 )
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 def test_cs_maker_raises_error_for_wrong_direction_in_json(
+    fake_log: MagicMock,
     fake_fid: MagicMock,
     fake_dir: MagicMock,
     fake_caget: MagicMock,
@@ -234,9 +261,12 @@ def test_cs_maker_raises_error_for_wrong_direction_in_json(
         RE(cs_maker(fake_pmac))
 
 
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caget")
-def test_pumpprobe_calc(fake_caget: MagicMock, fake_caput: MagicMock, RE):
+def test_pumpprobe_calc(
+    fake_caget: MagicMock, fake_caput: MagicMock, fake_log: MagicMock, RE
+):
     fake_caget.side_effect = [0.01, 0.005]
     RE(pumpprobe_calc())
     assert fake_caget.call_count == 2
