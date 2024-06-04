@@ -1037,5 +1037,7 @@ if __name__ == "__main__":
     setup_logging()
     # TODO have this in each function
     # Really tempted to make a wrapper ...
+    # Logging issue on blueapi see
+    # https://github.com/DiamondLightSource/blueapi/issues/494
 
     parse_args_and_run_parsed_function(sys.argv[1:])
