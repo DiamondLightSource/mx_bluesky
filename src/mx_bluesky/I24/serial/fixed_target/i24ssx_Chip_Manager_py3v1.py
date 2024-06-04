@@ -89,11 +89,13 @@ def initialise_stages() -> MsgGenerator:
     caput(pv.me14e_pmac_str, "m708=100 m709=150")
     caput(pv.me14e_pmac_str, "m808=100 m809=150")
 
+    # TODO Split this out.
+    # Temporarily disabled for testing
     # Define detector in use
-    logger.debug("Define detector in use.")
-    det_type = get_detector_type()
+    # logger.debug("Define detector in use.")
+    # det_type = get_detector_type()
 
-    caput(pv.pilat_cbftemplate, 0)
+    # caput(pv.pilat_cbftemplate, 0)
 
     sleep(0.1)
     logger.info("Clearing General Purpose PVs 1-120")
@@ -104,7 +106,7 @@ def initialise_stages() -> MsgGenerator:
         sys.stdout.flush()
 
     caput(pv.me14e_gp100, "press set params to read visit")
-    caput(pv.me14e_gp101, det_type.name)
+    # caput(pv.me14e_gp101, det_type.name)
 
     logger.info("Initialisation Complete")
     yield from bps.null()

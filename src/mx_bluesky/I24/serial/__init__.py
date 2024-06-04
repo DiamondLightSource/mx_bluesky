@@ -22,7 +22,6 @@ from .fixed_target.i24ssx_Chip_Manager_py3v1 import (
     upload_parameters,
     write_parameter_file,
 )
-from .fixed_target.i24ssx_moveonclick import start_viewer
 from .setup_beamline.setup_detector import setup_detector_stage
 
 __all__ = [
@@ -47,5 +46,4 @@ __all__ = [
     "save_screen_map",
     "upload_parameters",
     "write_parameter_file",
-    "start_viewer",
 ]
