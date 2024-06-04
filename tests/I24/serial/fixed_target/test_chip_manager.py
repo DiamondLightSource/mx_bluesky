@@ -152,11 +152,11 @@ def test_cs_reset(fake_pmac: MagicMock, RE):
         [
             call.set("&2"),
             call.set().wait(),
-            call.set("#1->-10000X+0Y+0Z"),
+            call.set("#1->10000X+0Y+0Z"),
             call.set().wait(),
-            call.set("#2->+0X+10000Y+0Z"),
+            call.set("#2->+0X-10000Y+0Z"),
             call.set().wait(),
-            call.set("#3->0X+0Y+10000Z"),
+            call.set("#3->0X+0Y-10000Z"),
             call.set().wait(),
         ]
     )
