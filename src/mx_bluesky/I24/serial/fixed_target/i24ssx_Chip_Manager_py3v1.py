@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 from pprint import pformat
 from time import sleep
+from typing import Optional
 
 import bluesky.plan_stubs as bps
 import numpy as np
@@ -716,11 +717,13 @@ def scrape_mtr_directions(param_path: Path | str = CS_FILES_PATH):
 
 
 @log.log_on_entry
-def fiducial(point: int = 1, param_path: Path | str = CS_FILES_PATH) -> MsgGenerator:
+def fiducial(point: int = 1, param_path: Optional[str] = None) -> MsgGenerator:
+    if not param_path:
+        param_path = CS_FILES_PATH.as_posix()
     scale = 10000.0  # noqa: F841
-    param_path = _coerce_to_path(param_path)
+    param_file_path = _coerce_to_path(param_path)
 
-    mtr1_dir, mtr2_dir, mtr3_dir = scrape_mtr_directions(param_path)
+    mtr1_dir, mtr2_dir, mtr3_dir = scrape_mtr_directions(param_file_path)
 
     rbv_1 = float(caget(pv.me14e_stage_x + ".RBV"))
     rbv_2 = float(caget(pv.me14e_stage_y + ".RBV"))
@@ -740,7 +743,7 @@ def fiducial(point: int = 1, param_path: Path | str = CS_FILES_PATH) -> MsgGener
     logger.info("MTR2\t%1.4f\t%i\t%i\t%1.4f" % (rbv_2, raw_2, mtr2_dir, f_y))
     logger.info("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
 
-    with open(param_path / f"fiducial_{point}.txt", "w") as f:
+    with open(param_file_path / f"fiducial_{point}.txt", "w") as f:
         f.write("MTR\tRBV\tRAW\tCorr\tf_value\n")
         f.write("MTR1\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_1, raw_1, mtr1_dir, f_x))
         f.write("MTR2\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_2, raw_2, mtr2_dir, f_y))
