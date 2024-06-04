@@ -3,6 +3,9 @@
 # Get edm path from input
 edm_path=$1
 
+# Export env variable for the stages edm to work properly
+export EDMDATAFILES="/dls_sw/prod/R3.14.12.3/support/motor/6-7-1dls14/motorApp/opi/edl"
+
 # Get the directory of this script
 current=$( realpath "$( dirname "$0" )" )
 
