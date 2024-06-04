@@ -49,6 +49,7 @@ class PumpProbeSetting(IntEnum):
     Repeat3 = 5
     Repeat5 = 6
     Repeat10 = 7
+    Medium1 = 8
 
 
 class Fiducials(str, Enum):
