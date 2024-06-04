@@ -14,6 +14,7 @@ from typing import Dict, List
 
 import numpy as np
 from blueapi.core import MsgGenerator
+from dodal.common import inject
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 
@@ -555,7 +556,9 @@ def finish_i24(
     return end_time
 
 
-def run_fixed_target_plan(zebra: Zebra, pmac: PMAC) -> MsgGenerator:
+def run_fixed_target_plan(
+    zebra: Zebra = inject("zebra"), pmac: PMAC = inject("pmac")
+) -> MsgGenerator:
     setup_logging()
     # ABORT BUTTON
     logger.info("Running a chip collection on I24")

@@ -190,7 +190,6 @@ def start_viewer(oav1: str = OAV1_CAM):
 
     # Clear cameraCapture instance
     cap.release()
-    # yield from bps.null()
 
 
 if __name__ == "__main__":

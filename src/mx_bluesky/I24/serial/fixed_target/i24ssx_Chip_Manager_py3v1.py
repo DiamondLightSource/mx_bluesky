@@ -18,7 +18,7 @@ from typing import Optional
 import bluesky.plan_stubs as bps
 import numpy as np
 from blueapi.core import MsgGenerator
-from dodal.beamlines import i24
+from dodal.common import inject
 from dodal.devices.i24.pmac import PMAC
 
 from mx_bluesky.I24.serial import log
@@ -200,9 +200,11 @@ def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
 @log.log_on_entry
 def define_current_chip(
     chipid: str = "oxford",
-    param_path: Path | str = PVAR_FILE_PATH,
+    pvar_path: Optional[str] = None,
 ) -> MsgGenerator:
     logger.debug("Run load stock map for just the first block")
+    if not pvar_path:
+        pvar_path = PVAR_FILE_PATH.as_posix()
     yield from load_stock_map("Just The First Block")
     """
     Not sure what this is for:
@@ -214,7 +216,7 @@ def define_current_chip(
     if chipid == "oxford":
         caput(pv.me14e_gp1, 1)
 
-    param_path = _coerce_to_path(param_path)
+    param_path = _coerce_to_path(pvar_path)
 
     with open(param_path / f"{chipid}.pvar", "r") as f:
         logger.info("Opening %s.pvar" % chipid)
@@ -250,13 +252,15 @@ def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
 @log.log_on_entry
 def upload_parameters(
     chipid: str = "oxford",
-    litemap_path: Path | str = LITEMAP_PATH,
+    map_path: Optional[str] = None,
 ) -> MsgGenerator:
     logger.info("Uploading Parameters to the GeoBrick")
     if chipid == "oxford":
         caput(pv.me14e_gp1, 0)
         width = 8
-    litemap_path = _coerce_to_path(litemap_path)
+    if not map_path:
+        map_path = LITEMAP_PATH.as_posix()
+    litemap_path = _coerce_to_path(map_path)
 
     with open(litemap_path / "currentchip.map", "r") as f:
         logger.info("Chipid %s" % chipid)
@@ -507,7 +511,7 @@ def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
 
 
 @log.log_on_entry
-def load_lite_map(litemap_path: Path | str = LITEMAP_PATH) -> MsgGenerator:
+def load_lite_map(map_path: Optional[str] = None) -> MsgGenerator:
     logger.debug("Run load stock map with 'clear' setting.")
     yield from load_stock_map("clear")
     # fmt: off
@@ -552,7 +556,9 @@ def load_lite_map(litemap_path: Path | str = LITEMAP_PATH) -> MsgGenerator:
                 btn_names[button_name] = label
         block_dict = btn_names
 
-    litemap_path = _coerce_to_path(litemap_path)
+    if not map_path:
+        map_path = LITEMAP_PATH.as_posix()
+    litemap_path = _coerce_to_path(map_path)
 
     litemap_fid = str(caget(pv.me14e_gp5)) + ".lite"
     logger.info("Please wait, loading LITE map")
@@ -590,9 +596,7 @@ def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
 
 
 @log.log_on_entry
-def moveto(place: str = "origin", pmac: PMAC = None) -> MsgGenerator:
-    if not pmac:
-        pmac = i24.pmac()
+def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
     logger.info(f"Move to: {place}")
     if place == Fiducials.zero:
         logger.info("Chip aspecific move.")
@@ -623,10 +627,7 @@ def moveto(place: str = "origin", pmac: PMAC = None) -> MsgGenerator:
 
 
 @log.log_on_entry
-def moveto_preset(place: str, pmac: PMAC = None) -> MsgGenerator:
-    if not PMAC:
-        pmac = i24.pmac()
-
+def moveto_preset(place: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
     def move_xyz(x, y, z):
         move_status = pmac.x.move(x, wait=False)
         move_status &= pmac.y.move(y, wait=False)
@@ -658,10 +659,8 @@ def moveto_preset(place: str, pmac: PMAC = None) -> MsgGenerator:
 
 
 @log.log_on_entry
-def laser_control(laser_setting: str, pmac: PMAC = None) -> MsgGenerator:
+def laser_control(laser_setting: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
     logger.info("Move to: %s" % laser_setting)
-    if not pmac:
-        pmac = i24.pmac()
     if laser_setting == "laser1on":  # these are in laser edm
         logger.info("Laser 1 /BNC2 shutter is open")
         # Use M712 = 0 if triggering on falling edge. M712 =1 if on rising edge
@@ -768,7 +767,7 @@ def scrape_mtr_fiducials(point: int, param_path: Path | str = PARAM_FILE_PATH_FT
 
 
 @log.log_on_entry
-def cs_maker(pmac: PMAC = None) -> MsgGenerator:
+def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     """
     Coordinate system.
 
@@ -798,9 +797,6 @@ def cs_maker(pmac: PMAC = None) -> MsgGenerator:
     This should be measured in situ prior to expriment, ie. measure by hand using
     opposite and adjacent RBV after calibration of scale factors.
     """
-    if not pmac:
-        pmac = i24.pmac()
-
     chip_type = int(caget(pv.me14e_gp1))
     fiducial_dict = {}
     fiducial_dict[0] = [25.400, 25.400]
@@ -933,10 +929,8 @@ def cs_maker(pmac: PMAC = None) -> MsgGenerator:
     yield from bps.sleep(5)
 
 
-def cs_reset(pmac: PMAC = None) -> MsgGenerator:
+def cs_reset(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     """Used to clear CS when using Custom Chip"""
-    if not pmac:
-        pmac = i24.pmac()
     cs1 = "#1->10000X+0Y+0Z"
     cs2 = "#2->+0X-10000Y+0Z"
     cs3 = "#3->0X+0Y-10000Z"

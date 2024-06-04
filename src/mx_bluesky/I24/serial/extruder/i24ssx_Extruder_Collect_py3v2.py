@@ -14,11 +14,10 @@ from datetime import datetime
 from pathlib import Path
 from pprint import pformat
 from time import sleep
-from typing import Optional
 
 import bluesky.plan_stubs as bps
 from blueapi.core import MsgGenerator
-from dodal.beamlines import i24
+from dodal.common import inject
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3, Zebra
 
 from mx_bluesky.I24.serial import log
@@ -89,7 +88,7 @@ def initialise_extruder() -> MsgGenerator:
 
 
 @log.log_on_entry
-def laser_check(mode: str, zebra: Optional[Zebra] = None) -> MsgGenerator:
+def laser_check(mode: str, zebra: Zebra = inject("zebra")) -> MsgGenerator:
     """Plan to open the shutter and check the laser beam from the viewer by pressing \
         'Laser On' and 'Laser Off' buttons on the edm.
 
@@ -104,8 +103,6 @@ def laser_check(mode: str, zebra: Optional[Zebra] = None) -> MsgGenerator:
     source, and viceversa.
     """
     setup_logging()
-    if not zebra:
-        zebra = i24.zebra()
     logger.debug(f"Laser check: {mode}")
 
     det_type = get_detector_type()
@@ -174,7 +171,7 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH):
 
 
 @log.log_on_entry
-def run_extruder_plan(zebra: Zebra) -> MsgGenerator:
+def run_extruder_plan(zebra: Zebra = inject("zebra")) -> MsgGenerator:
     setup_logging()
     start_time = datetime.now()
     logger.info("Collection start time: %s" % start_time.ctime())

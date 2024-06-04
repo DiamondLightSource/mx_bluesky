@@ -2,15 +2,13 @@
 Utilities for defining the detector in use, and moving the stage.
 """
 
-import argparse
 import logging
 import time
 from enum import IntEnum
 
 import bluesky.plan_stubs as bps
 from blueapi.core import MsgGenerator
-from bluesky.run_engine import RunEngine
-from dodal.beamlines import i24
+from dodal.common import inject
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 
 from mx_bluesky.I24.serial import log
@@ -96,8 +94,9 @@ def _get_requested_detector(det_type_pv: str) -> str:
 
 
 def setup_detector_stage(
-    detector_stage: DetectorMotion, expt_type: SSXType
+    expt_type: SSXType, detector_stage: DetectorMotion = inject("detector_motion")
 ) -> MsgGenerator:
+    setup_logging()
     # Grab the correct PV depending on experiment
     # Its value is set with MUX on edm screen
     det_type_pv = EXPT_TYPE_DETECTOR_PVS[expt_type]
@@ -108,20 +107,3 @@ def setup_detector_stage(
     )
     yield from _move_detector_stage(detector_stage, det_y_target)
     logger.info("Detector setup done.")
-
-
-if __name__ == "__main__":
-    setup_logging()
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "expt",
-        type=str,
-        choices=[expt.value for expt in SSXType],
-        help="Type of serial experiment being run.",
-    )
-    args = parser.parse_args()
-    expt_type = SSXType(args.expt)
-    RE = RunEngine()
-    # Use dodal device for move
-    detector_stage = i24.detector_motion()
-    RE(setup_detector_stage(detector_stage, expt_type))
