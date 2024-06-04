@@ -230,8 +230,10 @@ def define_current_chip(
 
 
 @log.log_on_entry
-def save_screen_map(litemap_path: Path | str = LITEMAP_PATH) -> MsgGenerator:
-    litemap_path = _coerce_to_path(litemap_path)
+def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
+    if not map_path:
+        map_path = LITEMAP_PATH.as_posix()
+    litemap_path = _coerce_to_path(map_path)
     litemap_path.mkdir(parents=True, exist_ok=True)
 
     logger.info("Saving %s currentchip.map" % litemap_path.as_posix())
