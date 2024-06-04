@@ -5,9 +5,8 @@ Robin Owen 12 Jan 2021
 
 import logging
 
-import bluesky.plan_stubs as bps
 import cv2 as cv
-from blueapi.core import MsgGenerator
+from dodal.beamlines import i24
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.oav.oav_detector import OAV
 
@@ -129,7 +128,10 @@ def update_ui(oav, frame):
     cv.imshow("OAV1view", frame)
 
 
-def start_viewer(oav: OAV, pmac: PMAC, oav1: str = OAV1_CAM) -> MsgGenerator:
+def start_viewer(oav1: str = OAV1_CAM):
+    # Get devices out of dodal
+    oav: OAV = i24.oav()
+    pmac: PMAC = i24.pmac()
     # Create a video caputure from OAV1
     cap = cv.VideoCapture(oav1)
 
@@ -188,8 +190,8 @@ def start_viewer(oav: OAV, pmac: PMAC, oav1: str = OAV1_CAM) -> MsgGenerator:
 
     # Clear cameraCapture instance
     cap.release()
-    yield from bps.null()
+    # yield from bps.null()
 
 
-# if __name__ == "__main__":
-# start_viewer()
+if __name__ == "__main__":
+    start_viewer()
