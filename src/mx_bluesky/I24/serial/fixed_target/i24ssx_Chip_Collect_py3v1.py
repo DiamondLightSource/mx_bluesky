@@ -37,9 +37,11 @@ from mx_bluesky.I24.serial.parameters.constants import (
 from mx_bluesky.I24.serial.setup_beamline import caget, cagetstring, caput, pv
 from mx_bluesky.I24.serial.setup_beamline import setup_beamline as sup
 from mx_bluesky.I24.serial.setup_beamline.setup_zebra_plans import (
+    SHUTTER_OPEN_TIME,
     arm_zebra,
     close_fast_shutter,
     open_fast_shutter,
+    open_fast_shutter_at_each_position_plan,
     reset_zebra_when_collection_done_plan,
     setup_zebra_for_fastchip_plan,
 )
@@ -121,6 +123,7 @@ def get_chip_prog_values(
         PumpProbeSetting.NoPP,
         PumpProbeSetting.Short1,
         PumpProbeSetting.Short2,
+        PumpProbeSetting.Medium1,
     ]:
         pump_repeat_pvar = 0
     elif pump_repeat == PumpProbeSetting.Repeat1:
@@ -200,6 +203,11 @@ def load_motion_program_data(
         if bool(caget(pv.me14e_gp111)) is True:
             logger.info("Checker pattern setting enabled.")
             pmac.pmac_string.set("P1439=1").wait()
+        if pump_repeat == PumpProbeSetting.Medium1:
+            # Medium1 has time delays (Fast shutter opening time in ms)
+            pmac.pmac_string.set("P1441=50").wait()
+        else:
+            pmac.pmac_string.set("P1441=0").wait()
     else:
         logger.warning(f"Unknown Pump repeat, pump_repeat = {pump_repeat}")
         return
@@ -393,14 +401,20 @@ def start_i24(zebra: Zebra, parameters: FixedTargetParameters):
         )
 
         logger.debug("Arm Pilatus. Arm Zebra.")
+        shutter_time_offset = SHUTTER_OPEN_TIME if PumpProbeSetting.Medium1 else 0.0
         yield from setup_zebra_for_fastchip_plan(
             zebra,
             parameters.detector_name,
             num_gates,
             parameters.num_exposures,
             parameters.exposure_time_s,
+            shutter_time_offset,
             wait=True,
         )
+        if parameters.pump_repeat == PumpProbeSetting.Medium1:
+            yield from open_fast_shutter_at_each_position_plan(
+                zebra, parameters.num_exposures, parameters.exposure_time_s
+            )
         caput(pv.pilat_acquire, "1")  # Arm pilatus
         yield from arm_zebra(zebra)
         caput(pv.pilat_filename, filename)
@@ -454,14 +468,20 @@ def start_i24(zebra: Zebra, parameters: FixedTargetParameters):
         )
 
         logger.debug("Arm Zebra.")
+        shutter_time_offset = SHUTTER_OPEN_TIME if PumpProbeSetting.Medium1 else 0.0
         yield from setup_zebra_for_fastchip_plan(
             zebra,
             parameters.detector_name,
             num_gates,
             parameters.num_exposures,
             parameters.exposure_time_s,
+            shutter_time_offset,
             wait=True,
         )
+        if parameters.pump_repeat == PumpProbeSetting.Medium1:
+            yield from open_fast_shutter_at_each_position_plan(
+                zebra, parameters.num_exposures, parameters.exposure_time_s
+            )
         yield from arm_zebra(zebra)
 
         time.sleep(1.5)

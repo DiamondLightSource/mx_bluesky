@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 62
-y 160
+x 2970
+y 362
 w 900
 h 700
 font "arial-medium-r-18.0"
@@ -86,7 +86,7 @@ major 4
 minor 1
 release 1
 x 6
-y 305
+y 333
 w 271
 h 27
 font "arial-bold-r-24.0"
@@ -106,8 +106,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 8
-y 402
+x 21
+y 430
 w 128
 h 21
 font "arial-medium-r-18.0"
@@ -127,8 +127,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 9
-y 439
+x 22
+y 467
 w 276
 h 42
 font "arial-medium-r-18.0"
@@ -149,8 +149,8 @@ beginObjectProperties
 major 4
 minor 3
 release 0
-x 117
-y 488
+x 128
+y 518
 w 122
 h 37
 fgColor index 14
@@ -170,8 +170,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 139
-y 496
+x 152
+y 524
 w 79
 h 21
 font "arial-medium-r-18.0"
@@ -191,8 +191,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 142
-y 400
+x 155
+y 428
 w 75
 h 25
 controlPv "ME14E-MO-CHIP-01:expTime"
@@ -212,8 +212,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 426
-y 382
+x 422
+y 398
 w 75
 h 25
 controlPv "ME14E-MO-IOC-01:GP104"
@@ -233,8 +233,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 338
-y 384
+x 334
+y 400
 w 71
 h 21
 font "arial-medium-r-18.0"
@@ -254,8 +254,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 338
-y 417
+x 334
+y 433
 w 72
 h 21
 font "arial-medium-r-18.0"
@@ -275,8 +275,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 505
-y 384
+x 501
+y 400
 w 9
 h 21
 font "arial-medium-r-18.0"
@@ -296,8 +296,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 505
-y 417
+x 501
+y 433
 w 9
 h 21
 font "arial-medium-r-18.0"
@@ -317,8 +317,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 338
-y 449
+x 334
+y 465
 w 71
 h 21
 font "arial-medium-r-18.0"
@@ -338,8 +338,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 338
-y 482
+x 334
+y 498
 w 71
 h 21
 font "arial-medium-r-18.0"
@@ -359,8 +359,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 505
-y 449
+x 501
+y 465
 w 9
 h 21
 font "arial-medium-r-18.0"
@@ -380,8 +380,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 505
-y 482
+x 501
+y 498
 w 9
 h 21
 font "arial-medium-r-18.0"
@@ -401,8 +401,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 338
-y 513
+x 334
+y 529
 w 82
 h 21
 font "arial-medium-r-18.0"
@@ -422,8 +422,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 505
-y 513
+x 501
+y 529
 w 9
 h 21
 font "arial-medium-r-18.0"
@@ -444,7 +444,7 @@ major 4
 minor 1
 release 1
 x 548
-y 382
+y 398
 w 49
 h 21
 font "arial-medium-r-18.0"
@@ -465,7 +465,7 @@ major 4
 minor 1
 release 1
 x 557
-y 407
+y 423
 w 308
 h 108
 font "arial-medium-r-16.0"
@@ -490,7 +490,7 @@ major 4
 minor 0
 release 0
 x 542
-y 412
+y 428
 w 10
 h 10
 lineColor index 12
@@ -505,7 +505,7 @@ major 4
 minor 0
 release 0
 x 542
-y 446
+y 462
 w 10
 h 10
 lineColor index 12
@@ -520,7 +520,7 @@ major 4
 minor 0
 release 0
 x 542
-y 464
+y 480
 w 10
 h 10
 lineColor index 12
@@ -535,7 +535,7 @@ major 4
 minor 0
 release 0
 x 542
-y 483
+y 499
 w 10
 h 10
 lineColor index 12
@@ -549,8 +549,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 426
-y 415
+x 422
+y 431
 w 75
 h 25
 controlPv "ME14E-MO-IOC-01:GP105"
@@ -570,8 +570,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 426
-y 448
+x 422
+y 464
 w 75
 h 25
 controlPv "ME14E-MO-IOC-01:GP106"
@@ -591,8 +591,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 426
-y 479
+x 422
+y 495
 w 75
 h 25
 controlPv "ME14E-MO-IOC-01:GP107"
@@ -612,8 +612,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 426
-y 510
+x 422
+y 526
 w 75
 h 25
 controlPv "ME14E-MO-IOC-01:GP108"
@@ -633,8 +633,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 6
-y 346
+x 19
+y 374
 w 122
 h 42
 font "arial-medium-r-18.0"
@@ -654,8 +654,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 143
-y 354
+x 156
+y 382
 w 75
 h 25
 controlPv "ME14E-MO-IOC-01:GP103"
@@ -682,7 +682,7 @@ major 4
 minor 0
 release 0
 x 542
-y 501
+y 517
 w 10
 h 10
 lineColor index 12
@@ -707,7 +707,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py laser_control laser1off"
+  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto laser1off"
 }
 endObjectProperties
 
@@ -749,7 +749,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py laser_control laser1on"
+  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto laser1on"
 }
 endObjectProperties
 
@@ -800,8 +800,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 13
-y 574
+x 11
+y 594
 w 189
 h 27
 font "arial-bold-r-24.0"
@@ -822,7 +822,7 @@ major 4
 minor 1
 release 1
 x 283
-y 305
+y 333
 w 68
 h 27
 font "arial-bold-i-24.0"
@@ -862,8 +862,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 143
-y 617
+x 141
+y 637
 w 75
 h 25
 controlPv "ME14E-MO-IOC-01:GP109"
@@ -889,8 +889,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 23
-y 619
+x 21
+y 639
 w 112
 h 21
 font "arial-medium-r-18.0"
@@ -930,8 +930,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 234
-y 614
+x 232
+y 634
 w 142
 h 36
 font "arial-medium-r-16.0"
@@ -951,8 +951,8 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 317
-y 349
+x 313
+y 365
 w 207
 h 191
 lineColor index 14
@@ -976,7 +976,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py laser_control laser2off"
+  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto laser2off"
 }
 endObjectProperties
 
@@ -1018,7 +1018,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py laser_control laser2on"
+  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto laser2on"
 }
 endObjectProperties
 
@@ -1049,8 +1049,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 216
-y 574
+x 214
+y 594
 w 90
 h 27
 font "arial-bold-r-24.0"
@@ -1073,8 +1073,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 351
-y 352
+x 347
+y 368
 w 150
 h 21
 font "arial-medium-r-18.0"
@@ -1093,8 +1093,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 225
-y 355
+x 238
+y 383
 w 9
 h 21
 font "arial-medium-r-18.0"
@@ -1134,8 +1134,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 17
-y 155
+x 20
+y 127
 w 98
 h 21
 font "arial-medium-r-18.0"
@@ -1154,8 +1154,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 141
-y 152
+x 144
+y 124
 w 75
 h 25
 controlPv "ME14E-MO-IOC-01:GP103"
@@ -1181,8 +1181,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 223
-y 153
+x 226
+y 125
 w 9
 h 21
 font "arial-medium-r-18.0"
@@ -1201,9 +1201,9 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 281
-y 70
-w 204
+x 273
+y 71
+w 135
 h 36
 font "arial-medium-r-16.0"
 fgColor index 13
@@ -1211,7 +1211,7 @@ bgColor index 0
 useDisplayBg
 value {
   "Short 1: "
-  "pulse before X-ray images"
+  "pulse before XRD"
 }
 autoSize
 endObjectProperties
@@ -1243,8 +1243,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 56
-y 641
+x 54
+y 661
 w 46
 h 18
 font "arial-bold-r-16.0"
@@ -1263,8 +1263,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 52
-y 215
+x 55
+y 187
 w 45
 h 18
 font "arial-bold-r-16.0"
@@ -1334,7 +1334,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py laser_control laser1burn"
+  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto laser1burn"
 }
 endObjectProperties
 
@@ -1376,7 +1376,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py laser_control laser2burn"
+  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto laser2burn"
 }
 endObjectProperties
 
@@ -1407,8 +1407,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 17
-y 186
+x 20
+y 158
 w 100
 h 21
 font "arial-medium-r-18.0"
@@ -1427,8 +1427,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 223
-y 184
+x 226
+y 156
 w 9
 h 21
 font "arial-medium-r-18.0"
@@ -1447,8 +1447,8 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 141
-y 183
+x 144
+y 155
 w 75
 h 25
 controlPv "ME14E-MO-IOC-01:GP110"
@@ -1474,9 +1474,9 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 538
+x 484
 y 71
-w 203
+w 134
 h 36
 font "arial-medium-r-16.0"
 fgColor index 13
@@ -1484,7 +1484,7 @@ bgColor index 0
 useDisplayBg
 value {
   "Short 2: "
-  "pulse during X-ray images"
+  "pulse during XRD"
 }
 autoSize
 endObjectProperties
@@ -1495,17 +1495,18 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 292
-y 257
-w 168
+x 276
+y 255
+w 123
 h 36
 font "arial-medium-r-16.0"
+fontAlign "center"
 fgColor index 13
 bgColor index 0
 useDisplayBg
 value {
-  "Note: X-ray shutter is "
-  "         open throughout"
+  "X-ray shutter is "
+  "open throughout"
 }
 autoSize
 endObjectProperties
@@ -1516,11 +1517,11 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 296
-y 110
+x 275
+y 111
 w 175
 h 139
-file "/home/xfk23773/Downloads/short1-laser.png"
+file "SCRIPTS_LOCATION/fixed_target/FT-gui-edm/short1-laser.png"
 endObjectProperties
 
 # (PNG Image)
@@ -1529,11 +1530,11 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 561
+x 486
 y 111
 w 172
 h 139
-file "/home/xfk23773/Downloads/short2-laser.png"
+file "SCRIPTS_LOCATION/fixed_target/FT-gui-edm/short2-laser.png"
 endObjectProperties
 
 # (Static Text)
@@ -1542,39 +1543,18 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 560
-y 262
-w 316
-h 72
+x 487
+y 254
+w 170
+h 54
 font "arial-medium-r-16.0"
 fgColor index 13
 bgColor index 0
 useDisplayBg
 value {
-  "Now working (BETA)"
-  "CHECK desired triggers on scope"
-  "You WILL see strange behavior if:"
-  " laser delay+dwell > total X-ray exposure"
-}
-autoSize
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 1
-x 6
-y 275
-w 191
-h 27
-font "arial-bold-r-24.0"
-fgColor index 12
-bgColor index 0
-useDisplayBg
-value {
-  "Checker Pattern"
+  "Ensure:"
+  "laser delay+ dwell "
+  "< total X-ray exposure"
 }
 autoSize
 endObjectProperties
@@ -1585,10 +1565,10 @@ beginObjectProperties
 major 4
 minor 1
 release 0
-x 207
-y 276
-w 82
-h 24
+x 164
+y 220
+w 96
+h 28
 fgColor index 14
 bgColor index 3
 topShadowColor index 1
@@ -1608,5 +1588,156 @@ value0 {
   0 "none"
   1 "True"
 }
+endObjectProperties
+
+# (PNG Image)
+object activePngClass
+beginObjectProperties
+major 4
+minor 0
+release 0
+x 695
+y 111
+w 175
+h 139
+file "SCRIPTS_LOCATION/fixed_target/FT-gui-edm/short1-laser.png"
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 1
+x 690
+y 71
+w 173
+h 36
+font "arial-medium-r-16.0"
+fgColor index 13
+bgColor index 0
+useDisplayBg
+value {
+  "Medium 1: "
+  "pulse long before XRD"
+}
+autoSize
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 1
+x 13
+y 226
+w 135
+h 21
+font "arial-medium-r-18.0"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "Checker Pattern"
+}
+autoSize
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 1
+x 696
+y 277
+w 192
+h 54
+font "arial-medium-r-16.0"
+fgColor index 13
+bgColor index 0
+useDisplayBg
+value {
+  "X-ray shutter closes"
+  "every position."
+  "User for delay >= 100ms"
+}
+autoSize
+endObjectProperties
+
+# (Lines)
+object activeLineClass
+beginObjectProperties
+major 4
+minor 0
+release 1
+x 696
+y 131
+w 160
+h 69
+lineColor index 38
+fillColor index 0
+lineWidth 2
+lineStyle "dash"
+numPoints 7
+xPoints {
+  0 696
+  1 703
+  2 777
+  3 791
+  4 813
+  5 829
+  6 856
+}
+yPoints {
+  0 133
+  1 200
+  2 200
+  3 131
+  4 131
+  5 199
+  6 199
+}
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 1
+x 817
+y 123
+w 41
+h 13
+font "arial-medium-r-12.0"
+fgColor index 38
+bgColor index 0
+useDisplayBg
+value {
+  "SHTR1"
+}
+autoSize
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 1
+x 696
+y 256
+w 40
+h 21
+font "arial-bold-i-18.0"
+fgColor index 13
+bgColor index 0
+useDisplayBg
+value {
+  "Beta"
+}
+autoSize
 endObjectProperties
 

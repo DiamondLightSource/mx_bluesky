@@ -67,14 +67,20 @@ def test_get_prog_number(chip_type, map_type, pump_repeat, expected_prog):
             1,
             2,
             False,
-            ["P1439=0", "P1400=1"],
+            ["P1439=0", "P1441=0", "P1400=1"],
         ),  # Map irrelevant, pp to Repeat1, no checker
         (
             0,
             3,
             True,
-            ["P1439=0", "P1439=1", "P1400=1"],
+            ["P1439=0", "P1439=1", "P1441=0", "P1400=1"],
         ),  # Map irrelevant, pp to Repeat2, checker enabled
+        (
+            1,
+            8,
+            False,
+            ["P1439=0", "P1441=50", "P1400=1"],
+        ),  # Map irrelevant, pp to Medium1, checker disabled
     ],
 )
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.i24.pmac")
