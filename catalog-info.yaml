@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: mx_bluesky
+  title: mx_bluesky
+  description:  Holds Bluesky code used in MX but outside the Hyperion project 
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: DiamondLightSource/mx_bluesky
+  tags:
+    - python
+    - bluesky
+spec:
+  type: application
+  lifecycle: production
+  owner: group:data-acquisition
