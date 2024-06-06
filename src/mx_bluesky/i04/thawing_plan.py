@@ -1,7 +1,6 @@
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
-from blueapi.core import MsgGenerator
-from dodal.common import inject
+from dodal.common import MsgGenerator, inject
 from dodal.devices.smargon import Smargon
 from dodal.devices.thawer import Thawer, ThawerStates
 
@@ -16,9 +15,11 @@ def thaw(
 
     Args:
         time_to_thaw (float): Time to thaw for, in seconds.
-        rotation (float, optional): How much to rotate by whilst thawing, in degrees. Defaults to 360.
+        rotation (float, optional): How much to rotate by whilst thawing, in degrees.
+                                    Defaults to 360.
         thawer (Thawer, optional): The thawing device. Defaults to inject("thawer").
-        smargon (Smargon, optional): The smargon used to rotate. Defaults to inject("smargon").
+        smargon (Smargon, optional): The smargon used to rotate.
+                                     Defaults to inject("smargon")
     """
     inital_velocity = yield from bps.rd(smargon.omega.velocity)
     new_velocity = abs(rotation / time_to_thaw)
