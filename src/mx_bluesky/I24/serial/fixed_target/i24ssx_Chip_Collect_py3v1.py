@@ -632,7 +632,6 @@ def run_fixed_target_plan(
     yield from open_fast_shutter(zebra)
 
     logger.info(f"Run PMAC with program number {prog_num}")
-    logger.debug(f"pmac str = &2b{prog_num}r")
     yield from bps.abs_set(pmac.pmac_string, f"&2b{prog_num}r", wait=True)
     sleep(1.0)
 
