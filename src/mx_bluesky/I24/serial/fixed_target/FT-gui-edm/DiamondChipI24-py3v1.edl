@@ -280,7 +280,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py preset_pos load_position"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"load_position\"\}'"
 }
 endObjectProperties
 
@@ -301,7 +301,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py preset_pos collect_position"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"collect_position\"\}'"
 }
 endObjectProperties
 
@@ -323,7 +323,7 @@ font "helvetica-bold-r-24.0"
 buttonLabel "Start"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Collect_py3v1.py"
+  0 "blueapi -c CONFIG_LOCATION controller run run_fixed_target_plan"
 }
 endObjectProperties
 
@@ -615,7 +615,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py cs_maker"
+  0 "blueapi -c CONFIG_LOCATION controller run cs_maker"
 }
 endObjectProperties
 
@@ -1051,7 +1051,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py preset_pos zero"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"zero\"\}'"
 }
 endObjectProperties
 
@@ -1199,7 +1199,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py initialise"
+  0 "blueapi -c CONFIG_LOCATION controller run initialise_stages"
 }
 endObjectProperties
 
@@ -1470,7 +1470,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py write_parameter_file"
+  0 "blueapi -c CONFIG_LOCATION controller run write_parameter_file"
 }
 endObjectProperties
 
@@ -1648,7 +1648,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py block_check "
+  0 "blueapi -c CONFIG_LOCATION controller run block_check"
 }
 endObjectProperties
 
@@ -3022,7 +3022,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Set Fiducial 2"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py fiducial 2"
+  0 "blueapi -c CONFIG_LOCATION controller run fiducial '\{\"point\":\"2\"\}'"
 }
 endObjectProperties
 
@@ -3044,7 +3044,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Goto Fiducial 2"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto f2"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"f2\"\}'"
 }
 endObjectProperties
 
@@ -3088,7 +3088,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Set Fiducial 1"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py fiducial 1"
+  0 "blueapi -c CONFIG_LOCATION controller run fiducial '\{\"point\":\"1\"\}'"
 }
 endObjectProperties
 
@@ -3110,7 +3110,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Goto Fiducial 1"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto f1"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"f1\"\}'"
 }
 endObjectProperties
 
@@ -3858,7 +3858,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py moveto zero"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"zero\"\}'"
 }
 endObjectProperties
 
@@ -3900,7 +3900,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "python SCRIPTS_LOCATION/fixed_target/i24ssx_Chip_Manager_py3v1.py preset_pos microdrop_position"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"microdrop_position\"\}'"
 }
 endObjectProperties
 

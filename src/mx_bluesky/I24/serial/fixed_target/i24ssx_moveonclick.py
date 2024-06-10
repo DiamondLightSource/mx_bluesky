@@ -9,6 +9,7 @@ import bluesky.plan_stubs as bps
 import cv2 as cv
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
+from dodal.devices.i24.pmac import PMAC
 from dodal.devices.oav.oav_detector import OAV
 
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_Manager_py3v1 as manager
@@ -130,10 +131,9 @@ def update_ui(oav, frame):
 
 
 def start_viewer(oav1: str = OAV1_CAM):
-    # Get PMAC device
-    print("Creating dodal devices")
-    pmac = i24.pmac()
-    oav = i24.oav()
+    # Get devices out of dodal
+    oav: OAV = i24.oav()
+    pmac: PMAC = i24.pmac()
     # Create a video caputure from OAV1
     cap = cv.VideoCapture(oav1)
 

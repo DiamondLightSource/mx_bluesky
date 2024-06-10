@@ -6,5 +6,5 @@
 # motor number * (dir) = positive chip direction
 
 mtr1_dir=1
-mtr2_dir=1
+mtr2_dir=-1
 mtr3_dir=-1

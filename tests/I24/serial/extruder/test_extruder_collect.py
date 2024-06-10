@@ -1,4 +1,3 @@
-import argparse
 from unittest.mock import ANY, call, patch
 
 import pytest
@@ -8,24 +7,12 @@ from mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2 import (
     TTL_EIGER,
     TTL_PILATUS,
     enter_hutch,
-    initialise_extruderi24,
+    initialise_extruder,
     laser_check,
-    run_extruderi24,
+    run_extruder_plan,
 )
 from mx_bluesky.I24.serial.parameters import ExtruderParameters
 from mx_bluesky.I24.serial.setup_beamline import Eiger, Pilatus
-
-
-@pytest.fixture
-def dummy_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "place",
-        type=str,
-        choices=["laseron", "laseroff"],
-        help="Requested setting.",
-    )
-    yield parser
 
 
 @pytest.fixture
@@ -64,16 +51,20 @@ def dummy_params_pp():
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.get_detector_type")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.logger")
-def test_initialise_extruder(fake_log, fake_det, fake_caput, fake_caget, RE):
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_logging")
+def test_initialise_extruder(
+    fake_log_setup, fake_log, fake_det, fake_caput, fake_caget, RE
+):
     fake_caget.return_value = "/path/to/visit"
     fake_det.return_value = Eiger()
-    RE(initialise_extruderi24())
+    RE(initialise_extruder())
     assert fake_caput.call_count == 10
     assert fake_caget.call_count == 1
 
 
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
-def test_enterhutch(fake_caput, RE):
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_logging")
+def test_enterhutch(fake_log_setup, fake_caput, RE):
     RE(enter_hutch())
     assert fake_caput.call_count == 1
     fake_caput.assert_has_calls([call(ANY, 1480)])
@@ -89,12 +80,19 @@ def test_enterhutch(fake_caput, RE):
     ],
 )
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.get_detector_type")
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_logging")
 async def test_laser_check(
-    fake_det, laser_mode, expected_in1, expected_out, det_type, dummy_parser, zebra, RE
+    fake_log_setup,
+    fake_det,
+    laser_mode,
+    expected_in1,
+    expected_out,
+    det_type,
+    zebra,
+    RE,
 ):
     fake_det.return_value = det_type
-    fake_args = dummy_parser.parse_args([laser_mode])
-    RE(laser_check(fake_args, zebra))
+    RE(laser_check(laser_mode, zebra))
 
     TTL = TTL_EIGER if isinstance(det_type, Pilatus) else TTL_PILATUS
     assert await zebra.inputs.soft_in_1.get_value() == expected_in1
@@ -118,7 +116,9 @@ async def test_laser_check(
 @patch(
     "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.ExtruderParameters"
 )
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_logging")
 def test_run_extruder_quickshot_with_eiger(
+    fake_log_setup,
     mock_params,
     mock_quickshot_plan,
     fake_det,
@@ -136,7 +136,7 @@ def test_run_extruder_quickshot_with_eiger(
 ):
     mock_params.from_file.return_value = dummy_params
     fake_det.return_value = Eiger()
-    RE(run_extruderi24())
+    RE(run_extruder_plan(zebra))
     assert fake_nexgen.call_count == 1
     assert fake_dcid.call_count == 1
     # Check temporary piilatus hack is in there
@@ -163,7 +163,9 @@ def test_run_extruder_quickshot_with_eiger(
 @patch(
     "mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.ExtruderParameters"
 )
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_logging")
 def test_run_extruder_pump_probe_with_pilatus(
+    fake_log_setup,
     mock_params,
     mock_reset_zebra_plan,
     mock_pp_plan,
@@ -180,9 +182,8 @@ def test_run_extruder_pump_probe_with_pilatus(
     dummy_params_pp,
 ):
     mock_params.from_file.return_value = dummy_params_pp
-    # fake_i24.zebra.return_value = MagicMock()
     fake_det.return_value = Pilatus()
-    RE(run_extruderi24())
+    RE(run_extruder_plan(zebra))
     assert fake_dcid.call_count == 1
     mock_pp_plan.assert_called_once()
     mock_reset_zebra_plan.assert_called_once()

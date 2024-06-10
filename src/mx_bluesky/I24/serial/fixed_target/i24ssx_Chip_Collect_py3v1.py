@@ -14,8 +14,8 @@ from typing import Dict, List
 
 import bluesky.plan_stubs as bps
 import numpy as np
-from bluesky.run_engine import RunEngine
-from dodal.beamlines import i24
+from blueapi.core import MsgGenerator
+from dodal.common import inject
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 
@@ -564,10 +564,10 @@ def run_aborted_plan(pmac: PMAC):
     yield from bps.abs_set(pmac.pmac_string, "P2401=0", wait=True)
 
 
-def main():
-    # Dodal devices
-    pmac = i24.pmac()
-    zebra = i24.zebra()
+def run_fixed_target_plan(
+    zebra: Zebra = inject("zebra"), pmac: PMAC = inject("pmac")
+) -> MsgGenerator:
+    setup_logging()
     # ABORT BUTTON
     logger.info("Running a chip collection on I24")
     caput(pv.me14e_gp9, 0)
@@ -710,10 +710,3 @@ def main():
     logger.debug(f"Chip name = {parameters.filename} sub_dir = {parameters.directory}")
     logger.debug(f"Start Time = {start_time}")
     logger.debug(f"End Time = {end_time}")
-
-
-if __name__ == "__main__":
-    setup_logging()
-    RE = RunEngine()
-
-    RE(main())
