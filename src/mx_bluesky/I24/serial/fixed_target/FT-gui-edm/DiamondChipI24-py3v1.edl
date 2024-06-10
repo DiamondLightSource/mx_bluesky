@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 2685
-y 224
+x 2870
+y 208
 w 1030
 h 950
 font "arial-medium-r-18.0"
@@ -1240,7 +1240,7 @@ topShadowColor index 1
 botShadowColor index 8
 controlPv "ME14E-MO-IOC-01:GP4"
 font "arial-medium-r-18.0"
-numItems 8
+numItems 9
 symbolTag {
   0 "None"
   1 "Short1"
@@ -1250,6 +1250,7 @@ symbolTag {
   5 "Repeat3"
   6 "Repeat5"
   7 "Repeat10"
+  8 "Medium1"
 }
 symbol0 {
   0 "na"
@@ -1260,6 +1261,7 @@ symbol0 {
   5 "R3"
   6 "R5"
   7 "R10"
+  8 "M1"
 }
 value0 {
   0 "None"
@@ -1270,6 +1272,7 @@ value0 {
   5 "Repeat3"
   6 "Repeat5"
   7 "Repeat10"
+  8 "Medium1"
 }
 endObjectProperties
 
