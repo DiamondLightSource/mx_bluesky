@@ -253,6 +253,9 @@ def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
     yield from bps.null()
 
 
+# TODO Use pydantic FilePath to improve map/parameter file paths
+# See https://github.com/DiamondLightSource/mx_bluesky/issues/107
+# Same on all other instances.
 @log.log_on_entry
 def upload_parameters(
     chipid: str = "oxford",
