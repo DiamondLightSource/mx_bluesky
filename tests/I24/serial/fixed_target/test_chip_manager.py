@@ -34,11 +34,17 @@ MTR3 0 0 -1 0"""
 cs_json = '{"scalex":1, "scaley":2, "scalez":3, "skew":-0.5, "Sx_dir":1, "Sy_dir":-1, "Sz_dir":0}'
 
 
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.sys")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.get_detector_type")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
 async def test_initialise(
-    fake_caput: MagicMock, fake_det: MagicMock, fake_sys: MagicMock, pmac: PMAC, RE
+    fake_caput: MagicMock,
+    fake_det: MagicMock,
+    fake_sys: MagicMock,
+    fake_log: MagicMock,
+    pmac: PMAC,
+    RE,
 ):
     fake_det.return_value = Eiger()
     RE(initialise_stages(pmac))
@@ -208,10 +214,11 @@ def test_cs_pmac_str_set(pmac: PMAC, RE):
     )
 
 
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 @patch(
     "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.set_pmac_strings_for_cs"
 )
-def test_cs_reset(mock_set_pmac_str: MagicMock, pmac: PMAC, RE):
+def test_cs_reset(mock_set_pmac_str: MagicMock, fake_log: MagicMock, pmac: PMAC, RE):
     RE(cs_reset(pmac))
     mock_set_pmac_str.assert_called_once()
 
