@@ -657,37 +657,37 @@ def laser_control(laser_setting: str, pmac: PMAC = None):
         # Use M712 = 0 if triggering on falling edge. M712 =1 if on rising edge
         # Be sure to also change laser1off
         # caput(pv.me14e_pmac_str, ' M712=0 M711=1')
-        yield from bps.abs_set(pmac.laser, LaserSettings.LASER1ON, wait=True)
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_ON, wait=True)
 
     elif laser_setting == "laser1off":
         logger.info("Laser 1 shutter is closed")
-        yield from bps.abs_set(pmac.laser, LaserSettings.LASER1OFF, wait=True)
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_OFF, wait=True)
 
     elif laser_setting == "laser2on":
         logger.info("Laser 2 / BNC3 shutter is open")
-        yield from bps.abs_set(pmac.laser, LaserSettings.LASER2ON, wait=True)
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_ON, wait=True)
 
     elif laser_setting == "laser2off":
         logger.info("Laser 2 shutter is closed")
-        yield from bps.abs_set(pmac.laser, LaserSettings.LASER2OFF, wait=True)
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_OFF, wait=True)
 
     elif laser_setting == "laser1burn":
         led_burn_time = caget(pv.me14e_gp103)
         logger.info("Laser 1  on")
         logger.info("Burn time is %s s" % led_burn_time)
-        yield from bps.abs_set(pmac.laser, LaserSettings.LASER1ON, wait=True)
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_ON, wait=True)
         yield from bps.sleep(led_burn_time)
         logger.info("Laser 1 off")
-        yield from bps.abs_set(pmac.laser, LaserSettings.LASER1OFF, wait=True)
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_OFF, wait=True)
 
     elif laser_setting == "laser2burn":
         led_burn_time = caget(pv.me14e_gp109)
         logger.info("Laser 2 on")
         logger.info("burntime %s s" % led_burn_time)
-        yield from bps.abs_set(pmac.laser, LaserSettings.LASER2ON, wait=True)
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_ON, wait=True)
         yield from bps.sleep(led_burn_time)
         logger.info("Laser 2 off")
-        yield from bps.abs_set(pmac.laser, LaserSettings.LASER2OFF, wait=True)
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_OFF, wait=True)
 
 
 @log.log_on_entry
