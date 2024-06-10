@@ -55,6 +55,9 @@ def setup_logging():
 
 @log.log_on_entry
 def initialise_stages(pmac: PMAC = inject("pmac")) -> MsgGenerator:
+    """Initialise the portable stages PVs, usually used only once right after setting \
+        up the stages either after use at different facility.
+    """
     setup_logging()
     group = "initialise_stages"
     # commented out filter lines 230719 as this stage not connected
@@ -952,6 +955,20 @@ def cs_reset(pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
 
 def set_pmac_strings_for_cs(pmac: PMAC, cs_str: dict):
+    """ A plan to set the pmac_string for the (x,y,z) axes while making or resetting \
+        the coordinate system.
+
+    Args:
+        pmac (PMAC): PMAC device
+        cs_str (dict): A dictionary containing a string for each axis, in the format: \
+            {
+                "cs1": "#1->1X+0Y+0Z",
+                "cs2": "#2->...",
+                "cs3": "#3->...",
+            }
+
+    Note. On the PMAC the axes allocations are: #1 - X, #2 - Y, #3 - Z.
+    """
     yield from bps.abs_set(pmac.pmac_string, "&2", wait=True)
     yield from bps.abs_set(pmac.pmac_string, cs_str["cs1"], wait=True)
     yield from bps.abs_set(pmac.pmac_string, cs_str["cs2"], wait=True)
