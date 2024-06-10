@@ -13,9 +13,12 @@ import time
 from pathlib import Path
 from pprint import pformat
 from time import sleep
+from typing import Optional
 
+import bluesky.plan_stubs as bps
 import numpy as np
-from dodal.beamlines import i24
+from blueapi.core import MsgGenerator
+from dodal.common import inject
 from dodal.devices.i24.pmac import PMAC
 
 from mx_bluesky.I24.serial import log
@@ -49,7 +52,8 @@ def setup_logging():
 
 
 @log.log_on_entry
-def initialise():
+def initialise_stages() -> MsgGenerator:
+    setup_logging()
     # commented out filter lines 230719 as this stage not connected
     logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
 
@@ -105,11 +109,17 @@ def initialise():
     caput(pv.me14e_gp101, det_type.name)
 
     logger.info("Initialisation Complete")
+    yield from bps.null()
 
 
 @log.log_on_entry
-def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
-    param_path = _coerce_to_path(param_path)
+def write_parameter_file(
+    input_param_path: Optional[str] = None,
+) -> MsgGenerator:
+    setup_logging()
+    if not input_param_path:
+        input_param_path = PARAM_FILE_PATH_FT.as_posix()
+    param_path = _coerce_to_path(input_param_path)
     param_path.mkdir(parents=True, exist_ok=True)
 
     logger.info(
@@ -161,6 +171,7 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
         # that are only needed when full mapping is in use.
         logger.info("Full mapping in use. Running start up now.")
         startup.run()
+    yield from bps.null()
 
 
 def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
@@ -191,10 +202,13 @@ def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
 @log.log_on_entry
 def define_current_chip(
     chipid: str = "oxford",
-    param_path: Path | str = PVAR_FILE_PATH,
-):
+    pvar_path: Optional[str] = None,
+) -> MsgGenerator:
+    setup_logging()
     logger.debug("Run load stock map for just the first block")
-    load_stock_map("Just The First Block")
+    if not pvar_path:
+        pvar_path = PVAR_FILE_PATH.as_posix()
+    yield from load_stock_map("Just The First Block")
     """
     Not sure what this is for:
     print 'Setting Mapping Type to Lite'
@@ -205,7 +219,7 @@ def define_current_chip(
     if chipid == "oxford":
         caput(pv.me14e_gp1, 1)
 
-    param_path = _coerce_to_path(param_path)
+    param_path = _coerce_to_path(pvar_path)
 
     with open(param_path / f"{chipid}.pvar", "r") as f:
         logger.info("Opening %s.pvar" % chipid)
@@ -215,11 +229,15 @@ def define_current_chip(
             line_from_file = line.rstrip("\n")
             logger.info("%s" % line_from_file)
             caput(pv.me14e_pmac_str, line_from_file)
+    yield from bps.null()
 
 
 @log.log_on_entry
-def save_screen_map(litemap_path: Path | str = LITEMAP_PATH):
-    litemap_path = _coerce_to_path(litemap_path)
+def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
+    setup_logging()
+    if not map_path:
+        map_path = LITEMAP_PATH.as_posix()
+    litemap_path = _coerce_to_path(map_path)
     litemap_path.mkdir(parents=True, exist_ok=True)
 
     logger.info("Saving %s currentchip.map" % litemap_path.as_posix())
@@ -232,19 +250,25 @@ def save_screen_map(litemap_path: Path | str = LITEMAP_PATH):
                 logger.info("%s %d" % (block_str, block_val))
             line = "%02dstatus    P3%02d1 \t%s\n" % (x, x, block_val)
             f.write(line)
-    return 0
+    yield from bps.null()
 
 
+# TODO Use pydantic FilePath to improve map/parameter file paths
+# See https://github.com/DiamondLightSource/mx_bluesky/issues/107
+# Same on all other instances.
 @log.log_on_entry
 def upload_parameters(
     chipid: str = "oxford",
-    litemap_path: Path | str = LITEMAP_PATH,
-):
+    map_path: Optional[str] = None,
+) -> MsgGenerator:
+    setup_logging()
     logger.info("Uploading Parameters to the GeoBrick")
     if chipid == "oxford":
         caput(pv.me14e_gp1, 0)
         width = 8
-    litemap_path = _coerce_to_path(litemap_path)
+    if not map_path:
+        map_path = LITEMAP_PATH.as_posix()
+    litemap_path = _coerce_to_path(map_path)
 
     with open(litemap_path / "currentchip.map", "r") as f:
         logger.info("Chipid %s" % chipid)
@@ -271,6 +295,7 @@ def upload_parameters(
 
     logger.warning("Automatic Setting Mapping Type to Lite has been disabled")
     logger.debug("Upload parameters done.")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -293,7 +318,8 @@ def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
 
 
 @log.log_on_entry
-def load_stock_map(map_choice: str = "clear"):
+def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
+    setup_logging()
     logger.info("Adjusting Lite Map EDM Screen")
     logger.debug("Please wait, adjusting lite map")
     #
@@ -490,12 +516,14 @@ def load_stock_map(map_choice: str = "clear"):
         pvar = "ME14E-MO-IOC-01:GP" + str(i + 10)
         caput(pvar, 1)
     logger.debug("Load stock map done.")
+    yield from bps.null()
 
 
 @log.log_on_entry
-def load_lite_map(litemap_path: Path | str = LITEMAP_PATH):
+def load_lite_map(map_path: Optional[str] = None) -> MsgGenerator:
+    setup_logging()
     logger.debug("Run load stock map with 'clear' setting.")
-    load_stock_map("clear")
+    yield from load_stock_map("clear")
     # fmt: off
     # Oxford_block_dict is wrong (columns and rows need to flip) added in script below to generate it automatically however kept this for backwards compatiability/reference
     oxford_block_dict = {   # noqa: F841
@@ -538,7 +566,9 @@ def load_lite_map(litemap_path: Path | str = LITEMAP_PATH):
                 btn_names[button_name] = label
         block_dict = btn_names
 
-    litemap_path = _coerce_to_path(litemap_path)
+    if not map_path:
+        map_path = LITEMAP_PATH.as_posix()
+    litemap_path = _coerce_to_path(map_path)
 
     litemap_fid = str(caget(pv.me14e_gp5)) + ".lite"
     logger.info("Please wait, loading LITE map")
@@ -554,12 +584,14 @@ def load_lite_map(litemap_path: Path | str = LITEMAP_PATH):
         pvar = "ME14E-MO-IOC-01:GP" + str(int(block_num) + 10)
         logger.info("Block: %s \tScanned: %s \tPVAR: %s" % (block_name, yesno, pvar))
     logger.debug("Load lite map done")
+    yield from bps.null()
 
 
 @log.log_on_entry
 def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
     params = startup.read_parameter_file()
     fullmap_path = _coerce_to_path(fullmap_path)
+    fullmap_path.mkdir(parents=True, exist_ok=True)
 
     fullmap_fid = fullmap_path / f"{str(caget(pv.me14e_gp5))}.spec"
     logger.info("Opening %s" % fullmap_fid)
@@ -574,9 +606,8 @@ def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
 
 
 @log.log_on_entry
-def moveto(place: str = "origin", pmac: PMAC = None):
-    if not pmac:
-        pmac = i24.pmac()
+def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
+    setup_logging()
     logger.info(f"Move to: {place}")
     if place == Fiducials.zero:
         logger.info("Chip aspecific move.")
@@ -603,12 +634,12 @@ def moveto(place: str = "origin", pmac: PMAC = None):
         move_xy(chip_move, 0.0)
     if place == Fiducials.fid2:
         move_xy(0.0, chip_move)
+    yield from bps.null()
 
 
 @log.log_on_entry
-def moveto_preset(place: str, pmac: PMAC = None):
-    if not PMAC:
-        pmac = i24.pmac()
+def moveto_preset(place: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
+    setup_logging()
 
     def move_xyz(x, y, z):
         move_status = pmac.x.move(x, wait=False)
@@ -637,13 +668,13 @@ def moveto_preset(place: str, pmac: PMAC = None):
     elif place == "microdrop_position":
         logger.info("microdrop align position")
         move_xyz(6.0, -7.8, 0.0)
+    yield from bps.null()
 
 
 @log.log_on_entry
-def laser_control(laser_setting: str, pmac: PMAC = None):
+def laser_control(laser_setting: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
+    setup_logging()
     logger.info("Move to: %s" % laser_setting)
-    if not pmac:
-        pmac = i24.pmac()
     if laser_setting == "laser1on":  # these are in laser edm
         logger.info("Laser 1 /BNC2 shutter is open")
         # Use M712 = 0 if triggering on falling edge. M712 =1 if on rising edge
@@ -680,13 +711,14 @@ def laser_control(laser_setting: str, pmac: PMAC = None):
         sleep(int(float(led_burn_time)))
         logger.info("Laser 2 off")
         pmac.pmac_string.set(" M812=0 M811=1").wait()
+    yield from bps.null()
 
 
 @log.log_on_entry
-def scrape_mtr_directions(param_path: Path | str = CS_FILES_PATH):
-    param_path = _coerce_to_path(param_path)
+def scrape_mtr_directions(motor_file_path: Path | str = CS_FILES_PATH):
+    motor_file_path = _coerce_to_path(motor_file_path)
 
-    with open(param_path / "motor_direction.txt", "r") as f:
+    with open(motor_file_path / "motor_direction.txt", "r") as f:
         lines = f.readlines()
     mtr1_dir, mtr2_dir, mtr3_dir = 1.0, 1.0, 1.0
     for line in lines:
@@ -703,11 +735,11 @@ def scrape_mtr_directions(param_path: Path | str = CS_FILES_PATH):
 
 
 @log.log_on_entry
-def fiducial(point: int = 1, param_path: Path | str = CS_FILES_PATH):
+def fiducial(point: int = 1) -> MsgGenerator:
+    setup_logging()
     scale = 10000.0  # noqa: F841
-    param_path = _coerce_to_path(param_path)
 
-    mtr1_dir, mtr2_dir, mtr3_dir = scrape_mtr_directions(param_path)
+    mtr1_dir, mtr2_dir, mtr3_dir = scrape_mtr_directions(CS_FILES_PATH)
 
     rbv_1 = float(caget(pv.me14e_stage_x + ".RBV"))
     rbv_2 = float(caget(pv.me14e_stage_y + ".RBV"))
@@ -721,21 +753,24 @@ def fiducial(point: int = 1, param_path: Path | str = CS_FILES_PATH):
     f_y = rbv_2
     f_z = rbv_3
 
-    logger.info("Writing Fiducial File %s/fiducial_%s.txt" % (param_path, point))
+    output_param_path = PARAM_FILE_PATH_FT
+    output_param_path.mkdir(parents=True, exist_ok=True)
+    logger.info("Writing Fiducial File %s/fiducial_%s.txt" % (output_param_path, point))
     logger.info("MTR\tRBV\tRAW\tCorr\tf_value")
     logger.info("MTR1\t%1.4f\t%i\t%i\t%1.4f" % (rbv_1, raw_1, mtr1_dir, f_x))
     logger.info("MTR2\t%1.4f\t%i\t%i\t%1.4f" % (rbv_2, raw_2, mtr2_dir, f_y))
     logger.info("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
 
-    with open(param_path / f"fiducial_{point}.txt", "w") as f:
+    with open(output_param_path / f"fiducial_{point}.txt", "w") as f:
         f.write("MTR\tRBV\tRAW\tCorr\tf_value\n")
         f.write("MTR1\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_1, raw_1, mtr1_dir, f_x))
         f.write("MTR2\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_2, raw_2, mtr2_dir, f_y))
         f.write("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
     logger.info(f"Fiducial {point} set.")
+    yield from bps.null()
 
 
-def scrape_mtr_fiducials(point: int, param_path: Path | str = CS_FILES_PATH):
+def scrape_mtr_fiducials(point: int, param_path: Path | str = PARAM_FILE_PATH_FT):
     param_path = _coerce_to_path(param_path)
 
     with open(param_path / f"fiducial_{point}.txt", "r") as f:
@@ -747,7 +782,7 @@ def scrape_mtr_fiducials(point: int, param_path: Path | str = CS_FILES_PATH):
 
 
 @log.log_on_entry
-def cs_maker(pmac: PMAC = None):
+def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     """
     Coordinate system.
 
@@ -777,9 +812,7 @@ def cs_maker(pmac: PMAC = None):
     This should be measured in situ prior to expriment, ie. measure by hand using
     opposite and adjacent RBV after calibration of scale factors.
     """
-    if not pmac:
-        pmac = i24.pmac()
-
+    setup_logging()
     chip_type = int(caget(pv.me14e_gp1))
     fiducial_dict = {}
     fiducial_dict[0] = [25.400, 25.400]
@@ -909,15 +942,15 @@ def cs_maker(pmac: PMAC = None):
     else:
         pmac.home_stages()
     logger.debug("CSmaker done.")
+    yield from bps.null()
 
 
-def cs_reset(pmac: PMAC = None):
+def cs_reset(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     """Used to clear CS when using Custom Chip"""
-    if not pmac:
-        pmac = i24.pmac()
-    cs1 = "#1->-10000X+0Y+0Z"
-    cs2 = "#2->+0X+10000Y+0Z"
-    cs3 = "#3->0X+0Y+10000Z"
+    setup_logging()
+    cs1 = "#1->10000X+0Y+0Z"
+    cs2 = "#2->+0X-10000Y+0Z"
+    cs3 = "#3->0X+0Y-10000Z"
     strg = "\n".join([cs1, cs2, cs3])
     print(strg)
     pmac.pmac_string.set("&2").wait()
@@ -925,10 +958,12 @@ def cs_reset(pmac: PMAC = None):
     pmac.pmac_string.set(cs2).wait()
     pmac.pmac_string.set(cs3).wait()
     logger.debug("CSreset Done")
+    yield from bps.null()
 
 
 @log.log_on_entry
-def pumpprobe_calc():
+def pumpprobe_calc() -> MsgGenerator:
+    setup_logging()
     logger.info("Calculate and show exposure and dwell time for each option.")
     exptime = float(caget(pv.me14e_exptime))
     pumpexptime = float(caget(pv.me14e_gp103))
@@ -952,10 +987,12 @@ def pumpprobe_calc():
         logger.info("Repeat (%s): %s s" % (pv_name, rounded))
     # logger.info("repeat10 (%s): %s s" % (pv.me14e_gp108, round(repeat10, 4)))
     logger.debug("PP calculations done")
+    yield from bps.null()
 
 
 @log.log_on_entry
-def block_check():
+def block_check() -> MsgGenerator:
+    setup_logging()
     caput(pv.me14e_gp9, 0)
     while True:
         if int(caget(pv.me14e_gp9)) == 0:
@@ -986,6 +1023,7 @@ def block_check():
             break
         break
     logger.debug("Block check done")
+    yield from bps.null()
 
 
 def parse_args_and_run_parsed_function(args):
@@ -996,51 +1034,10 @@ def parse_args_and_run_parsed_function(args):
         required=True,
         dest="sub-command",
     )
-    parser_init = subparsers.add_parser(
-        "initialise",
-    )
-    parser_init.set_defaults(func=initialise)
-    parser_moveto = subparsers.add_parser(
-        "moveto",
-    )
-    parser_moveto.add_argument("place", type=str)
-    parser_moveto.set_defaults(func=moveto)
-    parser_preset = subparsers.add_parser("preset_pos")
-    parser_preset.add_argument("place", type=str)
-    parser_preset.set_defaults(func=moveto_preset)
-    parser_laser = subparsers.add_parser("laser_control")
-    parser_laser.add_argument("laser_setting", type=str)
-    parser_laser.set_defaults(func=laser_control)
-    parser_fid = subparsers.add_parser("fiducial")
-    parser_fid.add_argument("point", type=int)
-    parser_fid.set_defaults(func=fiducial)
-    parser_csm = subparsers.add_parser("cs_maker")
-    parser_csm.set_defaults(func=cs_maker)
-    parser_pp = subparsers.add_parser("pumpprobe_calc")
-    parser_pp.set_defaults(func=pumpprobe_calc)
-    parser_write = subparsers.add_parser("write_parameter_file")
-    parser_write.set_defaults(func=write_parameter_file)
-    parser_def = subparsers.add_parser("define_current_chip")
-    parser_def.add_argument("chipid", type=str)
-    parser_def.set_defaults(func=define_current_chip)
-    parser_stockmap = subparsers.add_parser("load_stock_map")
-    parser_stockmap.add_argument("map_choice", type=str)
-    parser_stockmap.set_defaults(func=load_stock_map)
-    parser_litemap = subparsers.add_parser("load_lite_map")
-    parser_litemap.set_defaults(func=load_lite_map)
     parser_fullmap = subparsers.add_parser("load_full_map")
     parser_fullmap.set_defaults(func=load_full_map)
-    parser_save = subparsers.add_parser("save_screen_map")
-    parser_save.set_defaults(func=save_screen_map)
     parser_upld = subparsers.add_parser("upload_full")
     parser_upld.set_defaults(func=upload_full)
-    parser_params = subparsers.add_parser("upload_parameters")
-    parser_params.add_argument("chipid", type=str)
-    parser_params.set_defaults(func=upload_parameters)
-    parser_csr = subparsers.add_parser("cs_reset")
-    parser_csr.set_defaults(func=cs_reset)
-    parser_block = subparsers.add_parser("block_check")
-    parser_block.set_defaults(func=block_check)
 
     args = parser.parse_args(args)
 
@@ -1051,5 +1048,7 @@ def parse_args_and_run_parsed_function(args):
 
 if __name__ == "__main__":
     setup_logging()
+    # This is now in all functions. TODO See logging issue on blueapi
+    # https://github.com/DiamondLightSource/blueapi/issues/494
 
     parse_args_and_run_parsed_function(sys.argv[1:])

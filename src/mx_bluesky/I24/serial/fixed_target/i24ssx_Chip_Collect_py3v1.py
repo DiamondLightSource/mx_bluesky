@@ -13,8 +13,9 @@ from time import sleep
 from typing import Dict, List
 
 import numpy as np
-from bluesky.run_engine import RunEngine
+from blueapi.core import MsgGenerator
 from dodal.beamlines import i24
+from dodal.common import inject
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 
@@ -569,10 +570,10 @@ def finish_i24(
     return end_time
 
 
-def main():
-    # Dodal devices
-    pmac = i24.pmac()
-    zebra = i24.zebra()
+def run_fixed_target_plan(
+    zebra: Zebra = inject("zebra"), pmac: PMAC = inject("pmac")
+) -> MsgGenerator:
+    setup_logging()
     # ABORT BUTTON
     logger.info("Running a chip collection on I24")
     caput(pv.me14e_gp9, 0)
@@ -719,10 +720,3 @@ def main():
     logger.debug(f"Chip name = {parameters.filename} sub_dir = {parameters.directory}")
     logger.debug(f"Start Time = {start_time}")
     logger.debug(f"End Time = {end_time}")
-
-
-if __name__ == "__main__":
-    setup_logging()
-    RE = RunEngine()
-
-    RE(main())

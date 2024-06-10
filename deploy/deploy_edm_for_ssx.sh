@@ -1,16 +1,12 @@
 #!/bin/bash
 
 # Deploy EDM screens for serial crystallography
-# Make a copy of them in edm/ and replace paths depending if in dev or beamline mode
+# Make a copy of them in edm/ and replace paths
 
 current=$( realpath "$( dirname "$0" )" )
 base=$(dirname $current)
 
-if [[ -n "${BEAMLINE}" ]]; then
-    edm_build="/dls_sw/$BEAMLINE/software/bluesky/mx_bluesky/edm_serial"
-else
-    edm_build="$base/edm_serial"
-fi
+edm_build="$base/edm_serial"
 
 echo "EDM screens for ssx will be saved in: $edm_build"
 
@@ -30,6 +26,11 @@ mkdir $ft_edm
 scripts_placeholder="SCRIPTS_LOCATION"
 scripts_loc="$base/src/mx_bluesky/I24/serial"
 
+# Add blueapi configuration file to get stomp
+# See https://github.com/DiamondLightSource/blueapi/issues/485
+config_placeholder="CONFIG_LOCATION"
+config_loc="$scripts_loc/blueapi_config.yaml"
+
 # Copy extruder
 cp $scripts_loc/extruder/EX-gui-edm/*.edl $ex_edm
 # Copy fixed target
@@ -40,12 +41,13 @@ cp $scripts_loc/fixed_target/FT-gui-edm/*.edl $ft_edm
 echo "Setting up screen for extruder"
 for filename in $ex_edm/*.edl; do
     sed -i "s+${edm_placeholder}+${ex_edm}+g" $filename     # Fix edm paths
-    sed -i "s+${scripts_placeholder}+${scripts_loc}+g" $filename    # Fix scripts paths
+    sed -i "s+${config_placeholder}+${config_loc}+g" $filename   # Fix config paths
 done
 echo "Setting up screens for fixed target"
 for filename in $ft_edm/*.edl; do
     sed -i "s+${edm_placeholder}+${ft_edm}+g" $filename     # Fix edm paths
-    sed -i "s+${scripts_placeholder}+${scripts_loc}+g" $filename    # Fix scripts paths
+    sed -i "s+${config_placeholder}+${config_loc}+g" $filename   # Fix config paths
+    sed -i "s+${scripts_placeholder}+${scripts_loc}+g" $filename  # Fix script location - needed for viewer
 done
 
 echo "EDM screen set up completed."

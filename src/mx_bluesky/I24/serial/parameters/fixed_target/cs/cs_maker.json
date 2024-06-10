@@ -1,9 +1,9 @@
 {
-    "scalex": 10003.0,
-    "scaley": 10001.7,
+    "scalex": 10004.0,
+    "scaley": 10005.2,
     "scalez": 10000.0,
-    "skew": -0.175,
-    "Sx_dir": -1,
+    "skew": -0.01,
+    "Sx_dir": 1,
     "Sy_dir": 1,
-    "Sz_dir": -1
+    "Sz_dir": 1
 }
