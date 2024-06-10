@@ -560,7 +560,8 @@ def finish_i24(
 
 def run_aborted_plan(pmac: PMAC):
     """Plan to send pmac_strings to tell the PMAC when a collection has been aborted, \
-        either by pressing the Abort button or because of a timeout.
+        either by pressing the Abort button or because of a timeout, and to reset the \
+        P variable.
     """
     yield from bps.abs_set(pmac.pmac_string, "A", wait=True)
     yield from bps.sleep(1.0)
