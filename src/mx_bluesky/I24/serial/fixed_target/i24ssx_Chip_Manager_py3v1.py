@@ -939,7 +939,7 @@ def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     else:
         pmac.home_stages()
     logger.debug("CSmaker done.")
-    yield from bps.sleep(5)
+    yield from bps.null()
 
 
 def cs_reset(pmac: PMAC = inject("pmac")) -> MsgGenerator:
