@@ -21,7 +21,7 @@ from blueapi.core import MsgGenerator
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
 from dodal.common import inject
-from dodal.devices.i24.pmac import PMAC, LaserSettings
+from dodal.devices.i24.pmac import PMAC, EncReset, LaserSettings
 
 from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_Mapping_py3v1 as mapping
@@ -92,10 +92,10 @@ def initialise_stages(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     caput(pv.me14e_chip_name, "albion")
     caput(pv.me14e_dcdetdist, 1480)
     caput(pv.me14e_exptime, 0.01)
-    yield from bps.abs_set(pmac.pmac_string, "m508=100 m509=150", group=group)
-    yield from bps.abs_set(pmac.pmac_string, "m608=100 m609=150", group=group)
-    yield from bps.abs_set(pmac.pmac_string, "m708=100 m709=150", group=group)
-    yield from bps.abs_set(pmac.pmac_string, "m808=100 m809=150", group=group)
+    yield from bps.abs_set(pmac.enc_reset, EncReset.ENC5, group=group)
+    yield from bps.abs_set(pmac.enc_reset, EncReset.ENC6, group=group)
+    yield from bps.abs_set(pmac.enc_reset, EncReset.ENC7, group=group)
+    yield from bps.abs_set(pmac.enc_reset, EncReset.ENC8, group=group)
 
     # Define detector in use
     logger.debug("Define detector in use.")
