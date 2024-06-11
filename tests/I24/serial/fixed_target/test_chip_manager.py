@@ -26,10 +26,10 @@ mtr1_dir=1
 mtr2_dir=-1
 mtr3_dir=-1"""
 
-fiducial_1_str = """MTR RBV RAW Corr f_value
-MTR1 0 0 1 0
-MTR2 1 -1 -1 1
-MTR3 0 0 -1 0"""
+fiducial_1_str = """MTR RBV Corr
+MTR1 0 1
+MTR2 1 -1
+MTR3 0 -1"""
 
 cs_json = '{"scalex":1, "scaley":2, "scalez":3, "skew":-0.5, "Sx_dir":1, "Sy_dir":-1, "Sz_dir":0}'
 

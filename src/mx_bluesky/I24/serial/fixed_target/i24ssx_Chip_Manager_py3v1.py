@@ -734,38 +734,29 @@ def scrape_mtr_directions(motor_file_path: Path | str = CS_FILES_PATH):
 
 
 @log.log_on_entry
-def fiducial(point: int = 1) -> MsgGenerator:
+def fiducial(point: int = 1, pmac: PMAC = inject("pmac")) -> MsgGenerator:
     setup_logging()
     scale = 10000.0  # noqa: F841
 
     mtr1_dir, mtr2_dir, mtr3_dir = scrape_mtr_directions(CS_FILES_PATH)
 
-    rbv_1 = float(caget(pv.me14e_stage_x + ".RBV"))
-    rbv_2 = float(caget(pv.me14e_stage_y + ".RBV"))
-    rbv_3 = float(caget(pv.me14e_stage_z + ".RBV"))
-
-    # NOTE Raw readback not in ophyd_async motor
-    raw_1 = float(caget(pv.me14e_stage_x + ".RRBV"))
-    raw_2 = float(caget(pv.me14e_stage_y + ".RRBV"))
-    raw_3 = float(caget(pv.me14e_stage_z + ".RRBV"))
-
-    f_x = rbv_1
-    f_y = rbv_2
-    f_z = rbv_3
+    rbv_1 = yield from bps.rd(pmac.x.user_readback)
+    rbv_2 = yield from bps.rd(pmac.y.user_readback)
+    rbv_3 = yield from bps.rd(pmac.z.user_readback)
 
     output_param_path = PARAM_FILE_PATH_FT
     output_param_path.mkdir(parents=True, exist_ok=True)
     logger.info("Writing Fiducial File %s/fiducial_%s.txt" % (output_param_path, point))
     logger.info("MTR\tRBV\tRAW\tCorr\tf_value")
-    logger.info("MTR1\t%1.4f\t%i\t%i\t%1.4f" % (rbv_1, raw_1, mtr1_dir, f_x))
-    logger.info("MTR2\t%1.4f\t%i\t%i\t%1.4f" % (rbv_2, raw_2, mtr2_dir, f_y))
-    logger.info("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
+    logger.info("MTR1\t%1.4f\t%i" % (rbv_1, mtr1_dir))
+    logger.info("MTR2\t%1.4f\t%i" % (rbv_2, mtr2_dir))
+    logger.info("MTR3\t%1.4f\t%i" % (rbv_3, mtr3_dir))
 
     with open(output_param_path / f"fiducial_{point}.txt", "w") as f:
-        f.write("MTR\tRBV\tRAW\tCorr\tf_value\n")
-        f.write("MTR1\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_1, raw_1, mtr1_dir, f_x))
-        f.write("MTR2\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_2, raw_2, mtr2_dir, f_y))
-        f.write("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
+        f.write("MTR\tRBV\tCorr\n")
+        f.write("MTR1\t%1.4f\t%i\n" % (rbv_1, mtr1_dir))
+        f.write("MTR2\t%1.4f\t%i\n" % (rbv_2, mtr2_dir))
+        f.write("MTR3\t%1.4f\t%i\n" % (rbv_3, mtr3_dir))
     logger.info(f"Fiducial {point} set.")
     yield from bps.null()
 
@@ -775,9 +766,9 @@ def scrape_mtr_fiducials(point: int, param_path: Path | str = PARAM_FILE_PATH_FT
 
     with open(param_path / f"fiducial_{point}.txt", "r") as f:
         f_lines = f.readlines()[1:]
-    f_x = float(f_lines[0].rsplit()[4])
-    f_y = float(f_lines[1].rsplit()[4])
-    f_z = float(f_lines[2].rsplit()[4])
+    f_x = float(f_lines[0].rsplit()[1])
+    f_y = float(f_lines[1].rsplit()[1])
+    f_z = float(f_lines[2].rsplit()[1])
     return f_x, f_y, f_z
 
 
