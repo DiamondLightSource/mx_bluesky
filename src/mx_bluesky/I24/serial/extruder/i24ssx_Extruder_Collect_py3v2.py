@@ -19,6 +19,7 @@ import bluesky.plan_stubs as bps
 from blueapi.core import MsgGenerator
 from dodal.beamlines import i24
 from dodal.common import inject
+from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3, Zebra
 
 from mx_bluesky.I24.serial import log
@@ -64,7 +65,9 @@ def _coerce_to_path(path: Path | str) -> Path:
 
 
 @log.log_on_entry
-def initialise_extruder() -> MsgGenerator:
+def initialise_extruder(
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     setup_logging()
     logger.info("Initialise Parameters for extruder data collection on I24.")
 
@@ -72,7 +75,7 @@ def initialise_extruder() -> MsgGenerator:
     logger.info("Visit defined %s" % visit)
 
     # Define detector in use
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
 
     caput(pv.ioc12_gp2, "test")
     caput(pv.ioc12_gp3, "testrun")
@@ -89,7 +92,11 @@ def initialise_extruder() -> MsgGenerator:
 
 
 @log.log_on_entry
-def laser_check(mode: str, zebra: Zebra = inject("zebra")) -> MsgGenerator:
+def laser_check(
+    mode: str,
+    zebra: Zebra = inject("zebra"),
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     """Plan to open the shutter and check the laser beam from the viewer by pressing \
         'Laser On' and 'Laser Off' buttons on the edm.
 
@@ -106,7 +113,7 @@ def laser_check(mode: str, zebra: Zebra = inject("zebra")) -> MsgGenerator:
     setup_logging()
     logger.debug(f"Laser check: {mode}")
 
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
 
     LASER_TTL = TTL_EIGER if isinstance(det_type, Pilatus) else TTL_PILATUS
     if mode == "laseron":
@@ -128,13 +135,16 @@ def enter_hutch() -> MsgGenerator:
 
 
 @log.log_on_entry
-def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH):
+def write_parameter_file(
+    param_path: Path | str = PARAM_FILE_PATH,
+    detector_stage: DetectorMotion = inject("detector_motion"),
+):
     """Writes a json parameter file that can later be parsed by the model."""
     param_path = _coerce_to_path(param_path)
 
     logger.debug("Writing Parameter File to: %s \n" % (param_path / PARAM_FILE_NAME))
 
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
     filename = caget(pv.ioc12_gp3)
     # If file name ends in a digit this causes processing/pilatus pain.
     # Append an underscore

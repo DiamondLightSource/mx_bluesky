@@ -19,6 +19,7 @@ import bluesky.plan_stubs as bps
 import numpy as np
 from blueapi.core import MsgGenerator
 from dodal.common import inject
+from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC
 
 from mx_bluesky.I24.serial import log
@@ -52,7 +53,9 @@ def setup_logging():
 
 
 @log.log_on_entry
-def initialise_stages() -> MsgGenerator:
+def initialise_stages(
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     setup_logging()
     # commented out filter lines 230719 as this stage not connected
     logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
@@ -91,9 +94,12 @@ def initialise_stages() -> MsgGenerator:
     caput(pv.me14e_pmac_str, "m708=100 m709=150")
     caput(pv.me14e_pmac_str, "m808=100 m809=150")
 
+    # TODO Split this out.
+    # Detector bit is unrelated, just here for convenience sake
+    # See https://github.com/DiamondLightSource/mx_bluesky/issues/51
     # Define detector in use
     logger.debug("Define detector in use.")
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
 
     caput(pv.pilat_cbftemplate, 0)
 
@@ -115,6 +121,7 @@ def initialise_stages() -> MsgGenerator:
 @log.log_on_entry
 def write_parameter_file(
     input_param_path: Optional[str] = None,
+    detector_stage: DetectorMotion = inject("detector_motion"),
 ) -> MsgGenerator:
     setup_logging()
     if not input_param_path:
@@ -127,7 +134,7 @@ def write_parameter_file(
     )
 
     filename = caget(pv.me14e_chip_name)
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
     map_type = caget(pv.me14e_gp2)
 
     # If file name ends in a digit this causes processing/pilatus pain.

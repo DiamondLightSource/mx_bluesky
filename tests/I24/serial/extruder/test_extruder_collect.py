@@ -1,5 +1,6 @@
 from unittest.mock import ANY, call, patch
 
+import bluesky.plan_stubs as bps
 import pytest
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3
 
@@ -47,17 +48,28 @@ def dummy_params_pp():
     return ExtruderParameters(**params_pp)
 
 
+def fake_generator(value):
+    yield from bps.null()
+    return value
+
+
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caget")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.get_detector_type")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.logger")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_logging")
 def test_initialise_extruder(
-    fake_log_setup, fake_log, fake_det, fake_caput, fake_caget, RE
+    fake_log_setup,
+    fake_log,
+    fake_det,
+    fake_caput,
+    fake_caget,
+    detector_stage,
+    RE,
 ):
     fake_caget.return_value = "/path/to/visit"
-    fake_det.return_value = Eiger()
-    RE(initialise_extruder())
+    fake_det.side_effect = [fake_generator(Eiger())]
+    RE(initialise_extruder(detector_stage))
     assert fake_caput.call_count == 10
     assert fake_caget.call_count == 1
 
@@ -89,10 +101,11 @@ async def test_laser_check(
     expected_out,
     det_type,
     zebra,
+    detector_stage,
     RE,
 ):
-    fake_det.return_value = det_type
-    RE(laser_check(laser_mode, zebra))
+    fake_det.side_effect = [fake_generator(det_type)]
+    RE(laser_check(laser_mode, zebra, detector_stage))
 
     TTL = TTL_EIGER if isinstance(det_type, Pilatus) else TTL_PILATUS
     assert await zebra.inputs.soft_in_1.get_value() == expected_in1
