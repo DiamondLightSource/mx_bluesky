@@ -744,6 +744,7 @@ def fiducial(point: int = 1) -> MsgGenerator:
     rbv_2 = float(caget(pv.me14e_stage_y + ".RBV"))
     rbv_3 = float(caget(pv.me14e_stage_z + ".RBV"))
 
+    # NOTE Raw readback not in ophyd_async motor
     raw_1 = float(caget(pv.me14e_stage_x + ".RRBV"))
     raw_2 = float(caget(pv.me14e_stage_y + ".RRBV"))
     raw_3 = float(caget(pv.me14e_stage_z + ".RRBV"))
