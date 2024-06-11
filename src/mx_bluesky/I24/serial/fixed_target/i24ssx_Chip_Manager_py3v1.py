@@ -63,7 +63,8 @@ def initialise_stages(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     # commented out filter lines 230719 as this stage not connected
     logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
 
-    # NOTE .VMAX is read only in ohpyd_async motor.
+    # NOTE .VMAX is read only in ohpyd_async motor, should be removed in the future
+    # See https://github.com/DiamondLightSource/mx_bluesky/issues/109
     caput(pv.me14e_stage_x + ".VMAX", 20)
     caput(pv.me14e_stage_y + ".VMAX", 20)
     caput(pv.me14e_stage_z + ".VMAX", 20)
@@ -756,7 +757,7 @@ def fiducial(point: int = 1, pmac: PMAC = inject("pmac")) -> MsgGenerator:
         f.write("MTR\tRBV\tCorr\n")
         f.write("MTR1\t%1.4f\t%i\n" % (rbv_1, mtr1_dir))
         f.write("MTR2\t%1.4f\t%i\n" % (rbv_2, mtr2_dir))
-        f.write("MTR3\t%1.4f\t%i\n" % (rbv_3, mtr3_dir))
+        f.write("MTR3\t%1.4f\t%i" % (rbv_3, mtr3_dir))
     logger.info(f"Fiducial {point} set.")
     yield from bps.null()
 
