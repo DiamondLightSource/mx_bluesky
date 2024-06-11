@@ -14,8 +14,11 @@ from typing import Dict, List
 
 import numpy as np
 from blueapi.core import MsgGenerator
-from dodal.beamlines import i24
 from dodal.common import inject
+from dodal.devices.i24.aperture import Aperture
+from dodal.devices.i24.beamstop import Beamstop
+from dodal.devices.i24.dual_backlight import DualBacklight
+from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 
@@ -331,14 +334,15 @@ def datasetsizei24(n_exposures: int, chip_type: ChipType, map_type: MappingType)
 
 
 @log.log_on_entry
-def start_i24(zebra: Zebra, parameters: FixedTargetParameters):
+def start_i24(
+    zebra: Zebra,
+    aperture: Aperture,
+    backlight: DualBacklight,
+    beamstop: Beamstop,
+    detector_stage: DetectorMotion,
+    parameters: FixedTargetParameters,
+):
     """Returns a tuple of (start_time, dcid)"""
-    # Get other dodal devices
-    # TODO these should probably got somewhere else
-    aperture = i24.aperture()
-    backlight = i24.backlight()
-    beamstop = i24.beamstop()
-    detector_stage = i24.detector_motion()
 
     logger.info("Start I24 data collection.")
     start_time = datetime.now()
@@ -571,7 +575,12 @@ def finish_i24(
 
 
 def run_fixed_target_plan(
-    zebra: Zebra = inject("zebra"), pmac: PMAC = inject("pmac")
+    zebra: Zebra = inject("zebra"),
+    pmac: PMAC = inject("pmac"),
+    aperture: Aperture = inject("aperture"),
+    backlight: DualBacklight = inject("backlight"),
+    beamstop: Beamstop = inject("beamstop"),
+    detector_stage: DetectorMotion = inject("detector_motion"),
 ) -> MsgGenerator:
     setup_logging()
     # ABORT BUTTON
@@ -619,7 +628,9 @@ def run_fixed_target_plan(
         pmac, chip_prog_dict, parameters.map_type, parameters.pump_repeat
     )
 
-    start_time, dcid = yield from start_i24(zebra, parameters)
+    start_time, dcid = yield from start_i24(
+        zebra, aperture, backlight, beamstop, detector_stage, parameters
+    )
 
     logger.info("Moving to Start")
     caput(pv.me14e_pmac_str, "!x0y0z0")
