@@ -128,12 +128,13 @@ def laser_check(
 
 
 @log.log_on_entry
-def enter_hutch() -> MsgGenerator:
+def enter_hutch(
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     """Move the detector stage before entering hutch."""
     setup_logging()
-    caput(pv.det_z, SAFE_DET_Z)
+    yield from bps.mv(detector_stage.z, SAFE_DET_Z)
     logger.debug("Detector moved.")
-    yield from bps.null()
 
 
 @log.log_on_entry

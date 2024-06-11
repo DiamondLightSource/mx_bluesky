@@ -1,4 +1,4 @@
-from unittest.mock import ANY, call, patch
+from unittest.mock import patch
 
 import bluesky.plan_stubs as bps
 import pytest
@@ -74,12 +74,10 @@ def test_initialise_extruder(
     assert fake_caget.call_count == 1
 
 
-@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.setup_logging")
-def test_enterhutch(fake_log_setup, fake_caput, RE):
-    RE(enter_hutch())
-    assert fake_caput.call_count == 1
-    fake_caput.assert_has_calls([call(ANY, 1480)])
+async def test_enterhutch(fake_log_setup, detector_stage, RE):
+    RE(enter_hutch(detector_stage))
+    assert await detector_stage.z.user_readback.get_value() == 1480
 
 
 @pytest.mark.parametrize(
