@@ -17,8 +17,10 @@ from time import sleep
 
 import bluesky.plan_stubs as bps
 from blueapi.core import MsgGenerator
-from dodal.beamlines import i24
 from dodal.common import inject
+from dodal.devices.i24.aperture import Aperture
+from dodal.devices.i24.beamstop import Beamstop
+from dodal.devices.i24.dual_backlight import DualBacklight
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3, Zebra
 
@@ -182,12 +184,14 @@ def write_parameter_file(
 
 
 @log.log_on_entry
-def run_extruder_plan(zebra: Zebra = inject("zebra")) -> MsgGenerator:
+def run_extruder_plan(
+    zebra: Zebra = inject("zebra"),
+    aperture: Aperture = inject("aperture"),
+    backlight: DualBacklight = inject("backlight"),
+    beamstop: Beamstop = inject("beamstop"),
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     setup_logging()
-    aperture = i24.aperture()
-    backlight = i24.backlight()
-    beamstop = i24.beamstop()
-    detector_stage = i24.detector_motion()
     start_time = datetime.now()
     logger.info("Collection start time: %s" % start_time.ctime())
 
