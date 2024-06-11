@@ -49,7 +49,7 @@ class UnknownDetectorType(Exception):
 
 
 def get_detector_type(detector_stage: DetectorMotion) -> Generator[Msg, None, Detector]:
-    det_y = yield from bps.rd(detector_stage.y)  # caget(pv.det_y)
+    det_y = yield from bps.rd(detector_stage.y.user_readback)
     # DetectorMotion should also be used for this.
     # This should be part of https://github.com/DiamondLightSource/mx_bluesky/issues/51
     if float(det_y) < Eiger.det_y_threshold:
