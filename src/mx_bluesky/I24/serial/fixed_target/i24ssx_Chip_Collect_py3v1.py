@@ -665,16 +665,17 @@ def run_fixed_target_plan(
             flush_print(line_of_text)
             sleep(0.5)
             i += 1
+            status = yield from bps.rd(pmac.scanstatus)
             if int(caget(pv.me14e_gp9)) != 0:
                 aborted = True
                 logger.warning("Data Collection Aborted")
                 yield from run_aborted_plan(pmac)
                 break
-            elif int(caget(pv.me14e_scanstatus)) == 0:
-                # As soon as me14e_scanstatus is set to 0, exit.
-                # Epics checks the geobrick and updates this PV every s or so.
+            elif int(status) == 0:
+                # As soon as the PVAR P2401 is set to 0, exit.
+                # Epics checks the geobrick and updates this PV every 1s or so.
                 # Once the collection is done, it will be set to 0.
-                print(caget(pv.me14e_scanstatus))
+                print(status)
                 logger.warning("Data Collection Finished")
                 break
             elif time.time() >= timeout_time:
