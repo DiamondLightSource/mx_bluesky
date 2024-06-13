@@ -56,12 +56,6 @@ def flush_print(text):
     sys.stdout.flush()
 
 
-def _coerce_to_path(path: Path | str) -> Path:
-    if not isinstance(path, Path):
-        return Path(path)
-    return path
-
-
 @log.log_on_entry
 def initialise_extruder() -> MsgGenerator:
     setup_logging()
@@ -127,10 +121,8 @@ def enter_hutch() -> MsgGenerator:
 
 
 @log.log_on_entry
-def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH):
+def write_parameter_file(param_path: Path = PARAM_FILE_PATH):
     """Writes a json parameter file that can later be parsed by the model."""
-    param_path = _coerce_to_path(param_path)
-
     logger.debug("Writing Parameter File to: %s \n" % (param_path / PARAM_FILE_NAME))
 
     det_type = get_detector_type()

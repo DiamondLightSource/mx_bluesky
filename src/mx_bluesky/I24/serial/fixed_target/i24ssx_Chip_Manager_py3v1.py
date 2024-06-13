@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 from pprint import pformat
 from time import sleep
+from typing import Tuple
 
 import bluesky.plan_stubs as bps
 import numpy as np
@@ -36,12 +37,6 @@ from mx_bluesky.I24.serial.setup_beamline import Pilatus, caget, caput, pv
 from mx_bluesky.I24.serial.setup_beamline.setup_detector import get_detector_type
 
 logger = logging.getLogger("I24ssx.chip_manager")
-
-
-def _coerce_to_path(path: Path | str) -> Path:
-    if not isinstance(path, Path):
-        return Path(path)
-    return path
 
 
 def setup_logging():
@@ -170,9 +165,8 @@ def write_parameter_file(
     yield from bps.null()
 
 
-def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
+def scrape_pvar_file(fid: str, pvar_dir: Path = PVAR_FILE_PATH):
     block_start_list = []
-    pvar_dir = _coerce_to_path(pvar_dir)
 
     with open(pvar_dir / fid, "r") as f:
         lines = f.readlines()
@@ -701,9 +695,7 @@ def laser_control(laser_setting: str, pmac: PMAC = inject("pmac")) -> MsgGenerat
 
 
 @log.log_on_entry
-def scrape_mtr_directions(motor_file_path: Path | str = CS_FILES_PATH):
-    motor_file_path = _coerce_to_path(motor_file_path)
-
+def scrape_mtr_directions(motor_file_path: Path = CS_FILES_PATH):
     with open(motor_file_path / "motor_direction.txt", "r") as f:
         lines = f.readlines()
     mtr1_dir, mtr2_dir, mtr3_dir = 1.0, 1.0, 1.0
@@ -756,9 +748,9 @@ def fiducial(point: int = 1) -> MsgGenerator:
     yield from bps.null()
 
 
-def scrape_mtr_fiducials(point: int, param_path: Path | str = PARAM_FILE_PATH_FT):
-    param_path = _coerce_to_path(param_path)
-
+def scrape_mtr_fiducials(
+    point: int, param_path: Path = PARAM_FILE_PATH_FT
+) -> Tuple[float, float, float]:
     with open(param_path / f"fiducial_{point}.txt", "r") as f:
         f_lines = f.readlines()[1:]
     f_x = float(f_lines[0].rsplit()[4])
