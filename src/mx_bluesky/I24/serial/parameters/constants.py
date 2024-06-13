@@ -37,7 +37,7 @@ def _params_file_location() -> Tuple[Path, Path]:
 
 
 PARAM_FILE_NAME = "parameters.json"
-# Paths for rw - these need to be created on startup if not existing
+# Paths for rw - these should have been created on startup
 PARAM_FILE_PATH, PARAM_FILE_PATH_FT = _params_file_location()
 LITEMAP_PATH = PARAM_FILE_PATH_FT / "litemaps"
 FULLMAP_PATH = PARAM_FILE_PATH_FT / "fullmaps"

@@ -3,7 +3,6 @@ Chip manager for fixed target
 This version changed to python3 March2020 by RLO
 """
 
-import argparse
 import json
 import logging
 import re
@@ -13,7 +12,6 @@ import time
 from pathlib import Path
 from pprint import pformat
 from time import sleep
-from typing import Optional
 
 import bluesky.plan_stubs as bps
 import numpy as np
@@ -197,15 +195,14 @@ def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
     return block_start_list
 
 
+@validate_arguments
 @log.log_on_entry
 def define_current_chip(
     chipid: str = "oxford",
-    pvar_path: Optional[str] = None,
+    pvar_path: DirectoryPath = PVAR_FILE_PATH,
 ) -> MsgGenerator:
     setup_logging()
     logger.debug("Run load stock map for just the first block")
-    if not pvar_path:
-        pvar_path = PVAR_FILE_PATH.as_posix()
     yield from load_stock_map("Just The First Block")
     """
     Not sure what this is for:
@@ -217,9 +214,7 @@ def define_current_chip(
     if chipid == "oxford":
         caput(pv.me14e_gp1, 1)
 
-    param_path = _coerce_to_path(pvar_path)
-
-    with open(param_path / f"{chipid}.pvar", "r") as f:
+    with open(pvar_path / f"{chipid}.pvar", "r") as f:
         logger.info("Opening %s.pvar" % chipid)
         for line in f.readlines():
             if line.startswith("#"):
@@ -230,13 +225,10 @@ def define_current_chip(
     yield from bps.null()
 
 
+@validate_arguments
 @log.log_on_entry
-def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
+def save_screen_map(litemap_path: DirectoryPath = LITEMAP_PATH) -> MsgGenerator:
     setup_logging()
-    if not map_path:
-        map_path = LITEMAP_PATH.as_posix()
-    litemap_path = _coerce_to_path(map_path)
-    litemap_path.mkdir(parents=True, exist_ok=True)
 
     logger.info("Saving %s currentchip.map" % litemap_path.as_posix())
     with open(litemap_path / "currentchip.map", "w") as f:
@@ -254,19 +246,17 @@ def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
 # TODO Use pydantic FilePath to improve map/parameter file paths
 # See https://github.com/DiamondLightSource/mx_bluesky/issues/107
 # Same on all other instances.
+@validate_arguments
 @log.log_on_entry
 def upload_parameters(
     chipid: str = "oxford",
-    map_path: Optional[str] = None,
+    litemap_path: DirectoryPath = LITEMAP_PATH,
 ) -> MsgGenerator:
     setup_logging()
     logger.info("Uploading Parameters to the GeoBrick")
     if chipid == "oxford":
         caput(pv.me14e_gp1, 0)
         width = 8
-    if not map_path:
-        map_path = LITEMAP_PATH.as_posix()
-    litemap_path = _coerce_to_path(map_path)
 
     with open(litemap_path / "currentchip.map", "r") as f:
         logger.info("Chipid %s" % chipid)
@@ -296,11 +286,10 @@ def upload_parameters(
     yield from bps.null()
 
 
+@validate_arguments
 @log.log_on_entry
-def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
-    fullmap_path = _coerce_to_path(fullmap_path)
-    fullmap_path.mkdir(parents=True, exist_ok=True)
-
+def upload_full(fullmap_path: DirectoryPath = FULLMAP_PATH) -> MsgGenerator:
+    setup_logging()
     with open(fullmap_path / "currentchip.full", "r") as fh:
         f = fh.readlines()
 
@@ -313,6 +302,7 @@ def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
         caput(pv.me14e_pmac_str, writeline)
         sleep(0.02)
     logger.debug("Upload fullmap done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -517,8 +507,9 @@ def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
     yield from bps.null()
 
 
+@validate_arguments
 @log.log_on_entry
-def load_lite_map(map_path: Optional[str] = None) -> MsgGenerator:
+def load_lite_map(litemap_path: DirectoryPath = LITEMAP_PATH) -> MsgGenerator:
     setup_logging()
     logger.debug("Run load stock map with 'clear' setting.")
     yield from load_stock_map("clear")
@@ -564,10 +555,6 @@ def load_lite_map(map_path: Optional[str] = None) -> MsgGenerator:
                 btn_names[button_name] = label
         block_dict = btn_names
 
-    if not map_path:
-        map_path = LITEMAP_PATH.as_posix()
-    litemap_path = _coerce_to_path(map_path)
-
     litemap_fid = str(caget(pv.me14e_gp5)) + ".lite"
     logger.info("Please wait, loading LITE map")
     logger.debug("Loading Lite Map")
@@ -585,11 +572,11 @@ def load_lite_map(map_path: Optional[str] = None) -> MsgGenerator:
     yield from bps.null()
 
 
+@validate_arguments
 @log.log_on_entry
-def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
+def load_full_map(fullmap_path: DirectoryPath = FULLMAP_PATH) -> MsgGenerator:
+    setup_logging()
     params = startup.read_parameter_file()
-    fullmap_path = _coerce_to_path(fullmap_path)
-    fullmap_path.mkdir(parents=True, exist_ok=True)
 
     fullmap_fid = fullmap_path / f"{str(caget(pv.me14e_gp5))}.spec"
     logger.info("Opening %s" % fullmap_fid)
@@ -601,6 +588,7 @@ def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
         % (fullmap_fid.with_suffix(".full"), fullmap_path / "currentchip.full")
     )
     logger.debug("Load full map done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -1024,29 +1012,6 @@ def block_check() -> MsgGenerator:
     yield from bps.null()
 
 
-def parse_args_and_run_parsed_function(args):
-    print(f"Run with {args}")
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(
-        help="Choose command.",
-        required=True,
-        dest="sub-command",
-    )
-    parser_fullmap = subparsers.add_parser("load_full_map")
-    parser_fullmap.set_defaults(func=load_full_map)
-    parser_upld = subparsers.add_parser("upload_full")
-    parser_upld.set_defaults(func=upload_full)
-
-    args = parser.parse_args(args)
-
-    args_dict = vars(args)
-    args_dict.pop("sub-command")
-    args_dict.pop("func")(**args_dict)
-
-
-if __name__ == "__main__":
-    setup_logging()
-    # This is now in all functions. TODO See logging issue on blueapi
-    # https://github.com/DiamondLightSource/blueapi/issues/494
-
-    parse_args_and_run_parsed_function(sys.argv[1:])
+# setup_logging now called in all functions.
+# TODO See logging issue on blueapi
+# https://github.com/DiamondLightSource/blueapi/issues/494
