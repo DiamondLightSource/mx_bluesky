@@ -12,9 +12,11 @@ from pathlib import Path
 from time import sleep
 from typing import Dict, List
 
+import bluesky.plan_stubs as bps
 import numpy as np
 from blueapi.core import MsgGenerator
 from dodal.common import inject
+from dodal.devices.hutch_shutter import HutchShutter, ShutterDemand
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 
@@ -330,7 +332,7 @@ def datasetsizei24(n_exposures: int, chip_type: ChipType, map_type: MappingType)
 
 
 @log.log_on_entry
-def start_i24(zebra: Zebra, parameters: FixedTargetParameters):
+def start_i24(zebra: Zebra, shutter: HutchShutter, parameters: FixedTargetParameters):
     """Returns a tuple of (start_time, dcid)"""
     logger.info("Start I24 data collection.")
     start_time = datetime.now()
@@ -479,13 +481,7 @@ def start_i24(zebra: Zebra, parameters: FixedTargetParameters):
         raise ValueError(msg)
 
     # Open the hutch shutter
-
-    caput("BL24I-PS-SHTR-01:CON", "Reset")
-    logger.debug("Reset, then sleep for 1s")
-    sleep(1.0)
-    caput("BL24I-PS-SHTR-01:CON", "Open")
-    logger.debug(" Open, then sleep for 2s")
-    sleep(2.0)
+    yield from bps.abs_set(shutter, ShutterDemand.OPEN, wait=True)
 
     return start_time.ctime(), dcid
 
@@ -493,6 +489,7 @@ def start_i24(zebra: Zebra, parameters: FixedTargetParameters):
 @log.log_on_entry
 def finish_i24(
     zebra: Zebra,
+    shutter: HutchShutter,
     parameters: FixedTargetParameters,
 ):
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
@@ -521,7 +518,7 @@ def finish_i24(
     logger.info("Move chip back to home position by setting PMAC_STRING pv.")
     caput(pv.me14e_pmac_str, "!x0y0z0")
     logger.info("Closing shutter")
-    caput("BL24I-PS-SHTR-01:CON", "Close")
+    yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
 
     end_time = time.ctime()
     logger.debug("Collection end time %s" % end_time)
@@ -557,7 +554,9 @@ def finish_i24(
 
 
 def run_fixed_target_plan(
-    zebra: Zebra = inject("zebra"), pmac: PMAC = inject("pmac")
+    zebra: Zebra = inject("zebra"),
+    pmac: PMAC = inject("pmac"),
+    shutter: HutchShutter = inject("shutter"),
 ) -> MsgGenerator:
     setup_logging()
     # ABORT BUTTON
@@ -605,7 +604,7 @@ def run_fixed_target_plan(
         pmac, chip_prog_dict, parameters.map_type, parameters.pump_repeat
     )
 
-    start_time, dcid = yield from start_i24(zebra, parameters)
+    start_time, dcid = yield from start_i24(zebra, shutter, parameters)
 
     logger.info("Moving to Start")
     caput(pv.me14e_pmac_str, "!x0y0z0")
@@ -697,7 +696,7 @@ def run_fixed_target_plan(
         caput(pv.eiger_acquire, 0)
         caput(pv.eiger_ODcapture, "Done")
 
-    end_time = yield from finish_i24(zebra, parameters)
+    end_time = yield from finish_i24(zebra, shutter, parameters)
     dcid.collection_complete(end_time, aborted=aborted)
     logger.debug("Notify DCID of end of collection.")
     dcid.notify_end()

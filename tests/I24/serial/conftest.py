@@ -32,10 +32,8 @@ def shutter() -> HutchShutter:
 
     def set_status(value: ShutterDemand, *args, **kwargs):
         value_sta = ShutterState.OPEN if value == "Open" else ShutterState.CLOSED
-        # await shutter.status._backend.put(value_sta)
         set_mock_value(shutter.status, value_sta)
 
-    # shutter.set = AsyncMock(side_effect=set_status)
     callback_on_mock_put(shutter.control, set_status)
     return shutter
 
