@@ -20,6 +20,7 @@ import numpy as np
 from blueapi.core import MsgGenerator
 from dodal.common import inject
 from dodal.devices.i24.pmac import PMAC
+from pydantic import DirectoryPath, validate_arguments
 
 from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_Mapping_py3v1 as mapping
@@ -112,15 +113,12 @@ def initialise_stages() -> MsgGenerator:
     yield from bps.null()
 
 
+@validate_arguments
 @log.log_on_entry
 def write_parameter_file(
-    input_param_path: Optional[str] = None,
+    param_path: DirectoryPath = PARAM_FILE_PATH_FT,
 ) -> MsgGenerator:
     setup_logging()
-    if not input_param_path:
-        input_param_path = PARAM_FILE_PATH_FT.as_posix()
-    param_path = _coerce_to_path(input_param_path)
-    param_path.mkdir(parents=True, exist_ok=True)
 
     logger.info(
         "Writing Parameter File: %s" % (param_path / PARAM_FILE_NAME).as_posix()
