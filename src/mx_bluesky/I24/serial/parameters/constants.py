@@ -1,7 +1,7 @@
 from enum import Enum
 from os import environ
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 from mx_bluesky.I24.serial.log import _read_visit_directory_from_file
 
@@ -23,7 +23,7 @@ HEADER_FILES_PATH = Path("/dls_sw/i24/scripts/fastchips/").expanduser().resolve(
 INTERNAL_FILES_PATH = Path(__file__).absolute().parent
 
 
-def _params_file_location() -> Tuple[Path, Path]:
+def _params_file_location() -> Path:
     beamline: Optional[str] = environ.get("BEAMLINE")
     filepath: Path
 
@@ -31,14 +31,16 @@ def _params_file_location() -> Tuple[Path, Path]:
         filepath = _read_visit_directory_from_file() / "tmp/serial/parameters"
     else:
         filepath = INTERNAL_FILES_PATH
-    filepath_ft = filepath / "fixed_target"
 
-    return filepath, filepath_ft
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    return filepath
 
 
 PARAM_FILE_NAME = "parameters.json"
 # Paths for rw - these should have been created on startup
-PARAM_FILE_PATH, PARAM_FILE_PATH_FT = _params_file_location()
+PARAM_FILE_PATH = _params_file_location()
+PARAM_FILE_PATH_FT = PARAM_FILE_PATH / "fixed_target"
 LITEMAP_PATH = PARAM_FILE_PATH_FT / "litemaps"
 FULLMAP_PATH = PARAM_FILE_PATH_FT / "fullmaps"
 # Paths for r only

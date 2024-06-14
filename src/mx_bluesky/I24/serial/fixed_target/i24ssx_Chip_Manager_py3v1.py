@@ -19,7 +19,6 @@ import numpy as np
 from blueapi.core import MsgGenerator
 from dodal.common import inject
 from dodal.devices.i24.pmac import PMAC
-from pydantic import DirectoryPath, validate_arguments
 
 from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_Mapping_py3v1 as mapping
@@ -106,12 +105,12 @@ def initialise_stages() -> MsgGenerator:
     yield from bps.null()
 
 
-@validate_arguments
 @log.log_on_entry
-def write_parameter_file(
-    param_path: DirectoryPath = PARAM_FILE_PATH_FT,
-) -> MsgGenerator:
+def write_parameter_file() -> MsgGenerator:
     setup_logging()
+    param_path: Path = PARAM_FILE_PATH_FT
+    # Create directory if it doesn't yet exist.
+    param_path.mkdir(parents=True, exist_ok=True)
 
     logger.info(
         "Writing Parameter File: %s" % (param_path / PARAM_FILE_NAME).as_posix()
@@ -189,11 +188,9 @@ def scrape_pvar_file(fid: str, pvar_dir: Path = PVAR_FILE_PATH):
     return block_start_list
 
 
-@validate_arguments
 @log.log_on_entry
 def define_current_chip(
     chipid: str = "oxford",
-    pvar_path: DirectoryPath = PVAR_FILE_PATH,
 ) -> MsgGenerator:
     setup_logging()
     logger.debug("Run load stock map for just the first block")
@@ -208,7 +205,7 @@ def define_current_chip(
     if chipid == "oxford":
         caput(pv.me14e_gp1, 1)
 
-    with open(pvar_path / f"{chipid}.pvar", "r") as f:
+    with open(PVAR_FILE_PATH / f"{chipid}.pvar", "r") as f:
         logger.info("Opening %s.pvar" % chipid)
         for line in f.readlines():
             if line.startswith("#"):
@@ -219,10 +216,11 @@ def define_current_chip(
     yield from bps.null()
 
 
-@validate_arguments
 @log.log_on_entry
-def save_screen_map(litemap_path: DirectoryPath = LITEMAP_PATH) -> MsgGenerator:
+def save_screen_map() -> MsgGenerator:
     setup_logging()
+    litemap_path: Path = LITEMAP_PATH
+    litemap_path.mkdir(parents=True, exist_ok=True)
 
     logger.info("Saving %s currentchip.map" % litemap_path.as_posix())
     with open(litemap_path / "currentchip.map", "w") as f:
@@ -237,14 +235,9 @@ def save_screen_map(litemap_path: DirectoryPath = LITEMAP_PATH) -> MsgGenerator:
     yield from bps.null()
 
 
-# TODO Use pydantic FilePath to improve map/parameter file paths
-# See https://github.com/DiamondLightSource/mx_bluesky/issues/107
-# Same on all other instances.
-@validate_arguments
 @log.log_on_entry
 def upload_parameters(
     chipid: str = "oxford",
-    litemap_path: DirectoryPath = LITEMAP_PATH,
 ) -> MsgGenerator:
     setup_logging()
     logger.info("Uploading Parameters to the GeoBrick")
@@ -252,7 +245,11 @@ def upload_parameters(
         caput(pv.me14e_gp1, 0)
         width = 8
 
-    with open(litemap_path / "currentchip.map", "r") as f:
+    map_file: Path = LITEMAP_PATH / "currentchip.map"
+    if not map_file.exists():
+        raise FileNotFoundError(f"The file {map_file} has not yet been created")
+
+    with open(map_file, "r") as f:
         logger.info("Chipid %s" % chipid)
         logger.info("width %d" % width)
         x = 1
@@ -280,11 +277,14 @@ def upload_parameters(
     yield from bps.null()
 
 
-@validate_arguments
 @log.log_on_entry
-def upload_full(fullmap_path: DirectoryPath = FULLMAP_PATH) -> MsgGenerator:
+def upload_full() -> MsgGenerator:
     setup_logging()
-    with open(fullmap_path / "currentchip.full", "r") as fh:
+
+    map_file: Path = FULLMAP_PATH / "currentchip.full"
+    if not map_file.exists():
+        raise FileNotFoundError(f"The file {map_file} has not yet been created")
+    with open(map_file, "r") as fh:
         f = fh.readlines()
 
     for i in range(len(f) // 2):
@@ -501,9 +501,8 @@ def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
     yield from bps.null()
 
 
-@validate_arguments
 @log.log_on_entry
-def load_lite_map(litemap_path: DirectoryPath = LITEMAP_PATH) -> MsgGenerator:
+def load_lite_map() -> MsgGenerator:
     setup_logging()
     logger.debug("Run load stock map with 'clear' setting.")
     yield from load_stock_map("clear")
@@ -552,8 +551,8 @@ def load_lite_map(litemap_path: DirectoryPath = LITEMAP_PATH) -> MsgGenerator:
     litemap_fid = str(caget(pv.me14e_gp5)) + ".lite"
     logger.info("Please wait, loading LITE map")
     logger.debug("Loading Lite Map")
-    logger.info("Opening %s" % (litemap_path / litemap_fid))
-    with open(litemap_path / litemap_fid, "r") as fh:
+    logger.info("Opening %s" % (LITEMAP_PATH / litemap_fid))
+    with open(LITEMAP_PATH / litemap_fid, "r") as fh:
         f = fh.readlines()
     for line in f:
         entry = line.split()
@@ -566,20 +565,19 @@ def load_lite_map(litemap_path: DirectoryPath = LITEMAP_PATH) -> MsgGenerator:
     yield from bps.null()
 
 
-@validate_arguments
 @log.log_on_entry
-def load_full_map(fullmap_path: DirectoryPath = FULLMAP_PATH) -> MsgGenerator:
+def load_full_map() -> MsgGenerator:
     setup_logging()
     params = startup.read_parameter_file()
 
-    fullmap_fid = fullmap_path / f"{str(caget(pv.me14e_gp5))}.spec"
+    fullmap_fid = FULLMAP_PATH / f"{str(caget(pv.me14e_gp5))}.spec"
     logger.info("Opening %s" % fullmap_fid)
     mapping.plot_file(fullmap_fid, params.chip_type.value)
     mapping.convert_chip_to_hex(fullmap_fid, params.chip_type.value)
-    shutil.copy2(fullmap_fid.with_suffix(".full"), fullmap_path / "currentchip.full")
+    shutil.copy2(fullmap_fid.with_suffix(".full"), FULLMAP_PATH / "currentchip.full")
     logger.info(
         "Copying %s to %s"
-        % (fullmap_fid.with_suffix(".full"), fullmap_path / "currentchip.full")
+        % (fullmap_fid.with_suffix(".full"), FULLMAP_PATH / "currentchip.full")
     )
     logger.debug("Load full map done")
     yield from bps.null()

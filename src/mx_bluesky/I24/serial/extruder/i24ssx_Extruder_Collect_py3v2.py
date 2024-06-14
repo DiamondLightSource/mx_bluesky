@@ -121,9 +121,10 @@ def enter_hutch() -> MsgGenerator:
 
 
 @log.log_on_entry
-def write_parameter_file(param_path: Path = PARAM_FILE_PATH):
+def write_parameter_file():
     """Writes a json parameter file that can later be parsed by the model."""
-    logger.debug("Writing Parameter File to: %s \n" % (param_path / PARAM_FILE_NAME))
+    param_file: Path = PARAM_FILE_PATH / PARAM_FILE_NAME
+    logger.debug(f"Writing Parameter File to: {param_file}\n")
 
     det_type = get_detector_type()
     filename = caget(pv.ioc12_gp3)
@@ -155,7 +156,7 @@ def write_parameter_file(param_path: Path = PARAM_FILE_PATH):
         "laser_dwell_s": pump_exp,
         "laser_delay_s": pump_delay,
     }
-    with open(param_path / PARAM_FILE_NAME, "w") as f:
+    with open(param_file, "w") as f:
         json.dump(params_dict, f, indent=4)
 
     logger.info("Parameters \n")
