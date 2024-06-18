@@ -18,9 +18,11 @@ from typing import Optional
 import bluesky.plan_stubs as bps
 import numpy as np
 from blueapi.core import MsgGenerator
+from bluesky.run_engine import RunEngine
+from dodal.beamlines import i24
 from dodal.common import inject
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
-from dodal.devices.i24.pmac import PMAC
+from dodal.devices.i24.pmac import PMAC, EncReset, LaserSettings
 
 from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_Mapping_py3v1 as mapping
@@ -54,31 +56,37 @@ def setup_logging():
 
 @log.log_on_entry
 def initialise_stages(
+    pmac: PMAC = inject("pmac"),
     detector_stage: DetectorMotion = inject("detector_motion"),
 ) -> MsgGenerator:
+    """Initialise the portable stages PVs, usually used only once right after setting \
+        up the stages either after use at different facility.
+    """
     setup_logging()
+    group = "initialise_stages"
     # commented out filter lines 230719 as this stage not connected
     logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
 
+    # NOTE .VMAX is read only in ohpyd_async motor, should be removed in the future
+    # See https://github.com/DiamondLightSource/mx_bluesky/issues/109
     caput(pv.me14e_stage_x + ".VMAX", 20)
     caput(pv.me14e_stage_y + ".VMAX", 20)
     caput(pv.me14e_stage_z + ".VMAX", 20)
     # caput(pv.me14e_filter  + '.VMAX', 20)
-    caput(pv.me14e_stage_x + ".VELO", 20)
-    caput(pv.me14e_stage_y + ".VELO", 20)
-    caput(pv.me14e_stage_z + ".VELO", 20)
+    yield from bps.abs_set(pmac.x.velocity, 20, group=group)
+    yield from bps.abs_set(pmac.y.velocity, 20, group=group)
+    yield from bps.abs_set(pmac.z.velocity, 20, group=group)
     # caput(pv.me14e_filter  + '.VELO', 20)
-    caput(pv.me14e_stage_x + ".ACCL", 0.01)
-    caput(pv.me14e_stage_y + ".ACCL", 0.01)
-    caput(pv.me14e_stage_z + ".ACCL", 0.01)
+    yield from bps.abs_set(pmac.x.acceleration_time, 0.01, group=group)
+    yield from bps.abs_set(pmac.y.acceleration_time, 0.01, group=group)
+    yield from bps.abs_set(pmac.z.acceleration_time, 0.01, group=group)
     # caput(pv.me14e_filter  + '.ACCL', 0.01)
-    caput(pv.me14e_stage_x + ".HLM", 30)
-    caput(pv.me14e_stage_x + ".LLM", -29)
-    caput(pv.me14e_stage_y + ".HLM", 30)
-    caput(pv.me14e_stage_y + ".LLM", -30)
-    # caput(pv.me14e_stage_x + '.LLM', -30)
-    caput(pv.me14e_stage_z + ".HLM", 5.1)
-    caput(pv.me14e_stage_z + ".LLM", -4.1)
+    yield from bps.abs_set(pmac.x.high_limit_travel, 30, group=group)
+    yield from bps.abs_set(pmac.x.low_limit_travel, -29, group=group)
+    yield from bps.abs_set(pmac.y.high_limit_travel, 30, group=group)
+    yield from bps.abs_set(pmac.y.low_limit_travel, -30, group=group)
+    yield from bps.abs_set(pmac.z.high_limit_travel, 5.1, group=group)
+    yield from bps.abs_set(pmac.z.low_limit_travel, -4.1, group=group)
     # caput(pv.me14e_filter  + '.HLM', 45.0)
     # caput(pv.me14e_filter  + '.LLM', -45.0)
     caput(pv.me14e_gp1, 1)
@@ -89,10 +97,10 @@ def initialise_stages(
     caput(pv.me14e_chip_name, "albion")
     caput(pv.me14e_dcdetdist, 1480)
     caput(pv.me14e_exptime, 0.01)
-    caput(pv.me14e_pmac_str, "m508=100 m509=150")
-    caput(pv.me14e_pmac_str, "m608=100 m609=150")
-    caput(pv.me14e_pmac_str, "m708=100 m709=150")
-    caput(pv.me14e_pmac_str, "m808=100 m809=150")
+    yield from bps.abs_set(pmac.enc_reset, EncReset.ENC5, group=group)
+    yield from bps.abs_set(pmac.enc_reset, EncReset.ENC6, group=group)
+    yield from bps.abs_set(pmac.enc_reset, EncReset.ENC7, group=group)
+    yield from bps.abs_set(pmac.enc_reset, EncReset.ENC8, group=group)
 
     # TODO Split this out.
     # Detector bit is unrelated, just here for convenience sake
@@ -115,7 +123,7 @@ def initialise_stages(
     caput(pv.me14e_gp101, det_type.name)
 
     logger.info("Initialisation Complete")
-    yield from bps.null()
+    yield from bps.wait(group=group)
 
 
 @log.log_on_entry
@@ -210,6 +218,7 @@ def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
 def define_current_chip(
     chipid: str = "oxford",
     pvar_path: Optional[str] = None,
+    pmac: PMAC = inject("pmac"),
 ) -> MsgGenerator:
     setup_logging()
     logger.debug("Run load stock map for just the first block")
@@ -221,6 +230,8 @@ def define_current_chip(
     print 'Setting Mapping Type to Lite'
     caput(pv.me14e_gp2, 1)
     """
+    if not pmac:
+        pmac = i24.pmac()
     chip_type = int(caget(pv.me14e_gp1))
     logger.info("Chip type:%s Chipid:%s" % (chip_type, chipid))
     if chipid == "oxford":
@@ -235,8 +246,7 @@ def define_current_chip(
                 continue
             line_from_file = line.rstrip("\n")
             logger.info("%s" % line_from_file)
-            caput(pv.me14e_pmac_str, line_from_file)
-    yield from bps.null()
+            yield from bps.abs_set(pmac.pmac_string, line_from_file)
 
 
 @log.log_on_entry
@@ -267,6 +277,7 @@ def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
 def upload_parameters(
     chipid: str = "oxford",
     map_path: Optional[str] = None,
+    pmac: PMAC = inject("pmac"),
 ) -> MsgGenerator:
     setup_logging()
     logger.info("Uploading Parameters to the GeoBrick")
@@ -297,7 +308,7 @@ def upload_parameters(
                 x = 1
             else:
                 x += 1
-            caput(pv.me14e_pmac_str, s)
+            yield from bps.abs_set(pmac.pmac_string, s, wait=True)
             sleep(0.02)
 
     logger.warning("Automatic Setting Mapping Type to Lite has been disabled")
@@ -306,7 +317,9 @@ def upload_parameters(
 
 
 @log.log_on_entry
-def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
+def upload_full(pmac: PMAC = None, fullmap_path: Path | str = FULLMAP_PATH):
+    if not pmac:
+        pmac = i24.pmac()
     fullmap_path = _coerce_to_path(fullmap_path)
     fullmap_path.mkdir(parents=True, exist_ok=True)
 
@@ -319,9 +332,10 @@ def upload_full(fullmap_path: Path | str = FULLMAP_PATH):
             pmac_list.append(f.pop(0).rstrip("\n"))
         writeline = " ".join(pmac_list)
         logger.info("%s" % writeline)
-        caput(pv.me14e_pmac_str, writeline)
-        sleep(0.02)
+        yield from bps.abs_set(pmac.pmac_string, writeline, wait=True)
+        yield from bps.sleep(0.02)
     logger.debug("Upload fullmap done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -610,6 +624,7 @@ def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
         % (fullmap_fid.with_suffix(".full"), fullmap_path / "currentchip.full")
     )
     logger.debug("Load full map done")
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -618,7 +633,7 @@ def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
     logger.info(f"Move to: {place}")
     if place == Fiducials.zero:
         logger.info("Chip aspecific move.")
-        pmac.pmac_string.set("!x0y0z0").wait()
+        yield from bps.trigger(pmac.to_xyz_zero)
         return
 
     chip_type = int(caget(pv.me14e_gp1))
@@ -630,34 +645,22 @@ def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
     logger.info(f"{str(ChipType(chip_type))} Move")
     chip_move = ChipType(chip_type).get_approx_chip_size()
 
-    def move_xy(x, y):
-        move_status = pmac.x.move(x, wait=False)
-        move_status &= pmac.y.move(y, wait=False)
-        move_status.wait()
-
     if place == Fiducials.origin:
-        move_xy(0.0, 0.0)
+        yield from bps.mv(pmac.x, 0.0, pmac.y, 0.0)
     if place == Fiducials.fid1:
-        move_xy(chip_move, 0.0)
+        yield from bps.mv(pmac.x, chip_move, pmac.y, 0.0)
     if place == Fiducials.fid2:
-        move_xy(0.0, chip_move)
-    yield from bps.null()
+        yield from bps.mv(pmac.x, 0.0, pmac.y, chip_move)
 
 
 @log.log_on_entry
 def moveto_preset(place: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
     setup_logging()
 
-    def move_xyz(x, y, z):
-        move_status = pmac.x.move(x, wait=False)
-        move_status &= pmac.y.move(y, wait=False)
-        move_status &= pmac.z.move(z, wait=False)
-        move_status.wait()
-
     # Non Chip Specific Move
     if place == "zero":
         logger.info("Moving to %s" % place)
-        pmac.pmac_string.set("!x0y0z0").wait()
+        yield from bps.trigger(pmac.to_xyz_zero)
 
     elif place == "load_position":
         logger.info("load position")
@@ -668,14 +671,13 @@ def moveto_preset(place: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
     elif place == "collect_position":
         logger.info("collect position")
         caput(pv.me14e_filter, 20)
-        move_xyz(0.0, 0.0, 0.0)
+        yield from bps.mv(pmac.x, 0.0, pmac.y, 0.0, pmac.z, 0.0)
         caput(pv.bs_mp_select, "Data Collection")
         caput(pv.bl_mp_select, "In")
 
     elif place == "microdrop_position":
         logger.info("microdrop align position")
-        move_xyz(6.0, -7.8, 0.0)
-    yield from bps.null()
+        yield from bps.mv(pmac.x, 6.0, pmac.y, -7.8, pmac.z, 0.0)
 
 
 @log.log_on_entry
@@ -687,38 +689,37 @@ def laser_control(laser_setting: str, pmac: PMAC = inject("pmac")) -> MsgGenerat
         # Use M712 = 0 if triggering on falling edge. M712 =1 if on rising edge
         # Be sure to also change laser1off
         # caput(pv.me14e_pmac_str, ' M712=0 M711=1')
-        pmac.pmac_string.set(" M712=1 M711=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_ON, wait=True)
 
     elif laser_setting == "laser1off":
         logger.info("Laser 1 shutter is closed")
-        pmac.pmac_string.set(" M712=0 M711=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_OFF, wait=True)
 
     elif laser_setting == "laser2on":
         logger.info("Laser 2 / BNC3 shutter is open")
-        pmac.pmac_string.set(" M812=1 M811=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_ON, wait=True)
 
     elif laser_setting == "laser2off":
         logger.info("Laser 2 shutter is closed")
-        pmac.pmac_string.set(" M812=0 M811=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_OFF, wait=True)
 
     elif laser_setting == "laser1burn":
         led_burn_time = caget(pv.me14e_gp103)
         logger.info("Laser 1  on")
         logger.info("Burn time is %s s" % led_burn_time)
-        pmac.pmac_string.set(" M712=1 M711=1").wait()
-        sleep(int(float(led_burn_time)))
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_ON, wait=True)
+        yield from bps.sleep(led_burn_time)
         logger.info("Laser 1 off")
-        pmac.pmac_string.set(" M712=0 M711=1").wait()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_OFF, wait=True)
 
     elif laser_setting == "laser2burn":
         led_burn_time = caget(pv.me14e_gp109)
         logger.info("Laser 2 on")
         logger.info("burntime %s s" % led_burn_time)
-        pmac.pmac_string.set(" M812=1 M811=1").wait()
-        sleep(int(float(led_burn_time)))
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_ON, wait=True)
+        yield from bps.sleep(led_burn_time)
         logger.info("Laser 2 off")
-        pmac.pmac_string.set(" M812=0 M811=1").wait()
-    yield from bps.null()
+        yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_OFF, wait=True)
 
 
 @log.log_on_entry
@@ -742,37 +743,29 @@ def scrape_mtr_directions(motor_file_path: Path | str = CS_FILES_PATH):
 
 
 @log.log_on_entry
-def fiducial(point: int = 1) -> MsgGenerator:
+def fiducial(point: int = 1, pmac: PMAC = inject("pmac")) -> MsgGenerator:
     setup_logging()
     scale = 10000.0  # noqa: F841
 
     mtr1_dir, mtr2_dir, mtr3_dir = scrape_mtr_directions(CS_FILES_PATH)
 
-    rbv_1 = float(caget(pv.me14e_stage_x + ".RBV"))
-    rbv_2 = float(caget(pv.me14e_stage_y + ".RBV"))
-    rbv_3 = float(caget(pv.me14e_stage_z + ".RBV"))
-
-    raw_1 = float(caget(pv.me14e_stage_x + ".RRBV"))
-    raw_2 = float(caget(pv.me14e_stage_y + ".RRBV"))
-    raw_3 = float(caget(pv.me14e_stage_z + ".RRBV"))
-
-    f_x = rbv_1
-    f_y = rbv_2
-    f_z = rbv_3
+    rbv_1 = yield from bps.rd(pmac.x.user_readback)
+    rbv_2 = yield from bps.rd(pmac.y.user_readback)
+    rbv_3 = yield from bps.rd(pmac.z.user_readback)
 
     output_param_path = PARAM_FILE_PATH_FT
     output_param_path.mkdir(parents=True, exist_ok=True)
     logger.info("Writing Fiducial File %s/fiducial_%s.txt" % (output_param_path, point))
     logger.info("MTR\tRBV\tRAW\tCorr\tf_value")
-    logger.info("MTR1\t%1.4f\t%i\t%i\t%1.4f" % (rbv_1, raw_1, mtr1_dir, f_x))
-    logger.info("MTR2\t%1.4f\t%i\t%i\t%1.4f" % (rbv_2, raw_2, mtr2_dir, f_y))
-    logger.info("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
+    logger.info("MTR1\t%1.4f\t%i" % (rbv_1, mtr1_dir))
+    logger.info("MTR2\t%1.4f\t%i" % (rbv_2, mtr2_dir))
+    logger.info("MTR3\t%1.4f\t%i" % (rbv_3, mtr3_dir))
 
     with open(output_param_path / f"fiducial_{point}.txt", "w") as f:
-        f.write("MTR\tRBV\tRAW\tCorr\tf_value\n")
-        f.write("MTR1\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_1, raw_1, mtr1_dir, f_x))
-        f.write("MTR2\t%1.4f\t%i\t%i\t%1.4f\n" % (rbv_2, raw_2, mtr2_dir, f_y))
-        f.write("MTR3\t%1.4f\t%i\t%i\t%1.4f" % (rbv_3, raw_3, mtr3_dir, f_z))
+        f.write("MTR\tRBV\tCorr\n")
+        f.write("MTR1\t%1.4f\t%i\n" % (rbv_1, mtr1_dir))
+        f.write("MTR2\t%1.4f\t%i\n" % (rbv_2, mtr2_dir))
+        f.write("MTR3\t%1.4f\t%i" % (rbv_3, mtr3_dir))
     logger.info(f"Fiducial {point} set.")
     yield from bps.null()
 
@@ -782,9 +775,9 @@ def scrape_mtr_fiducials(point: int, param_path: Path | str = PARAM_FILE_PATH_FT
 
     with open(param_path / f"fiducial_{point}.txt", "r") as f:
         f_lines = f.readlines()[1:]
-    f_x = float(f_lines[0].rsplit()[4])
-    f_y = float(f_lines[1].rsplit()[4])
-    f_z = float(f_lines[2].rsplit()[4])
+    f_x = float(f_lines[0].rsplit()[1])
+    f_y = float(f_lines[1].rsplit()[1])
+    f_z = float(f_lines[2].rsplit()[1])
     return f_x, f_y, f_z
 
 
@@ -931,23 +924,20 @@ def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     sqfact3 = np.sqrt(x3factor**2 + y3factor**2 + z3factor**2) / scalez
     logger.info("%1.4f \n %1.4f \n %1.4f" % (sqfact1, sqfact2, sqfact3))
     logger.debug("Long wait, please be patient")
-    pmac.pmac_string.set("!x0y0z0").wait()
+    yield from bps.trigger(pmac.to_xyz_zero)
     sleep(2.5)
-    pmac.pmac_string.set("&2").wait()
-    pmac.pmac_string.set(cs1).wait()
-    pmac.pmac_string.set(cs2).wait()
-    pmac.pmac_string.set(cs3).wait()
-    pmac.pmac_string.set("!x0y0z0").wait()
+    yield from set_pmac_strings_for_cs(pmac, {"cs1": cs1, "cs2": cs2, "cs3": cs3})
+    yield from bps.trigger(pmac.to_xyz_zero)
     sleep(0.1)
-    pmac.home_stages()
+    yield from bps.trigger(pmac.home, wait=True)
     sleep(0.1)
     logger.debug("Chip_type is %s" % chip_type)
     if chip_type == 0:
-        pmac.pmac_string.set("!x0.4y0.4").wait()
+        yield from bps.abs_set(pmac.pmac_string, "!x0.4y0.4", wait=True)
         sleep(0.1)
-        pmac.home_stages()
+        yield from bps.trigger(pmac.home, wait=True)
     else:
-        pmac.home_stages()
+        yield from bps.trigger(pmac.home, wait=True)
     logger.debug("CSmaker done.")
     yield from bps.null()
 
@@ -960,12 +950,30 @@ def cs_reset(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     cs3 = "#3->0X+0Y-10000Z"
     strg = "\n".join([cs1, cs2, cs3])
     print(strg)
-    pmac.pmac_string.set("&2").wait()
-    pmac.pmac_string.set(cs1).wait()
-    pmac.pmac_string.set(cs2).wait()
-    pmac.pmac_string.set(cs3).wait()
+    yield from set_pmac_strings_for_cs(pmac, {"cs1": cs1, "cs2": cs2, "cs3": cs3})
     logger.debug("CSreset Done")
     yield from bps.null()
+
+
+def set_pmac_strings_for_cs(pmac: PMAC, cs_str: dict):
+    """ A plan to set the pmac_string for the (x,y,z) axes while making or resetting \
+        the coordinate system.
+
+    Args:
+        pmac (PMAC): PMAC device
+        cs_str (dict): A dictionary containing a string for each axis, in the format: \
+            {
+                "cs1": "#1->1X+0Y+0Z",
+                "cs2": "#2->...",
+                "cs3": "#3->...",
+            }
+
+    Note. On the PMAC the axes allocations are: #1 - X, #2 - Y, #3 - Z.
+    """
+    yield from bps.abs_set(pmac.pmac_string, "&2", wait=True)
+    yield from bps.abs_set(pmac.pmac_string, cs_str["cs1"], wait=True)
+    yield from bps.abs_set(pmac.pmac_string, cs_str["cs2"], wait=True)
+    yield from bps.abs_set(pmac.pmac_string, cs_str["cs3"], wait=True)
 
 
 @log.log_on_entry
@@ -998,7 +1006,7 @@ def pumpprobe_calc() -> MsgGenerator:
 
 
 @log.log_on_entry
-def block_check() -> MsgGenerator:
+def block_check(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     setup_logging()
     caput(pv.me14e_gp9, 0)
     while True:
@@ -1023,7 +1031,7 @@ def block_check() -> MsgGenerator:
                     break
                 block, x, y = entry
                 logger.debug("Block: %s -> (x=%s y=%s)" % (block, x, y))
-                caput(pv.me14e_pmac_str, "!x%sy%s" % (x, y))
+                yield from bps.abs_set(pmac.pmac_string, f"!x{x}y{y}", wait=True)
                 time.sleep(0.4)
         else:
             logger.warning("Block Check Aborted due to GP 9 not equalling 0")
@@ -1054,8 +1062,9 @@ def parse_args_and_run_parsed_function(args):
 
 
 if __name__ == "__main__":
+    RE = RunEngine()
     setup_logging()
     # This is now in all functions. TODO See logging issue on blueapi
     # https://github.com/DiamondLightSource/blueapi/issues/494
 
-    parse_args_and_run_parsed_function(sys.argv[1:])
+    RE(parse_args_and_run_parsed_function(sys.argv[1:]))

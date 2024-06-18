@@ -5,7 +5,9 @@ Robin Owen 12 Jan 2021
 
 import logging
 
+import bluesky.plan_stubs as bps
 import cv2 as cv
+from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.oav.oav_detector import OAV
@@ -42,8 +44,8 @@ def onMouse(event, x, y, flags, param):
         logger.info("Moving X and Y %s %s" % (xmove, ymove))
         xmovepmacstring = "#1J:" + str(xmove)
         ymovepmacstring = "#2J:" + str(ymove)
-        pmac.pmac_string.set(xmovepmacstring).wait()
-        pmac.pmac_string.set(ymovepmacstring).wait()
+        yield from bps.abs_set(pmac.pmac_string, xmovepmacstring, wait=True)
+        yield from bps.abs_set(pmac.pmac_string, ymovepmacstring, wait=True)
 
 
 def update_ui(oav, frame):
@@ -151,38 +153,38 @@ def start_viewer(oav1: str = OAV1_CAM):
 
         k = cv.waitKey(1)
         if k == 113:  # Q
-            manager.moveto(Fiducials.zero, pmac)
+            yield from manager.moveto(Fiducials.zero, pmac)
         if k == 119:  # W
-            manager.moveto(Fiducials.fid1, pmac)
+            yield from manager.moveto(Fiducials.fid1, pmac)
         if k == 101:  # E
-            manager.moveto(Fiducials.fid2, pmac)
+            yield from manager.moveto(Fiducials.fid2, pmac)
         if k == 97:  # A
-            pmac.home_stages()
+            yield from bps.trigger(pmac.home, wait=True)
             print("Current position set as origin")
         if k == 115:  # S
-            manager.fiducial(1)
+            yield from manager.fiducial(1)
         if k == 100:  # D
-            manager.fiducial(2)
+            yield from manager.fiducial(2)
         if k == 99:  # C
-            manager.cs_maker(pmac)
+            yield from manager.cs_maker(pmac)
         if k == 98:  # B
-            manager.block_check()  # doesn't work well for blockcheck as image doesn't update
+            yield from manager.block_check()  # doesn't work well for blockcheck as image doesn't update
         if k == 104:  # H
-            pmac.pmac_string.set("#2J:-10").wait()
+            yield from bps.abs_set(pmac.pmac_string, "#2J:-10", wait=True)
         if k == 110:  # N
-            pmac.pmac_string.set("#2J:10").wait()
+            yield from bps.abs_set(pmac.pmac_string, "#2J:10", wait=True)
         if k == 109:  # M
-            pmac.pmac_string.set("#1J:-10").wait()
+            yield from bps.abs_set(pmac.pmac_string, "#1J:-10", wait=True)
         if k == 98:  # B
-            pmac.pmac_string.set("#1J:10").wait()
+            yield from bps.abs_set(pmac.pmac_string, "#1J:10", wait=True)
         if k == 105:  # I
-            pmac.pmac_string.set("#3J:-150").wait()
+            yield from bps.abs_set(pmac.pmac_string, "#3J:-150", wait=True)
         if k == 111:  # O
-            pmac.pmac_string.set("#3J:150").wait()
+            yield from bps.abs_set(pmac.pmac_string, "#3J:150", wait=True)
         if k == 117:  # U
-            pmac.pmac_string.set("#3J:-1000").wait()
+            yield from bps.abs_set(pmac.pmac_string, "#3J:-1000", wait=True)
         if k == 112:  # P
-            pmac.pmac_string.set("#3J:1000").wait()
+            yield from bps.abs_set(pmac.pmac_string, "#3J:1000", wait=True)
         if k == 0x1B:  # esc
             cv.destroyWindow("OAV1view")
             print("Pressed escape. Closing window")
@@ -193,4 +195,5 @@ def start_viewer(oav1: str = OAV1_CAM):
 
 
 if __name__ == "__main__":
-    start_viewer()
+    RE = RunEngine()
+    RE(start_viewer())

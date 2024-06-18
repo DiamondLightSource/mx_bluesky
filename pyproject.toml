@@ -21,7 +21,7 @@ dependencies = [
     "requests",
     "opencv-python",
     "pydantic",
-    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@15e430b5e583ce1fd7ef4af5dd1c3c50b7da0a72",
+    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@60d1d8857648989709dd9368d71196fcbf4cb5b8",
     "fastapi[all]<0.99",
     "blueapi>=0.4.3-a3",
 ]

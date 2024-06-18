@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from unittest.mock import AsyncMock
 
 import pytest
@@ -6,7 +8,7 @@ from dodal.beamlines import i24
 from dodal.devices.i24.aperture import Aperture
 from dodal.devices.i24.beamstop import Beamstop
 from dodal.devices.i24.dual_backlight import DualBacklight
-from dodal.devices.i24.I24_detector_motion import DetectorMotion
+from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 from ophyd_async.core import callback_on_mock_put, set_mock_value
 from ophyd_async.epics.motion import Motor
@@ -41,7 +43,7 @@ def zebra() -> Zebra:
 
 
 @pytest.fixture
-def detector_stage() -> DetectorMotion:
+def detector_stage():
     RunEngine()
     detector_motion = i24.detector_motion(fake_with_ophyd_sim=True)
 
@@ -76,6 +78,18 @@ def beamstop():
         patch_motor(beamstop.roty),
     ):
         yield beamstop
+
+
+@pytest.fixture
+def pmac():
+    RunEngine()
+    pmac: PMAC = i24.pmac(fake_with_ophyd_sim=True)
+    with (
+        patch_motor(pmac.x),
+        patch_motor(pmac.y),
+        patch_motor(pmac.z),
+    ):
+        yield pmac
 
 
 @pytest.fixture
