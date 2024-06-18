@@ -2,7 +2,9 @@ from unittest.mock import MagicMock, call, mock_open, patch
 
 import pytest
 from dodal.devices.hutch_shutter import HutchShutter
+from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
+from ophyd_async.core import get_mock_put
 
 from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, MappingType
 from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1 import (
@@ -86,21 +88,22 @@ def test_get_prog_number(chip_type, map_type, pump_repeat, expected_prog):
 )
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caget")
 def test_load_motion_program_data(
-    fake_caget,
-    map_type,
-    pump_repeat,
-    checker,
-    expected_calls,
+    fake_caget: MagicMock,
+    map_type: int,
+    pump_repeat: int,
+    checker: bool,
+    expected_calls: list,
+    pmac: PMAC,
+    RE,
 ):
     test_dict = {"N_EXPOSURES": [0, 1]}
     fake_caget.return_value = checker
-    fake_pmac = MagicMock()
-    load_motion_program_data(fake_pmac, test_dict, map_type, pump_repeat)
+    RE(load_motion_program_data(pmac, test_dict, map_type, pump_repeat))
     call_list = []
     for i in expected_calls:
-        call_list.append(call.set(i))
-        call_list.append(call.set().wait())
-    fake_pmac.pmac_string.assert_has_calls(call_list)
+        call_list.append(call(i, wait=True, timeout=10.0))
+    mock_pmac_str = get_mock_put(pmac.pmac_string)
+    mock_pmac_str.assert_has_calls(call_list)
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.datasetsizei24")

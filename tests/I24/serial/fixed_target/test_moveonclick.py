@@ -4,6 +4,7 @@ import cv2 as cv
 import pytest
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.oav.oav_detector import OAV
+from ophyd_async.core import get_mock_put
 
 from mx_bluesky.I24.serial.fixed_target.i24ssx_moveonclick import (
     onMouse,
@@ -34,21 +35,21 @@ from mx_bluesky.I24.serial.fixed_target.i24ssx_moveonclick import (
 )
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_moveonclick._get_beam_centre")
 def test_onMouse_gets_beam_position_and_sends_correct_str(
-    fake_get_beam_pos,
-    beam_position,
-    expected_xmove,
-    expected_ymove,
+    fake_get_beam_pos: MagicMock,
+    beam_position: tuple,
+    expected_xmove: str,
+    expected_ymove: str,
+    pmac: PMAC,
+    RE,
 ):
     fake_get_beam_pos.side_effect = [beam_position]
-    fake_pmac: PMAC = MagicMock(spec=PMAC)
     fake_oav: OAV = MagicMock(spec=OAV)
-    onMouse(cv.EVENT_LBUTTONUP, 0, 0, "", param=[fake_pmac, fake_oav])
-    fake_pmac.pmac_string.assert_has_calls(
+    RE(onMouse(cv.EVENT_LBUTTONUP, 0, 0, "", param=[pmac, fake_oav]))
+    mock_pmac_str = get_mock_put(pmac.pmac_string)
+    mock_pmac_str.assert_has_calls(
         [
-            call.set(expected_xmove),
-            call.set().wait(),
-            call.set(expected_ymove),
-            call.set().wait(),
+            call(expected_xmove, wait=True, timeout=10),
+            call(expected_ymove, wait=True, timeout=10),
         ]
     )
 

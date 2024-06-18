@@ -201,15 +201,15 @@ def load_motion_program_data(
         # Pump setting chosen
         prefix = 14
         logger.info(f"Setting program prefix to {prefix}")
-        pmac.pmac_string.set("P1439=0").wait()
+        yield from bps.abs_set(pmac.pmac_string, "P1439=0", wait=True)
         if bool(caget(pv.me14e_gp111)) is True:
             logger.info("Checker pattern setting enabled.")
-            pmac.pmac_string.set("P1439=1").wait()
+            yield from bps.abs_set(pmac.pmac_string, "P1439=1", wait=True)
         if pump_repeat == PumpProbeSetting.Medium1:
             # Medium1 has time delays (Fast shutter opening time in ms)
-            pmac.pmac_string.set("P1441=50").wait()
+            yield from bps.abs_set(pmac.pmac_string, "P1441=50", wait=True)
         else:
-            pmac.pmac_string.set("P1441=0").wait()
+            yield from bps.abs_set(pmac.pmac_string, "P1441=0", wait=True)
     else:
         logger.warning(f"Unknown Pump repeat, pump_repeat = {pump_repeat}")
         return
@@ -222,9 +222,9 @@ def load_motion_program_data(
         value = str(v[1])
         s = f"P{pvar}={value}"
         logger.info("%s \t %s" % (key, s))
-        pmac.pmac_string.set(s).wait()
-        sleep(0.02)
-    sleep(0.2)
+        yield from bps.abs_set(pmac.pmac_string, s, wait=True)
+        yield from bps.sleep(0.02)
+    yield from bps.sleep(0.2)
 
 
 @log.log_on_entry
@@ -489,6 +489,7 @@ def start_i24(zebra: Zebra, shutter: HutchShutter, parameters: FixedTargetParame
 @log.log_on_entry
 def finish_i24(
     zebra: Zebra,
+    pmac: PMAC,
     shutter: HutchShutter,
     parameters: FixedTargetParameters,
 ):
@@ -516,7 +517,7 @@ def finish_i24(
 
     # Detector independent moves
     logger.info("Move chip back to home position by setting PMAC_STRING pv.")
-    caput(pv.me14e_pmac_str, "!x0y0z0")
+    yield from bps.trigger(pmac.to_xyz_zero)
     logger.info("Closing shutter")
     yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
 
@@ -528,7 +529,7 @@ def finish_i24(
 
     # Write a record of what was collected to the processing directory
     userlog_path = parameters.visit + "processing/" + parameters.directory + "/"
-    userlog_fid = filename + "_parameters.txt"
+    userlog_fid = f"{filename}_parameters.txt"
     logger.debug("Write a user log in %s" % userlog_path)
 
     os.makedirs(userlog_path, exist_ok=True)
@@ -551,6 +552,16 @@ def finish_i24(
     sleep(0.5)
 
     return end_time
+
+
+def run_aborted_plan(pmac: PMAC):
+    """Plan to send pmac_strings to tell the PMAC when a collection has been aborted, \
+        either by pressing the Abort button or because of a timeout, and to reset the \
+        P variable.
+    """
+    yield from bps.abs_set(pmac.pmac_string, "A", wait=True)
+    yield from bps.sleep(1.0)
+    yield from bps.abs_set(pmac.pmac_string, "P2401=0", wait=True)
 
 
 def run_fixed_target_plan(
@@ -600,14 +611,14 @@ def run_fixed_target_plan(
         n_exposures=parameters.num_exposures,
     )
     logger.info("Loading Motion Program Data")
-    load_motion_program_data(
+    yield from load_motion_program_data(
         pmac, chip_prog_dict, parameters.map_type, parameters.pump_repeat
     )
 
     start_time, dcid = yield from start_i24(zebra, shutter, parameters)
 
     logger.info("Moving to Start")
-    caput(pv.me14e_pmac_str, "!x0y0z0")
+    yield from bps.trigger(pmac.to_xyz_zero)
     sleep(2.0)
 
     prog_num = get_prog_num(
@@ -619,8 +630,7 @@ def run_fixed_target_plan(
     yield from open_fast_shutter(zebra)
 
     logger.info(f"Run PMAC with program number {prog_num}")
-    logger.debug(f"pmac str = &2b{prog_num}r")
-    caput(pv.me14e_pmac_str, f"&2b{prog_num}r")
+    yield from bps.abs_set(pmac.pmac_string, f"&2b{prog_num}r", wait=True)
     sleep(1.0)
 
     # Kick off the StartOfCollect script
@@ -653,18 +663,17 @@ def run_fixed_target_plan(
             flush_print(line_of_text)
             sleep(0.5)
             i += 1
+            status = yield from bps.rd(pmac.scanstatus)
             if int(caget(pv.me14e_gp9)) != 0:
                 aborted = True
                 logger.warning("Data Collection Aborted")
-                caput(pv.me14e_pmac_str, "A")
-                sleep(1.0)
-                caput(pv.me14e_pmac_str, "P2401=0")
+                yield from run_aborted_plan(pmac)
                 break
-            elif int(caget(pv.me14e_scanstatus)) == 0:
-                # As soon as me14e_scanstatus is set to 0, exit.
-                # Epics checks the geobrick and updates this PV every s or so.
+            elif int(status) == 0:
+                # As soon as the PVAR P2401 is set to 0, exit.
+                # Epics checks the geobrick and updates this PV every 1s or so.
                 # Once the collection is done, it will be set to 0.
-                print(caget(pv.me14e_scanstatus))
+                print(status)
                 logger.warning("Data Collection Finished")
                 break
             elif time.time() >= timeout_time:
@@ -674,9 +683,7 @@ def run_fixed_target_plan(
                     Something went wrong and data collection timed out. Aborting.
                     """
                 )
-                caput(pv.me14e_pmac_str, "A")
-                sleep(1.0)
-                caput(pv.me14e_pmac_str, "P2401=0")
+                yield from run_aborted_plan(pmac)
                 break
     else:
         aborted = True
@@ -696,7 +703,8 @@ def run_fixed_target_plan(
         caput(pv.eiger_acquire, 0)
         caput(pv.eiger_ODcapture, "Done")
 
-    end_time = yield from finish_i24(zebra, shutter, parameters)
+    end_time = yield from finish_i24(zebra, pmac, shutter, parameters)
+
     dcid.collection_complete(end_time, aborted=aborted)
     logger.debug("Notify DCID of end of collection.")
     dcid.notify_end()

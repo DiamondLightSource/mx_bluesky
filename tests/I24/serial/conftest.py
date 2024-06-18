@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from unittest.mock import AsyncMock
 
 import pytest
@@ -9,8 +11,22 @@ from dodal.devices.hutch_shutter import (
     ShutterDemand,
     ShutterState,
 )
+from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 from ophyd_async.core import callback_on_mock_put, set_mock_value
+from ophyd_async.epics.motion import Motor
+
+
+def patch_motor(motor: Motor, initial_position: float = 0):
+    set_mock_value(motor.user_setpoint, initial_position)
+    set_mock_value(motor.user_readback, initial_position)
+    set_mock_value(motor.deadband, 0.001)
+    set_mock_value(motor.motor_done_move, 1)
+    set_mock_value(motor.velocity, 3)
+    return callback_on_mock_put(
+        motor.user_setpoint,
+        lambda pos, *args, **kwargs: set_mock_value(motor.user_readback, pos),
+    )
 
 
 @pytest.fixture
@@ -41,6 +57,18 @@ def shutter() -> HutchShutter:
 
     callback_on_mock_put(shutter.control, set_status)
     return shutter
+
+
+@pytest.fixture
+def pmac():
+    RunEngine()
+    pmac: PMAC = i24.pmac(fake_with_ophyd_sim=True)
+    with (
+        patch_motor(pmac.x),
+        patch_motor(pmac.y),
+        patch_motor(pmac.z),
+    ):
+        yield pmac
 
 
 @pytest.fixture
