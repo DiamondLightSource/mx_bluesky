@@ -3,7 +3,12 @@ from unittest.mock import AsyncMock
 import pytest
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
-from dodal.devices.hutch_shutter import HutchShutter, ShutterDemand, ShutterState
+from dodal.devices.hutch_shutter import (
+    HUTCH_SAFE_FOR_OPERATIONS,
+    HutchShutter,
+    ShutterDemand,
+    ShutterState,
+)
 from dodal.devices.zebra import Zebra
 from ophyd_async.core import callback_on_mock_put, set_mock_value
 
@@ -28,7 +33,7 @@ def zebra() -> Zebra:
 def shutter() -> HutchShutter:
     RunEngine()
     shutter = i24.shutter(fake_with_ophyd_sim=True)
-    set_mock_value(shutter.interlock.status, 0)
+    set_mock_value(shutter.interlock.status, HUTCH_SAFE_FOR_OPERATIONS)
 
     def set_status(value: ShutterDemand, *args, **kwargs):
         value_sta = ShutterState.OPEN if value == "Open" else ShutterState.CLOSED
