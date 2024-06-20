@@ -14,11 +14,11 @@ async def test_setup_beamline_for_collection_plan(
 ):
     RE(setup_beamline.setup_beamline_for_collection_plan(aperture, backlight, beamstop))
 
-    assert await aperture.pos.pos_select.get_value() == "In"
+    assert await aperture.position.get_value() == "In"
     assert await beamstop.pos_select.get_value() == "Data Collection"
-    assert await beamstop.roty.user_readback.get_value() == 0
+    assert await beamstop.y_rotation.user_readback.get_value() == 0
 
-    assert await backlight.pos1.pos_level.get_value() == "Out"
+    assert await backlight.bl_position.pos_level.get_value() == "Out"
 
 
 async def test_setup_beamline_for_quickshot_plan(detector_stage: DetectorMotion, RE):

@@ -75,7 +75,7 @@ def beamstop():
         patch_motor(beamstop.x),
         patch_motor(beamstop.y),
         patch_motor(beamstop.z),
-        patch_motor(beamstop.roty),
+        patch_motor(beamstop.y_rotation),
     ):
         yield beamstop
 
