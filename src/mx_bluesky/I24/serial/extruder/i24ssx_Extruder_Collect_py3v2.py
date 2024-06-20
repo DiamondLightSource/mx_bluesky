@@ -4,7 +4,6 @@ This version in python3 new Feb2021 by RLO
     - March 21 added logging and Eiger functionality
 """
 
-import argparse
 import json
 import logging
 import re
@@ -15,11 +14,10 @@ from datetime import datetime
 from pathlib import Path
 from pprint import pformat
 from time import sleep
-from typing import Optional
 
 import bluesky.plan_stubs as bps
-from bluesky.run_engine import RunEngine
-from dodal.beamlines import i24
+from blueapi.core import MsgGenerator
+from dodal.common import inject
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3, Zebra
 
 from mx_bluesky.I24.serial import log
@@ -65,7 +63,8 @@ def _coerce_to_path(path: Path | str) -> Path:
 
 
 @log.log_on_entry
-def initialise_extruderi24(args=None):
+def initialise_extruder() -> MsgGenerator:
+    setup_logging()
     logger.info("Initialise Parameters for extruder data collection on I24.")
 
     visit = caget(pv.ioc12_gp1)
@@ -89,7 +88,7 @@ def initialise_extruderi24(args=None):
 
 
 @log.log_on_entry
-def laser_check(args, zebra: Optional[Zebra] = None):
+def laser_check(mode: str, zebra: Zebra = inject("zebra")) -> MsgGenerator:
     """Plan to open the shutter and check the laser beam from the viewer by pressing \
         'Laser On' and 'Laser Off' buttons on the edm.
 
@@ -103,9 +102,7 @@ def laser_check(args, zebra: Optional[Zebra] = None):
     detector in use is the Eiger, the Pilatus cable is repurposed to trigger the light \
     source, and viceversa.
     """
-    if not zebra:
-        zebra = i24.zebra()
-    mode = args.place
+    setup_logging()
     logger.debug(f"Laser check: {mode}")
 
     det_type = get_detector_type()
@@ -121,8 +118,9 @@ def laser_check(args, zebra: Optional[Zebra] = None):
 
 
 @log.log_on_entry
-def enter_hutch(args=None):
+def enter_hutch() -> MsgGenerator:
     """Move the detector stage before entering hutch."""
+    setup_logging()
     caput(pv.det_z, SAFE_DET_Z)
     logger.debug("Detector moved.")
     yield from bps.null()
@@ -173,9 +171,8 @@ def write_parameter_file(param_path: Path | str = PARAM_FILE_PATH):
 
 
 @log.log_on_entry
-def run_extruderi24(args=None):
-    # Get dodal devices
-    zebra = i24.zebra()
+def run_extruder_plan(zebra: Zebra = inject("zebra")) -> MsgGenerator:
+    setup_logging()
     start_time = datetime.now()
     logger.info("Collection start time: %s" % start_time.ctime())
 
@@ -424,45 +421,3 @@ def run_extruderi24(args=None):
     # Copy parameter file
     shutil.copy2(PARAM_FILE_PATH / PARAM_FILE_NAME, Path(filepath) / PARAM_FILE_NAME)
     return 1
-
-
-if __name__ == "__main__":
-    setup_logging()
-    RE = RunEngine()
-
-    parser = argparse.ArgumentParser(usage=usage, description=__doc__)
-    subparsers = parser.add_subparsers(
-        help="Choose command.",
-        required=True,
-        dest="sub-command",
-    )
-
-    parser_init = subparsers.add_parser(
-        "initialise",
-        description="Initialise extruder on beamline I24.",
-    )
-    parser_init.set_defaults(func=initialise_extruderi24)
-    parser_run = subparsers.add_parser(
-        "run",
-        description="Run extruder on I24.",
-    )
-    parser_run.set_defaults(func=run_extruderi24)
-    parser_mv = subparsers.add_parser(
-        "laser_check",
-        description="Move extruder to requested setting on I24.",
-    )
-    parser_mv.add_argument(
-        "place",
-        type=str,
-        choices=["laseron", "laseroff"],
-        help="Requested setting.",
-    )
-    parser_mv.set_defaults(func=laser_check)
-    parser_hutch = subparsers.add_parser(
-        "enterhutch",
-        description="Move the detector stage before entering hutch.",
-    )
-    parser_hutch.set_defaults(func=enter_hutch)
-
-    args = parser.parse_args()
-    RE(args.func(args))
