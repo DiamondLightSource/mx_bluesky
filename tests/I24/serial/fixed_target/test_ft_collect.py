@@ -139,7 +139,7 @@ def test_start_i24_with_eiger(
     )
     assert fake_sup.eiger.call_count == 1
     assert fake_sup.setup_beamline_for_collection_plan.call_count == 1
-    assert fake_sup.setup_beamline_for_quickshot_plan.call_count == 1
+    assert fake_sup.move_detector_stage_to_position_plan.call_count == 1
     # Pilatus gets called for hack to create directory
     assert fake_sup.pilatus.call_count == 2
     assert fake_dcid.call_count == 1

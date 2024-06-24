@@ -205,6 +205,6 @@ def test_run_extruder_pump_probe_with_pilatus(
     fake_det.return_value = Pilatus()
     RE(run_extruder_plan(zebra, aperture, backlight, beamstop, detector_stage))
     assert fake_dcid.call_count == 1
-    assert fake_sup.setup_beamline_for_quickshot_plan.call_count == 1
+    assert fake_sup.move_detector_stage_to_position_plan.call_count == 1
     mock_pp_plan.assert_called_once()
     mock_reset_zebra_plan.assert_called_once()

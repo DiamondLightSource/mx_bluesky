@@ -21,9 +21,9 @@ async def test_setup_beamline_for_collection_plan(
     assert await backlight.backlight_position.pos_level.get_value() == "Out"
 
 
-async def test_setup_beamline_for_quickshot_plan(detector_stage: DetectorMotion, RE):
+async def test_move_detector_stage_to_position_plan(detector_stage: DetectorMotion, RE):
     det_dist = 100
-    RE(setup_beamline.setup_beamline_for_quickshot_plan(detector_stage, det_dist))
+    RE(setup_beamline.move_detector_stage_to_position_plan(detector_stage, det_dist))
 
     assert await detector_stage.z.user_readback.get_value() == det_dist
 

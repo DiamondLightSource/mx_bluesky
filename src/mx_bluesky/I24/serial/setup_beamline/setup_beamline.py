@@ -32,16 +32,15 @@ def setup_beamline_for_collection_plan(
         yield from bps.wait(group=group)
 
 
-def setup_beamline_for_quickshot_plan(
+def move_detector_stage_to_position_plan(
     detector_stage: DetectorMotion,
     detector_distance: float,
 ):
-    logger.debug("Setup beamline: quickshot.")
+    logger.debug("Setup beamline: moving detector stage.")
     logger.debug(
         f"Waiting for detector move. Detector distance: {detector_distance} mm."
     )
     yield from bps.mv(detector_stage.z, detector_distance)
-    yield from bps.sleep(0.1)
 
 
 def modechange(action):

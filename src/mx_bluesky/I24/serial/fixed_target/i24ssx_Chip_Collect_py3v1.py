@@ -354,7 +354,7 @@ def start_i24(
         aperture, backlight, beamstop, wait=True
     )
 
-    yield from sup.setup_beamline_for_quickshot_plan(
+    yield from sup.move_detector_stage_to_position_plan(
         detector_stage, parameters.detector_distance_mm
     )
 
