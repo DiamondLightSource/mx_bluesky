@@ -4,7 +4,7 @@ from time import sleep
 import bluesky.plan_stubs as bps
 from dodal.devices.i24.aperture import Aperture, AperturePositions
 from dodal.devices.i24.beamstop import Beamstop, BeamstopPositions
-from dodal.devices.i24.dual_backlight import DualBacklight
+from dodal.devices.i24.dual_backlight import BacklightPositions, DualBacklight
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 
 from mx_bluesky.I24.serial.setup_beamline import pv
@@ -22,7 +22,7 @@ def setup_beamline_for_collection_plan(
 ):
     logger.debug("Setup beamline: collect.")
     yield from bps.abs_set(aperture.position, AperturePositions.IN, group=group)
-    yield from bps.abs_set(backlight, "Out", group=group)
+    yield from bps.abs_set(backlight, BacklightPositions.OUT, group=group)
     yield from bps.sleep(3)  # Not sure needed - to test
     yield from bps.abs_set(beamstop.pos_select, BeamstopPositions.DATA_COLLECTION)
     yield from bps.abs_set(beamstop.y_rotation, 0, group=group)
