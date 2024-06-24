@@ -32,14 +32,17 @@ def _params_file_location() -> Path:
     else:
         filepath = INTERNAL_FILES_PATH
 
-    Path(filepath).mkdir(parents=True, exist_ok=True)
+    filepath.mkdir(parents=True, exist_ok=True)
+
     return filepath
 
 
 PARAM_FILE_NAME = "parameters.json"
+# Paths for rw - these should have been created on startup
 PARAM_FILE_PATH = _params_file_location()
 PARAM_FILE_PATH_FT = PARAM_FILE_PATH / "fixed_target"
 LITEMAP_PATH = PARAM_FILE_PATH_FT / "litemaps"
 FULLMAP_PATH = PARAM_FILE_PATH_FT / "fullmaps"
+# Paths for r only
 PVAR_FILE_PATH = INTERNAL_FILES_PATH / "fixed_target/pvar_files"
 CS_FILES_PATH = INTERNAL_FILES_PATH / "fixed_target/cs"

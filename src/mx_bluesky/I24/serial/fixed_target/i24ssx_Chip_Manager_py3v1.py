@@ -3,7 +3,6 @@ Chip manager for fixed target
 This version changed to python3 March2020 by RLO
 """
 
-import argparse
 import json
 import logging
 import re
@@ -13,12 +12,11 @@ import time
 from pathlib import Path
 from pprint import pformat
 from time import sleep
-from typing import Optional
+from typing import Tuple
 
 import bluesky.plan_stubs as bps
 import numpy as np
 from blueapi.core import MsgGenerator
-from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
 from dodal.common import inject
 from dodal.devices.i24.pmac import PMAC, EncReset, LaserSettings
@@ -39,12 +37,6 @@ from mx_bluesky.I24.serial.setup_beamline import Pilatus, caget, caput, pv
 from mx_bluesky.I24.serial.setup_beamline.setup_detector import get_detector_type
 
 logger = logging.getLogger("I24ssx.chip_manager")
-
-
-def _coerce_to_path(path: Path | str) -> Path:
-    if not isinstance(path, Path):
-        return Path(path)
-    return path
 
 
 def setup_logging():
@@ -120,13 +112,10 @@ def initialise_stages(pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
 
 @log.log_on_entry
-def write_parameter_file(
-    input_param_path: Optional[str] = None,
-) -> MsgGenerator:
+def write_parameter_file() -> MsgGenerator:
     setup_logging()
-    if not input_param_path:
-        input_param_path = PARAM_FILE_PATH_FT.as_posix()
-    param_path = _coerce_to_path(input_param_path)
+    param_path: Path = PARAM_FILE_PATH_FT
+    # Create directory if it doesn't yet exist.
     param_path.mkdir(parents=True, exist_ok=True)
 
     logger.info(
@@ -181,9 +170,8 @@ def write_parameter_file(
     yield from bps.null()
 
 
-def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
+def scrape_pvar_file(fid: str, pvar_dir: Path = PVAR_FILE_PATH):
     block_start_list = []
-    pvar_dir = _coerce_to_path(pvar_dir)
 
     with open(pvar_dir / fid, "r") as f:
         lines = f.readlines()
@@ -209,13 +197,10 @@ def scrape_pvar_file(fid: str, pvar_dir: Path | str = PVAR_FILE_PATH):
 @log.log_on_entry
 def define_current_chip(
     chipid: str = "oxford",
-    pvar_path: Optional[str] = None,
     pmac: PMAC = inject("pmac"),
 ) -> MsgGenerator:
     setup_logging()
     logger.debug("Run load stock map for just the first block")
-    if not pvar_path:
-        pvar_path = PVAR_FILE_PATH.as_posix()
     yield from load_stock_map("Just The First Block")
     """
     Not sure what this is for:
@@ -229,9 +214,7 @@ def define_current_chip(
     if chipid == "oxford":
         caput(pv.me14e_gp1, 1)
 
-    param_path = _coerce_to_path(pvar_path)
-
-    with open(param_path / f"{chipid}.pvar", "r") as f:
+    with open(PVAR_FILE_PATH / f"{chipid}.pvar", "r") as f:
         logger.info("Opening %s.pvar" % chipid)
         for line in f.readlines():
             if line.startswith("#"):
@@ -242,11 +225,9 @@ def define_current_chip(
 
 
 @log.log_on_entry
-def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
+def save_screen_map() -> MsgGenerator:
     setup_logging()
-    if not map_path:
-        map_path = LITEMAP_PATH.as_posix()
-    litemap_path = _coerce_to_path(map_path)
+    litemap_path: Path = LITEMAP_PATH
     litemap_path.mkdir(parents=True, exist_ok=True)
 
     logger.info("Saving %s currentchip.map" % litemap_path.as_posix())
@@ -262,13 +243,9 @@ def save_screen_map(map_path: Optional[str] = None) -> MsgGenerator:
     yield from bps.null()
 
 
-# TODO Use pydantic FilePath to improve map/parameter file paths
-# See https://github.com/DiamondLightSource/mx_bluesky/issues/107
-# Same on all other instances.
 @log.log_on_entry
 def upload_parameters(
     chipid: str = "oxford",
-    map_path: Optional[str] = None,
     pmac: PMAC = inject("pmac"),
 ) -> MsgGenerator:
     setup_logging()
@@ -276,11 +253,12 @@ def upload_parameters(
     if chipid == "oxford":
         caput(pv.me14e_gp1, 0)
         width = 8
-    if not map_path:
-        map_path = LITEMAP_PATH.as_posix()
-    litemap_path = _coerce_to_path(map_path)
 
-    with open(litemap_path / "currentchip.map", "r") as f:
+    map_file: Path = LITEMAP_PATH / "currentchip.map"
+    if not map_file.exists():
+        raise FileNotFoundError(f"The file {map_file} has not yet been created")
+
+    with open(map_file, "r") as f:
         logger.info("Chipid %s" % chipid)
         logger.info("width %d" % width)
         x = 1
@@ -309,13 +287,15 @@ def upload_parameters(
 
 
 @log.log_on_entry
-def upload_full(pmac: PMAC = None, fullmap_path: Path | str = FULLMAP_PATH):
+def upload_full(pmac: PMAC = None) -> MsgGenerator:
+    setup_logging()
     if not pmac:
         pmac = i24.pmac()
-    fullmap_path = _coerce_to_path(fullmap_path)
-    fullmap_path.mkdir(parents=True, exist_ok=True)
 
-    with open(fullmap_path / "currentchip.full", "r") as fh:
+    map_file: Path = FULLMAP_PATH / "currentchip.full"
+    if not map_file.exists():
+        raise FileNotFoundError(f"The file {map_file} has not yet been created")
+    with open(map_file, "r") as fh:
         f = fh.readlines()
 
     for i in range(len(f) // 2):
@@ -533,7 +513,7 @@ def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
 
 
 @log.log_on_entry
-def load_lite_map(map_path: Optional[str] = None) -> MsgGenerator:
+def load_lite_map() -> MsgGenerator:
     setup_logging()
     logger.debug("Run load stock map with 'clear' setting.")
     yield from load_stock_map("clear")
@@ -579,15 +559,11 @@ def load_lite_map(map_path: Optional[str] = None) -> MsgGenerator:
                 btn_names[button_name] = label
         block_dict = btn_names
 
-    if not map_path:
-        map_path = LITEMAP_PATH.as_posix()
-    litemap_path = _coerce_to_path(map_path)
-
     litemap_fid = str(caget(pv.me14e_gp5)) + ".lite"
     logger.info("Please wait, loading LITE map")
     logger.debug("Loading Lite Map")
-    logger.info("Opening %s" % (litemap_path / litemap_fid))
-    with open(litemap_path / litemap_fid, "r") as fh:
+    logger.info("Opening %s" % (LITEMAP_PATH / litemap_fid))
+    with open(LITEMAP_PATH / litemap_fid, "r") as fh:
         f = fh.readlines()
     for line in f:
         entry = line.split()
@@ -601,19 +577,18 @@ def load_lite_map(map_path: Optional[str] = None) -> MsgGenerator:
 
 
 @log.log_on_entry
-def load_full_map(fullmap_path: Path | str = FULLMAP_PATH):
+def load_full_map() -> MsgGenerator:
+    setup_logging()
     params = startup.read_parameter_file()
-    fullmap_path = _coerce_to_path(fullmap_path)
-    fullmap_path.mkdir(parents=True, exist_ok=True)
 
-    fullmap_fid = fullmap_path / f"{str(caget(pv.me14e_gp5))}.spec"
+    fullmap_fid = FULLMAP_PATH / f"{str(caget(pv.me14e_gp5))}.spec"
     logger.info("Opening %s" % fullmap_fid)
     mapping.plot_file(fullmap_fid, params.chip_type.value)
     mapping.convert_chip_to_hex(fullmap_fid, params.chip_type.value)
-    shutil.copy2(fullmap_fid.with_suffix(".full"), fullmap_path / "currentchip.full")
+    shutil.copy2(fullmap_fid.with_suffix(".full"), FULLMAP_PATH / "currentchip.full")
     logger.info(
         "Copying %s to %s"
-        % (fullmap_fid.with_suffix(".full"), fullmap_path / "currentchip.full")
+        % (fullmap_fid.with_suffix(".full"), FULLMAP_PATH / "currentchip.full")
     )
     logger.debug("Load full map done")
     yield from bps.null()
@@ -715,9 +690,7 @@ def laser_control(laser_setting: str, pmac: PMAC = inject("pmac")) -> MsgGenerat
 
 
 @log.log_on_entry
-def scrape_mtr_directions(motor_file_path: Path | str = CS_FILES_PATH):
-    motor_file_path = _coerce_to_path(motor_file_path)
-
+def scrape_mtr_directions(motor_file_path: Path = CS_FILES_PATH):
     with open(motor_file_path / "motor_direction.txt", "r") as f:
         lines = f.readlines()
     mtr1_dir, mtr2_dir, mtr3_dir = 1.0, 1.0, 1.0
@@ -762,9 +735,9 @@ def fiducial(point: int = 1, pmac: PMAC = inject("pmac")) -> MsgGenerator:
     yield from bps.null()
 
 
-def scrape_mtr_fiducials(point: int, param_path: Path | str = PARAM_FILE_PATH_FT):
-    param_path = _coerce_to_path(param_path)
-
+def scrape_mtr_fiducials(
+    point: int, param_path: Path = PARAM_FILE_PATH_FT
+) -> Tuple[float, float, float]:
     with open(param_path / f"fiducial_{point}.txt", "r") as f:
         f_lines = f.readlines()[1:]
     f_x = float(f_lines[0].rsplit()[1])
@@ -1033,30 +1006,6 @@ def block_check(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     yield from bps.null()
 
 
-def parse_args_and_run_parsed_function(args):
-    print(f"Run with {args}")
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(
-        help="Choose command.",
-        required=True,
-        dest="sub-command",
-    )
-    parser_fullmap = subparsers.add_parser("load_full_map")
-    parser_fullmap.set_defaults(func=load_full_map)
-    parser_upld = subparsers.add_parser("upload_full")
-    parser_upld.set_defaults(func=upload_full)
-
-    args = parser.parse_args(args)
-
-    args_dict = vars(args)
-    args_dict.pop("sub-command")
-    args_dict.pop("func")(**args_dict)
-
-
-if __name__ == "__main__":
-    RE = RunEngine()
-    setup_logging()
-    # This is now in all functions. TODO See logging issue on blueapi
-    # https://github.com/DiamondLightSource/blueapi/issues/494
-
-    RE(parse_args_and_run_parsed_function(sys.argv[1:]))
+# setup_logging now called in all functions.
+# TODO See logging issue on blueapi
+# https://github.com/DiamondLightSource/blueapi/issues/494
