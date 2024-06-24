@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import time
 from unittest.mock import AsyncMock
 
 import pytest
@@ -27,8 +29,20 @@ def patch_motor(motor: Motor, initial_position: float = 0):
 
 
 @pytest.fixture
-def zebra() -> Zebra:
-    RunEngine()
+async def RE():
+    RE = RunEngine()
+    # make sure the event loop is thoroughly up and running before we try to create
+    # any ophyd_async devices which might need it
+    timeout = time.monotonic() + 1
+    while not RE.loop.is_running():
+        await asyncio.sleep(0)
+        if time.monotonic() > timeout:
+            raise TimeoutError("This really shouldn't happen but just in case...")
+    yield RE
+
+
+@pytest.fixture
+def zebra(RE) -> Zebra:
     zebra = i24.zebra(fake_with_ophyd_sim=True)
 
     async def mock_disarm(_):
@@ -43,8 +57,7 @@ def zebra() -> Zebra:
 
 
 @pytest.fixture
-def detector_stage():
-    RunEngine()
+def detector_stage(RE):
     detector_motion = i24.detector_motion(fake_with_ophyd_sim=True)
 
     with patch_motor(detector_motion.y), patch_motor(detector_motion.z):
@@ -52,23 +65,20 @@ def detector_stage():
 
 
 @pytest.fixture
-def aperture():
-    RunEngine()
+def aperture(RE):
     aperture: Aperture = i24.aperture(fake_with_ophyd_sim=True)
     with patch_motor(aperture.x), patch_motor(aperture.y):
         yield aperture
 
 
 @pytest.fixture
-def backlight() -> DualBacklight:
-    RunEngine()
+def backlight(RE) -> DualBacklight:
     backlight = i24.backlight(fake_with_ophyd_sim=True)
     return backlight
 
 
 @pytest.fixture
-def beamstop():
-    RunEngine()
+def beamstop(RE):
     beamstop: Beamstop = i24.beamstop(fake_with_ophyd_sim=True)
 
     with (
@@ -81,8 +91,7 @@ def beamstop():
 
 
 @pytest.fixture
-def pmac():
-    RunEngine()
+def pmac(RE):
     pmac: PMAC = i24.pmac(fake_with_ophyd_sim=True)
     with (
         patch_motor(pmac.x),
@@ -90,8 +99,3 @@ def pmac():
         patch_motor(pmac.z),
     ):
         yield pmac
-
-
-@pytest.fixture
-def RE():
-    return RunEngine()
