@@ -5,9 +5,11 @@ Utilities for defining the detector in use, and moving the stage.
 import logging
 import time
 from enum import IntEnum
+from typing import Generator
 
 import bluesky.plan_stubs as bps
 from blueapi.core import MsgGenerator
+from bluesky.utils import Msg
 from dodal.common import inject
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 
@@ -46,8 +48,8 @@ class UnknownDetectorType(Exception):
     pass
 
 
-def get_detector_type() -> Detector:
-    det_y = caget(pv.det_y)
+def get_detector_type(detector_stage: DetectorMotion) -> Generator[Msg, None, Detector]:
+    det_y = yield from bps.rd(detector_stage.y)
     # DetectorMotion should also be used for this.
     # This should be part of https://github.com/DiamondLightSource/mx_bluesky/issues/51
     if float(det_y) < Eiger.det_y_threshold:
@@ -63,11 +65,7 @@ def get_detector_type() -> Detector:
 
 def _move_detector_stage(detector_stage: DetectorMotion, target: float) -> MsgGenerator:
     logger.info(f"Moving detector stage to target position: {target}.")
-    yield from bps.abs_set(
-        detector_stage.y,
-        target,
-        wait=True,
-    )
+    yield from bps.mv(detector_stage.y, target)
 
 
 # Workaround in case the PV value has been set to the detector name

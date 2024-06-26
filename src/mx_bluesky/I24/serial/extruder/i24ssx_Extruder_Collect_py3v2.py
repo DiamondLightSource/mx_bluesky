@@ -19,6 +19,10 @@ import bluesky.plan_stubs as bps
 from blueapi.core import MsgGenerator
 from dodal.common import inject
 from dodal.devices.hutch_shutter import HutchShutter, ShutterDemand
+from dodal.devices.i24.aperture import Aperture
+from dodal.devices.i24.beamstop import Beamstop
+from dodal.devices.i24.dual_backlight import DualBacklight
+from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3, Zebra
 
 from mx_bluesky.I24.serial import log
@@ -58,7 +62,9 @@ def flush_print(text):
 
 
 @log.log_on_entry
-def initialise_extruder() -> MsgGenerator:
+def initialise_extruder(
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     setup_logging()
     logger.info("Initialise Parameters for extruder data collection on I24.")
 
@@ -66,7 +72,7 @@ def initialise_extruder() -> MsgGenerator:
     logger.info("Visit defined %s" % visit)
 
     # Define detector in use
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
 
     caput(pv.ioc12_gp2, "test")
     caput(pv.ioc12_gp3, "testrun")
@@ -83,7 +89,11 @@ def initialise_extruder() -> MsgGenerator:
 
 
 @log.log_on_entry
-def laser_check(mode: str, zebra: Zebra = inject("zebra")) -> MsgGenerator:
+def laser_check(
+    mode: str,
+    zebra: Zebra = inject("zebra"),
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     """Plan to open the shutter and check the laser beam from the viewer by pressing \
         'Laser On' and 'Laser Off' buttons on the edm.
 
@@ -100,7 +110,7 @@ def laser_check(mode: str, zebra: Zebra = inject("zebra")) -> MsgGenerator:
     setup_logging()
     logger.debug(f"Laser check: {mode}")
 
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
 
     LASER_TTL = TTL_EIGER if isinstance(det_type, Pilatus) else TTL_PILATUS
     if mode == "laseron":
@@ -113,21 +123,24 @@ def laser_check(mode: str, zebra: Zebra = inject("zebra")) -> MsgGenerator:
 
 
 @log.log_on_entry
-def enter_hutch() -> MsgGenerator:
+def enter_hutch(
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     """Move the detector stage before entering hutch."""
     setup_logging()
-    caput(pv.det_z, SAFE_DET_Z)
+    yield from bps.mv(detector_stage.z, SAFE_DET_Z)
     logger.debug("Detector moved.")
-    yield from bps.null()
 
 
 @log.log_on_entry
-def write_parameter_file():
+def write_parameter_file(
+    detector_stage: DetectorMotion = inject("detector_motion"),
+):
     """Writes a json parameter file that can later be parsed by the model."""
     param_file: Path = PARAM_FILE_PATH / PARAM_FILE_NAME
     logger.debug(f"Writing Parameter File to: {param_file}\n")
 
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
     filename = caget(pv.ioc12_gp3)
     # If file name ends in a digit this causes processing/pilatus pain.
     # Append an underscore
@@ -166,7 +179,12 @@ def write_parameter_file():
 
 @log.log_on_entry
 def run_extruder_plan(
-    zebra: Zebra = inject("zebra"), shutter: HutchShutter = inject("shutter")
+    zebra: Zebra = inject("zebra"),
+    aperture: Aperture = inject("aperture"),
+    backlight: DualBacklight = inject("backlight"),
+    beamstop: Beamstop = inject("beamstop"),
+    detector_stage: DetectorMotion = inject("detector_motion"),
+    shutter: HutchShutter = inject("shutter"),
 ) -> MsgGenerator:
     setup_logging()
     start_time = datetime.now()
@@ -180,8 +198,13 @@ def run_extruder_plan(
     # Before Open, it Resets
     yield from bps.abs_set(shutter, ShutterDemand.OPEN, wait=True)
 
-    sup.beamline("collect")
-    sup.beamline("quickshot", [parameters.detector_distance_mm])
+    yield from sup.setup_beamline_for_collection_plan(
+        aperture, backlight, beamstop, wait=True
+    )
+
+    yield from sup.move_detector_stage_to_position_plan(
+        detector_stage, parameters.detector_distance_mm
+    )
 
     # Set the abort PV to zero
     caput(pv.ioc12_gp8, 0)

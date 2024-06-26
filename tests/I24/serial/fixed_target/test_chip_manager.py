@@ -2,7 +2,9 @@ import json
 from typing import List
 from unittest.mock import ANY, MagicMock, call, mock_open, patch
 
+import bluesky.plan_stubs as bps
 import pytest
+from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC
 from ophyd_async.core import get_mock_put
 
@@ -44,10 +46,15 @@ async def test_initialise(
     fake_sys: MagicMock,
     fake_log: MagicMock,
     pmac: PMAC,
+    detector_stage: DetectorMotion,
     RE,
 ):
-    fake_det.return_value = Eiger()
-    RE(initialise_stages(pmac))
+    def fake_generator(value):
+        yield from bps.null()
+        return value
+
+    fake_det.side_effect = [fake_generator(Eiger())]
+    RE(initialise_stages(pmac, detector_stage))
 
     fake_caput.assert_called_with(ANY, "eiger")  # last call should be detector
 

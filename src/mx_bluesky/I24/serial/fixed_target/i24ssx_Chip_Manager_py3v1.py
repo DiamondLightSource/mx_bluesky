@@ -19,6 +19,7 @@ import numpy as np
 from blueapi.core import MsgGenerator
 from dodal.beamlines import i24
 from dodal.common import inject
+from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC, EncReset, LaserSettings
 
 from mx_bluesky.I24.serial import log
@@ -46,7 +47,10 @@ def setup_logging():
 
 
 @log.log_on_entry
-def initialise_stages(pmac: PMAC = inject("pmac")) -> MsgGenerator:
+def initialise_stages(
+    pmac: PMAC = inject("pmac"),
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     """Initialise the portable stages PVs, usually used only once right after setting \
         up the stages either after use at different facility.
     """
@@ -90,9 +94,12 @@ def initialise_stages(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     yield from bps.abs_set(pmac.enc_reset, EncReset.ENC7, group=group)
     yield from bps.abs_set(pmac.enc_reset, EncReset.ENC8, group=group)
 
+    # TODO Split this out.
+    # Detector bit is unrelated, just here for convenience sake
+    # See https://github.com/DiamondLightSource/mx_bluesky/issues/51
     # Define detector in use
     logger.debug("Define detector in use.")
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
 
     caput(pv.pilat_cbftemplate, 0)
 
@@ -112,7 +119,9 @@ def initialise_stages(pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
 
 @log.log_on_entry
-def write_parameter_file() -> MsgGenerator:
+def write_parameter_file(
+    detector_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     setup_logging()
     param_path: Path = PARAM_FILE_PATH_FT
     # Create directory if it doesn't yet exist.
@@ -123,7 +132,7 @@ def write_parameter_file() -> MsgGenerator:
     )
 
     filename = caget(pv.me14e_chip_name)
-    det_type = get_detector_type()
+    det_type = yield from get_detector_type(detector_stage)
     map_type = caget(pv.me14e_gp2)
 
     # If file name ends in a digit this causes processing/pilatus pain.
