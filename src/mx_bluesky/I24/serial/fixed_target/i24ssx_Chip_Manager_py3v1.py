@@ -49,7 +49,6 @@ def setup_logging():
 @log.log_on_entry
 def initialise_stages(
     pmac: PMAC = inject("pmac"),
-    detector_stage: DetectorMotion = inject("detector_motion"),
 ) -> MsgGenerator:
     """Initialise the portable stages PVs, usually used only once right after setting \
         up the stages either after use at different facility.
@@ -57,7 +56,7 @@ def initialise_stages(
     setup_logging()
     group = "initialise_stages"
     # commented out filter lines 230719 as this stage not connected
-    logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
+    logger.info("Setting VELO ACCL HHL LLM pvs for stages")
 
     yield from bps.abs_set(pmac.x.velocity, 20, group=group)
     yield from bps.abs_set(pmac.y.velocity, 20, group=group)
@@ -88,13 +87,6 @@ def initialise_stages(
     yield from bps.abs_set(pmac.enc_reset, EncReset.ENC7, group=group)
     yield from bps.abs_set(pmac.enc_reset, EncReset.ENC8, group=group)
 
-    # TODO Split this out.
-    # Detector bit is unrelated, just here for convenience sake
-    # See https://github.com/DiamondLightSource/mx_bluesky/issues/51
-    # Define detector in use
-    logger.debug("Define detector in use.")
-    det_type = yield from get_detector_type(detector_stage)
-
     caput(pv.pilat_cbftemplate, 0)
 
     sleep(0.1)
@@ -106,9 +98,12 @@ def initialise_stages(
         sys.stdout.flush()
 
     caput(pv.me14e_gp100, "press set params to read visit")
-    caput(pv.me14e_gp101, det_type.name)
 
-    logger.info("Initialisation Complete")
+    logger.info("Initialisation of the stages complete")
+    logger.info(
+        """To define detector in use and set the PV accordingly, use the MUX choice \
+            on the `Detector` screen."""
+    )
     yield from bps.wait(group=group)
 
 
