@@ -19,6 +19,8 @@ import numpy as np
 from blueapi.core import MsgGenerator
 from dodal.beamlines import i24
 from dodal.common import inject
+from dodal.devices.i24.beamstop import Beamstop, BeamstopPositions
+from dodal.devices.i24.dual_backlight import BacklightPositions, DualBacklight
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC, EncReset, LaserSettings
 
@@ -630,7 +632,13 @@ def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
 
 @log.log_on_entry
-def moveto_preset(place: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
+def moveto_preset(
+    place: str,
+    pmac: PMAC = inject("pmac"),
+    beamstop: Beamstop = inject("beamstop"),
+    backlight: DualBacklight = inject("backlight"),
+    det_stage: DetectorMotion = inject("detector_motion"),
+) -> MsgGenerator:
     setup_logging()
 
     # Non Chip Specific Move
@@ -640,16 +648,22 @@ def moveto_preset(place: str, pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
     elif place == "load_position":
         logger.info("load position")
-        caput(pv.bs_mp_select, "Robot")
-        caput(pv.bl_mp_select, "Out")
-        caput(pv.det_z, 1300)
+        yield from bps.abs_set(
+            beamstop.pos_select, BeamstopPositions.ROBOT, group=place
+        )
+        yield from bps.abs_set(backlight, BacklightPositions.OUT, group=place)
+        yield from bps.mv(det_stage.z, 1300)
+        yield from bps.wait(group=place)
 
     elif place == "collect_position":
         logger.info("collect position")
         caput(pv.me14e_filter, 20)
         yield from bps.mv(pmac.x, 0.0, pmac.y, 0.0, pmac.z, 0.0)
-        caput(pv.bs_mp_select, "Data Collection")
-        caput(pv.bl_mp_select, "In")
+        yield from bps.abs_set(
+            beamstop.pos_select, BeamstopPositions.DATA_COLLECTION, group=place
+        )
+        yield from bps.abs_set(backlight, BacklightPositions.IN, group=place)
+        yield from bps.wait(group=place)
 
     elif place == "microdrop_position":
         logger.info("microdrop align position")
