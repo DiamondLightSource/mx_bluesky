@@ -59,12 +59,6 @@ def initialise_stages(
     # commented out filter lines 230719 as this stage not connected
     logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
 
-    # NOTE .VMAX is read only in ohpyd_async motor, should be removed in the future
-    # See https://github.com/DiamondLightSource/mx_bluesky/issues/109
-    caput(pv.me14e_stage_x + ".VMAX", 20)
-    caput(pv.me14e_stage_y + ".VMAX", 20)
-    caput(pv.me14e_stage_z + ".VMAX", 20)
-    # caput(pv.me14e_filter  + '.VMAX', 20)
     yield from bps.abs_set(pmac.x.velocity, 20, group=group)
     yield from bps.abs_set(pmac.y.velocity, 20, group=group)
     yield from bps.abs_set(pmac.z.velocity, 20, group=group)
