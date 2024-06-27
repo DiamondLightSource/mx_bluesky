@@ -427,7 +427,7 @@ def run_extruder_plan(
         sup.eiger("return-to-normal")
         logger.debug(parameters.filename + "_" + caget(pv.eiger_seqID))
     logger.debug("End of Run")
-    logger.info("Close hutch shutter")
+    logger.debug("Close hutch shutter")
     yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
 
     dcid.collection_complete(end_time, aborted=aborted)
