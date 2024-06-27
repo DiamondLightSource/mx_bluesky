@@ -195,7 +195,6 @@ def run_extruder_plan(
 
     # Setting up the beamline
     logger.debug("Open hutch shutter")
-    # Before Open, it Resets
     yield from bps.abs_set(shutter, ShutterDemand.OPEN, wait=True)
 
     yield from sup.setup_beamline_for_collection_plan(
