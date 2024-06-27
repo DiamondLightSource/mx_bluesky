@@ -55,25 +55,20 @@ def initialise_stages(
     """
     setup_logging()
     group = "initialise_stages"
-    # commented out filter lines 230719 as this stage not connected
-    logger.info("Setting VELO ACCL HHL LLM pvs for stages")
+    logger.info("Setting velocity, acceleration and limits for stages")
 
     yield from bps.abs_set(pmac.x.velocity, 20, group=group)
     yield from bps.abs_set(pmac.y.velocity, 20, group=group)
     yield from bps.abs_set(pmac.z.velocity, 20, group=group)
-    # caput(pv.me14e_filter  + '.VELO', 20)
     yield from bps.abs_set(pmac.x.acceleration_time, 0.01, group=group)
     yield from bps.abs_set(pmac.y.acceleration_time, 0.01, group=group)
     yield from bps.abs_set(pmac.z.acceleration_time, 0.01, group=group)
-    # caput(pv.me14e_filter  + '.ACCL', 0.01)
     yield from bps.abs_set(pmac.x.high_limit_travel, 30, group=group)
     yield from bps.abs_set(pmac.x.low_limit_travel, -29, group=group)
     yield from bps.abs_set(pmac.y.high_limit_travel, 30, group=group)
     yield from bps.abs_set(pmac.y.low_limit_travel, -30, group=group)
     yield from bps.abs_set(pmac.z.high_limit_travel, 5.1, group=group)
     yield from bps.abs_set(pmac.z.low_limit_travel, -4.1, group=group)
-    # caput(pv.me14e_filter  + '.HLM', 45.0)
-    # caput(pv.me14e_filter  + '.LLM', -45.0)
     caput(pv.me14e_gp1, 1)
     caput(pv.me14e_gp2, 0)
     caput(pv.me14e_gp3, 1)
@@ -100,10 +95,6 @@ def initialise_stages(
     caput(pv.me14e_gp100, "press set params to read visit")
 
     logger.info("Initialisation of the stages complete")
-    logger.info(
-        """To define detector in use and set the PV accordingly, use the MUX choice \
-            on the `Detector` screen."""
-    )
     yield from bps.wait(group=group)
 
 
