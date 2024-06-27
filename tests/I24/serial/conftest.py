@@ -9,6 +9,7 @@ from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
 from dodal.devices.i24.aperture import Aperture
 from dodal.devices.i24.beamstop import Beamstop
+from dodal.devices.i24.dcm import DCM
 from dodal.devices.i24.dual_backlight import DualBacklight
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
@@ -99,3 +100,9 @@ def pmac(RE):
         patch_motor(pmac.z),
     ):
         yield pmac
+
+
+@pytest.fixture
+def dcm(RE) -> DCM:
+    dcm = i24.dcm(fake_with_ophyd_sim=True)
+    return dcm

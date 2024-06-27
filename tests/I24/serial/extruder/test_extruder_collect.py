@@ -147,11 +147,12 @@ def test_run_extruder_quickshot_with_eiger(
     backlight,
     beamstop,
     detector_stage,
+    dcm,
     dummy_params,
 ):
     mock_params.from_file.return_value = dummy_params
     fake_det.return_value = Eiger()
-    RE(run_extruder_plan(zebra, aperture, backlight, beamstop, detector_stage))
+    RE(run_extruder_plan(zebra, aperture, backlight, beamstop, detector_stage, dcm))
     assert fake_nexgen.call_count == 1
     assert fake_dcid.call_count == 1
     assert fake_sup.setup_beamline_for_collection_plan.call_count == 1
@@ -199,11 +200,12 @@ def test_run_extruder_pump_probe_with_pilatus(
     backlight,
     beamstop,
     detector_stage,
+    dcm,
     dummy_params_pp,
 ):
     mock_params.from_file.return_value = dummy_params_pp
     fake_det.return_value = Pilatus()
-    RE(run_extruder_plan(zebra, aperture, backlight, beamstop, detector_stage))
+    RE(run_extruder_plan(zebra, aperture, backlight, beamstop, detector_stage, dcm))
     assert fake_dcid.call_count == 1
     assert fake_sup.move_detector_stage_to_position_plan.call_count == 1
     mock_pp_plan.assert_called_once()

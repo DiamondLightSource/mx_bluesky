@@ -18,6 +18,7 @@ from blueapi.core import MsgGenerator
 from dodal.common import inject
 from dodal.devices.i24.aperture import Aperture
 from dodal.devices.i24.beamstop import Beamstop
+from dodal.devices.i24.dcm import DCM
 from dodal.devices.i24.dual_backlight import DualBacklight
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC
@@ -506,13 +507,14 @@ def start_i24(
     logger.debug(" Open, then sleep for 2s")
     sleep(2.0)
 
-    return start_time.ctime(), dcid
+    return start_time, dcid
 
 
 @log.log_on_entry
 def finish_i24(
     zebra: Zebra,
     pmac: PMAC,
+    dcm: DCM,
     parameters: FixedTargetParameters,
 ):
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
@@ -523,7 +525,7 @@ def finish_i24(
     filepath = parameters.visit + parameters.directory
     filename = parameters.filename
     transmission = (float(caget(pv.pilat_filtertrasm)),)
-    wavelength = float(caget(pv.dcm_lambda))
+    wavelength = yield from bps.rd(dcm.wavelength_in_a)
 
     if parameters.detector_name == "pilatus":
         logger.debug("Finish I24 Pilatus")
@@ -593,6 +595,7 @@ def run_fixed_target_plan(
     backlight: DualBacklight = inject("backlight"),
     beamstop: Beamstop = inject("beamstop"),
     detector_stage: DetectorMotion = inject("detector_motion"),
+    dcm: DCM = inject("dcm"),
 ) -> MsgGenerator:
     setup_logging()
     # ABORT BUTTON
@@ -667,12 +670,14 @@ def run_fixed_target_plan(
     tot_num_imgs = datasetsizei24(
         parameters.num_exposures, parameters.chip_type, parameters.map_type
     )
+    wavelength = yield from bps.rd(dcm.wavelength_in_a)
     if parameters.detector_name == "eiger":
         logger.debug("Start nexus writing service.")
         call_nexgen(
             chip_prog_dict,
             start_time,
             parameters,
+            wavelength,
             total_numb_imgs=tot_num_imgs,
         )
 
@@ -730,12 +735,12 @@ def run_fixed_target_plan(
         caput(pv.eiger_acquire, 0)
         caput(pv.eiger_ODcapture, "Done")
 
-    end_time = yield from finish_i24(zebra, pmac, parameters)
+    end_time = yield from finish_i24(zebra, pmac, dcm, parameters)
     dcid.collection_complete(end_time, aborted=aborted)
     logger.debug("Notify DCID of end of collection.")
     dcid.notify_end()
 
     logger.debug("Quick summary of settings")
     logger.debug(f"Chip name = {parameters.filename} sub_dir = {parameters.directory}")
-    logger.debug(f"Start Time = {start_time}")
+    logger.debug(f"Start Time = {start_time.ctime()}")
     logger.debug(f"End Time = {end_time}")

@@ -10,15 +10,16 @@ import requests
 
 from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, MappingType
 from mx_bluesky.I24.serial.parameters import ExtruderParameters, FixedTargetParameters
-from mx_bluesky.I24.serial.setup_beamline import Eiger, caget, cagetstring, pv
+from mx_bluesky.I24.serial.setup_beamline import Eiger, caget, cagetstring
 
 logger = logging.getLogger("I24ssx.nexus_writer")
 
 
 def call_nexgen(
-    chip_prog_dict: Dict,
+    chip_prog_dict: Dict | None,
     start_time: datetime,
     parameters: ExtruderParameters | FixedTargetParameters,
+    wavelength: float,
     expt_type: Literal["fixed-target", "extruder"] = "fixed-target",
     total_numb_imgs: Optional[int] = None,
 ):
@@ -63,7 +64,6 @@ def call_nexgen(
         return False
 
     transmission = (float(caget(Eiger.pv.transmission)),)
-    wavelength = float(caget(pv.dcm_lambda))
 
     if det_type == Eiger.name:
         logger.debug(
