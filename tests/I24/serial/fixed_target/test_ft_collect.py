@@ -146,3 +146,10 @@ def test_start_i24_with_eiger(
     # Pilatus gets called for hack to create directory
     assert fake_sup.pilatus.call_count == 2
     assert fake_dcid.call_count == 1
+
+    shutter_call_list = [
+        call("Reset", wait=True, timeout=10.0),
+        call("Open", wait=True, timeout=10.0),
+    ]
+    mock_shutter = get_mock_put(shutter.control)
+    mock_shutter.assert_has_calls(shutter_call_list)

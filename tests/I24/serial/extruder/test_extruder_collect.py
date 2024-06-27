@@ -1,8 +1,9 @@
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import bluesky.plan_stubs as bps
 import pytest
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3
+from ophyd_async.core import get_mock_put
 
 from mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2 import (
     TTL_EIGER,
@@ -210,3 +211,11 @@ def test_run_extruder_pump_probe_with_pilatus(
     assert fake_sup.move_detector_stage_to_position_plan.call_count == 1
     mock_pp_plan.assert_called_once()
     mock_reset_zebra_plan.assert_called_once()
+
+    shutter_call_list = [
+        call("Reset", wait=True, timeout=10.0),
+        call("Open", wait=True, timeout=10.0),
+        call("Close", wait=True, timeout=10.0),
+    ]
+    mock_shutter = get_mock_put(shutter.control)
+    mock_shutter.assert_has_calls(shutter_call_list)
