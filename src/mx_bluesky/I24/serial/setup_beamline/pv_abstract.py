@@ -4,6 +4,7 @@ Cleaner abstractions of the PV table.
 Takes the PV tables from I24's setup_beamline and wraps a slightly more
 abstract wrapper around them.
 """
+
 from typing import Union
 
 from mx_bluesky.I24.serial.setup_beamline import pv
@@ -56,6 +57,7 @@ class Eiger:
         detector_distance = pv.eiger_detdist
         wavelength = pv.eiger_wavelength
         transmission = "BL24I-EA-PILAT-01:cam1:FilterTransm"
+        filenameRBV = pv.eiger_ODfilenameRBV
         file_name = pv.eiger_ODfilename
         file_path = pv.eiger_ODfilepath
         file_template = None

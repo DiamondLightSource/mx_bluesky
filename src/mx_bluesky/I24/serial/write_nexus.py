@@ -42,7 +42,7 @@ def call_nexgen(
         currentchipmap = None
         pump_status = parameters.pump_status
 
-    filename_prefix = cagetstring(pv.eiger_ODfilenameRBV)
+    filename_prefix = cagetstring(Eiger.pv.filenameRBV)
     meta_h5 = (
         pathlib.Path(parameters.visit)
         / parameters.directory
@@ -62,7 +62,7 @@ def call_nexgen(
         logger.warning(f"Giving up waiting for {meta_h5} after {max_wait} seconds")
         return False
 
-    transmission = (float(caget(pv.pilat_filtertrasm)),)
+    transmission = (float(caget(Eiger.pv.transmission)),)
     wavelength = float(caget(pv.dcm_lambda))
 
     if det_type == Eiger.name:
@@ -76,7 +76,7 @@ def call_nexgen(
 
         payload = {
             "beamline": "i24",
-            "beam_center": [caget(pv.eiger_beamx), caget(pv.eiger_beamy)],
+            "beam_center": [caget(Eiger.pv.beamx), caget(Eiger.pv.beamy)],
             "chipmap": currentchipmap,
             "chip_info": chip_prog_dict,
             "det_dist": parameters.detector_distance_mm,
