@@ -364,7 +364,7 @@ def run_extruder_plan(
     if parameters.detector_name == "eiger":
         wavelength = yield from bps.rd(dcm.wavelength_in_a)
         logger.debug("Call nexgen server for nexus writing.")
-        call_nexgen({}, start_time, parameters, wavelength, "extruder")
+        call_nexgen(None, start_time, parameters, wavelength, "extruder")
 
     aborted = False
     timeout_time = time.time() + parameters.num_images * parameters.exposure_time_s + 10
