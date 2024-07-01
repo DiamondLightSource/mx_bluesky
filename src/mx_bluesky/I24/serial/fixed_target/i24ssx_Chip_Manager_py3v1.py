@@ -51,38 +51,26 @@ def setup_logging():
 @log.log_on_entry
 def initialise_stages(
     pmac: PMAC = inject("pmac"),
-    detector_stage: DetectorMotion = inject("detector_motion"),
 ) -> MsgGenerator:
     """Initialise the portable stages PVs, usually used only once right after setting \
         up the stages either after use at different facility.
     """
     setup_logging()
     group = "initialise_stages"
-    # commented out filter lines 230719 as this stage not connected
-    logger.info("Setting VMAX VELO ACCL HHL LLM pvs for stages")
+    logger.info("Setting velocity, acceleration and limits for stages")
 
-    # NOTE .VMAX is read only in ohpyd_async motor, should be removed in the future
-    # See https://github.com/DiamondLightSource/mx_bluesky/issues/109
-    caput(pv.me14e_stage_x + ".VMAX", 20)
-    caput(pv.me14e_stage_y + ".VMAX", 20)
-    caput(pv.me14e_stage_z + ".VMAX", 20)
-    # caput(pv.me14e_filter  + '.VMAX', 20)
     yield from bps.abs_set(pmac.x.velocity, 20, group=group)
     yield from bps.abs_set(pmac.y.velocity, 20, group=group)
     yield from bps.abs_set(pmac.z.velocity, 20, group=group)
-    # caput(pv.me14e_filter  + '.VELO', 20)
     yield from bps.abs_set(pmac.x.acceleration_time, 0.01, group=group)
     yield from bps.abs_set(pmac.y.acceleration_time, 0.01, group=group)
     yield from bps.abs_set(pmac.z.acceleration_time, 0.01, group=group)
-    # caput(pv.me14e_filter  + '.ACCL', 0.01)
     yield from bps.abs_set(pmac.x.high_limit_travel, 30, group=group)
     yield from bps.abs_set(pmac.x.low_limit_travel, -29, group=group)
     yield from bps.abs_set(pmac.y.high_limit_travel, 30, group=group)
     yield from bps.abs_set(pmac.y.low_limit_travel, -30, group=group)
     yield from bps.abs_set(pmac.z.high_limit_travel, 5.1, group=group)
     yield from bps.abs_set(pmac.z.low_limit_travel, -4.1, group=group)
-    # caput(pv.me14e_filter  + '.HLM', 45.0)
-    # caput(pv.me14e_filter  + '.LLM', -45.0)
     caput(pv.me14e_gp1, 1)
     caput(pv.me14e_gp2, 0)
     caput(pv.me14e_gp3, 1)
@@ -96,13 +84,6 @@ def initialise_stages(
     yield from bps.abs_set(pmac.enc_reset, EncReset.ENC7, group=group)
     yield from bps.abs_set(pmac.enc_reset, EncReset.ENC8, group=group)
 
-    # TODO Split this out.
-    # Detector bit is unrelated, just here for convenience sake
-    # See https://github.com/DiamondLightSource/mx_bluesky/issues/51
-    # Define detector in use
-    logger.debug("Define detector in use.")
-    det_type = yield from get_detector_type(detector_stage)
-
     caput(pv.pilat_cbftemplate, 0)
 
     sleep(0.1)
@@ -114,9 +95,8 @@ def initialise_stages(
         sys.stdout.flush()
 
     caput(pv.me14e_gp100, "press set params to read visit")
-    caput(pv.me14e_gp101, det_type.name)
 
-    logger.info("Initialisation Complete")
+    logger.info("Initialisation of the stages complete")
     yield from bps.wait(group=group)
 
 

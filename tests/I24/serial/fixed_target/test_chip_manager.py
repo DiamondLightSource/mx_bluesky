@@ -2,7 +2,6 @@ import json
 from typing import List
 from unittest.mock import ANY, MagicMock, call, mock_open, patch
 
-import bluesky.plan_stubs as bps
 import pytest
 from dodal.devices.i24.beamstop import Beamstop
 from dodal.devices.i24.dual_backlight import DualBacklight
@@ -23,7 +22,6 @@ from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1 import (
     scrape_mtr_fiducials,
     set_pmac_strings_for_cs,
 )
-from mx_bluesky.I24.serial.setup_beamline import Eiger
 
 mtr_dir_str = """#Some words
 mtr1_dir=1
@@ -48,17 +46,9 @@ async def test_initialise(
     fake_sys: MagicMock,
     fake_log: MagicMock,
     pmac: PMAC,
-    detector_stage: DetectorMotion,
     RE,
 ):
-    def fake_generator(value):
-        yield from bps.null()
-        return value
-
-    fake_det.side_effect = [fake_generator(Eiger())]
-    RE(initialise_stages(pmac, detector_stage))
-
-    fake_caput.assert_called_with(ANY, "eiger")  # last call should be detector
+    RE(initialise_stages(pmac))
 
     assert await pmac.x.velocity.get_value() == 20
     assert await pmac.y.acceleration_time.get_value() == 0.01
