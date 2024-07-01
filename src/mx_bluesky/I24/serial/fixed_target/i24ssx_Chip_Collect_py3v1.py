@@ -16,6 +16,7 @@ import bluesky.plan_stubs as bps
 import numpy as np
 from blueapi.core import MsgGenerator
 from dodal.common import inject
+from dodal.devices.hutch_shutter import HutchShutter, ShutterDemand
 from dodal.devices.i24.aperture import Aperture
 from dodal.devices.i24.beamstop import Beamstop
 from dodal.devices.i24.dcm import DCM
@@ -342,6 +343,7 @@ def start_i24(
     backlight: DualBacklight,
     beamstop: Beamstop,
     detector_stage: DetectorMotion,
+    shutter: HutchShutter,
     parameters: FixedTargetParameters,
 ):
     """Returns a tuple of (start_time, dcid)"""
@@ -499,13 +501,7 @@ def start_i24(
         raise ValueError(msg)
 
     # Open the hutch shutter
-
-    caput("BL24I-PS-SHTR-01:CON", "Reset")
-    logger.debug("Reset, then sleep for 1s")
-    sleep(1.0)
-    caput("BL24I-PS-SHTR-01:CON", "Open")
-    logger.debug(" Open, then sleep for 2s")
-    sleep(2.0)
+    yield from bps.abs_set(shutter, ShutterDemand.OPEN, wait=True)
 
     return start_time, dcid
 
@@ -514,6 +510,7 @@ def start_i24(
 def finish_i24(
     zebra: Zebra,
     pmac: PMAC,
+    shutter: HutchShutter,
     dcm: DCM,
     parameters: FixedTargetParameters,
 ):
@@ -543,7 +540,7 @@ def finish_i24(
     logger.info("Move chip back to home position by setting PMAC_STRING pv.")
     yield from bps.trigger(pmac.to_xyz_zero)
     logger.info("Closing shutter")
-    caput("BL24I-PS-SHTR-01:CON", "Close")
+    yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
 
     end_time = time.ctime()
     logger.debug("Collection end time %s" % end_time)
@@ -553,7 +550,7 @@ def finish_i24(
 
     # Write a record of what was collected to the processing directory
     userlog_path = parameters.visit + "processing/" + parameters.directory + "/"
-    userlog_fid = filename + "_parameters.txt"
+    userlog_fid = f"{filename}_parameters.txt"
     logger.debug("Write a user log in %s" % userlog_path)
 
     os.makedirs(userlog_path, exist_ok=True)
@@ -595,6 +592,7 @@ def run_fixed_target_plan(
     backlight: DualBacklight = inject("backlight"),
     beamstop: Beamstop = inject("beamstop"),
     detector_stage: DetectorMotion = inject("detector_motion"),
+    shutter: HutchShutter = inject("shutter"),
     dcm: DCM = inject("dcm"),
 ) -> MsgGenerator:
     setup_logging()
@@ -644,7 +642,7 @@ def run_fixed_target_plan(
     )
 
     start_time, dcid = yield from start_i24(
-        zebra, aperture, backlight, beamstop, detector_stage, parameters
+        zebra, aperture, backlight, beamstop, detector_stage, shutter, parameters
     )
 
     logger.info("Moving to Start")
@@ -735,7 +733,8 @@ def run_fixed_target_plan(
         caput(pv.eiger_acquire, 0)
         caput(pv.eiger_ODcapture, "Done")
 
-    end_time = yield from finish_i24(zebra, pmac, dcm, parameters)
+    end_time = yield from finish_i24(zebra, pmac, shutter, dcm, parameters)
+
     dcid.collection_complete(end_time, aborted=aborted)
     logger.debug("Notify DCID of end of collection.")
     dcid.notify_end()

@@ -7,6 +7,12 @@ from unittest.mock import AsyncMock
 import pytest
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
+from dodal.devices.hutch_shutter import (
+    HUTCH_SAFE_FOR_OPERATIONS,
+    HutchShutter,
+    ShutterDemand,
+    ShutterState,
+)
 from dodal.devices.i24.aperture import Aperture
 from dodal.devices.i24.beamstop import Beamstop
 from dodal.devices.i24.dcm import DCM
@@ -55,6 +61,19 @@ def zebra(RE) -> Zebra:
     zebra.pc.arm.arm_set.set = AsyncMock(side_effect=mock_arm)
     zebra.pc.arm.disarm_set.set = AsyncMock(side_effect=mock_disarm)
     return zebra
+
+
+@pytest.fixture
+def shutter(RE) -> HutchShutter:
+    shutter = i24.shutter(fake_with_ophyd_sim=True)
+    set_mock_value(shutter.interlock.status, HUTCH_SAFE_FOR_OPERATIONS)
+
+    def set_status(value: ShutterDemand, *args, **kwargs):
+        value_sta = ShutterState.OPEN if value == "Open" else ShutterState.CLOSED
+        set_mock_value(shutter.status, value_sta)
+
+    callback_on_mock_put(shutter.control, set_status)
+    return shutter
 
 
 @pytest.fixture

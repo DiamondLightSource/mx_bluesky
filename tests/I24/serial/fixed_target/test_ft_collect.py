@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, call, mock_open, patch
 
 import pytest
+from dodal.devices.hutch_shutter import HutchShutter
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 from ophyd_async.core import get_mock_put
@@ -119,6 +120,7 @@ def test_start_i24_with_eiger(
     fake_dcid,
     fake_size,
     zebra: Zebra,
+    shutter: HutchShutter,
     RE,
     aperture,
     backlight,
@@ -134,6 +136,7 @@ def test_start_i24_with_eiger(
             backlight,
             beamstop,
             detector_stage,
+            shutter,
             dummy_params_without_pp,
         )
     )
@@ -143,3 +146,10 @@ def test_start_i24_with_eiger(
     # Pilatus gets called for hack to create directory
     assert fake_sup.pilatus.call_count == 2
     assert fake_dcid.call_count == 1
+
+    shutter_call_list = [
+        call("Reset", wait=True, timeout=10.0),
+        call("Open", wait=True, timeout=10.0),
+    ]
+    mock_shutter = get_mock_put(shutter.control)
+    mock_shutter.assert_has_calls(shutter_call_list)
