@@ -22,7 +22,7 @@ repos:
         name: Run ruff
         stages: [commit]
         language: system
-        entry: ruff
+        entry: ruff check --force-exclude
         types: [python]
 
   # Type checking
