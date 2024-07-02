@@ -4,7 +4,6 @@ This version in python3 new Feb2021 by RLO
     - March 21 added logging and Eiger functionality
 """
 
-# import asyncio
 import json
 import logging
 import re
@@ -376,9 +375,7 @@ def run_extruder_plan(
             flush_print(line_of_text)
             sleep(0.5)
             i += 1
-            zebra_arm_status = yield from bps.rd(
-                zebra.pc.arm.armed
-            )  # await asyncio.gather(zebra.pc.is_armed())
+            zebra_arm_status = yield from bps.rd(zebra.pc.arm.armed)
             if int(caget(pv.ioc12_gp8)) != 0:
                 aborted = True
                 logger.warning("Data Collection Aborted")
