@@ -139,7 +139,6 @@ def write_parameter_file(detector_stage: DetectorMotion):
     logger.debug(f"Writing Parameter File to: {param_file}\n")
 
     det_type = yield from get_detector_type(detector_stage)
-    sleep(2.0)
     logger.warning(f"DETECTOR TYPE: {det_type}")
     filename = caget(pv.ioc12_gp3)
     # If file name ends in a digit this causes processing/pilatus pain.
