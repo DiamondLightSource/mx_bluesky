@@ -82,14 +82,14 @@ def default_logging_setup(dev_mode: bool = False):
     - Remove dodal stream handler to avoid double messages (for now, use only the \
         i24ssx default stream to keep the output expected by the scientists.)
     """
-    handlers = set_up_all_logging_handlers(
+    handlers = set_up_all_logging_handlers(  # noqa: F841
         dodal_logger,
         _get_logging_file_path(),
         "dodal.log",
         dev_mode,
         ERROR_LOG_BUFFER_LINES,
     )
-    integrate_bluesky_and_ophyd_logging(dodal_logger, handlers)
+    integrate_bluesky_and_ophyd_logging(dodal_logger)
     # Remove dodal StreamHandler to avoid duplication of messages above debug
     dodal_logger.removeHandler(dodal_logger.handlers[0])
 
