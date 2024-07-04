@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Literal, Optional
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, ConfigDict, validator
 
 from mx_bluesky.I24.serial.fixed_target.ft_utils import (
     ChipType,
@@ -47,20 +47,20 @@ class ExtruderParameters(SerialExperiment, LaserExperiment):
         return cls(**raw_params)
 
 
-class FixedTargetParameters(SerialExperiment, LaserExperiment):
-    """Fixed target parameter model."""
+class ChipDescription(BaseModel):
+    """Parameters defining the chip in use for FT collection."""
 
-    class Config:
-        arbitrary_types_allowed = True
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
-    # model_config = ConfigDict(use_enum_values=True)
-
-    num_exposures: int
     chip_type: ChipType
-    map_type: MappingType
-    pump_repeat: PumpProbeSetting
-    checker_pattern: bool = False
+    x_num_steps: int
+    y_num_steps: int
+    x_step_size: float
+    y_step_size: float
+    x_blocks: int
+    y_blocks: int
+    b2b_horz: float
+    b2b_vert: float
 
     @validator("chip_type", pre=True)
     def _parse_chip(cls, chip_type: str | int):
@@ -68,6 +68,46 @@ class FixedTargetParameters(SerialExperiment, LaserExperiment):
             return ChipType[chip_type]
         else:
             return ChipType(chip_type)
+
+    @property
+    def chip_format(self) -> list[int]:
+        return [self.x_blocks, self.y_blocks, self.x_num_steps, self.y_num_steps]
+
+    @property
+    def x_block_size(self) -> float:
+        if self.chip_type.name == "Custom":
+            return 0.0  # placeholder
+        else:
+            return ((self.x_num_steps - 1) * self.x_step_size) + self.b2b_horz
+
+    @property
+    def y_block_size(self) -> float:
+        if self.chip_type.name == "Custom":
+            return 0.0  # placeholder
+        else:
+            return ((self.y_num_steps - 1) * self.y_step_size) + self.b2b_vert
+
+    @property
+    def approx_chip_size(self) -> float:
+        """Returns an approximation of the chip size for the move during alignment \
+            of the fiducials
+        """
+        if self.chip_type.name == "OxfordInner":
+            return 24.60
+        else:
+            return 25.40
+
+
+class FixedTargetParameters(SerialExperiment, LaserExperiment):
+    """Fixed target parameter model."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    num_exposures: int
+    chip: ChipDescription
+    map_type: MappingType
+    pump_repeat: PumpProbeSetting
+    checker_pattern: bool = False
 
     @validator("map_type", pre=True)
     def _parse_map(cls, map_type: str | int):
@@ -85,3 +125,8 @@ class FixedTargetParameters(SerialExperiment, LaserExperiment):
         with open(filename, "r") as fh:
             raw_params = json.load(fh)
         return cls(**raw_params)
+
+    @property
+    def total_num_images(self) -> int:
+        # TODO complete
+        return 0

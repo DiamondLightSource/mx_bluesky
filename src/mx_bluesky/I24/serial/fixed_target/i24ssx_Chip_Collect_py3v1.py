@@ -31,10 +31,11 @@ from mx_bluesky.I24.serial.fixed_target.ft_utils import (
     MappingType,
     PumpProbeSetting,
 )
-from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1 import (
-    get_format,
+from mx_bluesky.I24.serial.parameters import (
+    ChipDescription,
+    FixedTargetParameters,
+    SSXType,
 )
-from mx_bluesky.I24.serial.parameters import FixedTargetParameters, SSXType
 from mx_bluesky.I24.serial.parameters.constants import (
     LITEMAP_PATH,
     PARAM_FILE_NAME,
@@ -84,102 +85,72 @@ def copy_files_to_data_location(
 
 @log.log_on_entry
 def get_chip_prog_values(
-    chip_type: int,
-    pump_repeat: int,
-    pumpexptime: float,
-    pumpdelay: float,
-    prepumpexptime: float,
-    exptime: float = 16,
-    n_exposures: int = 1,
+    parameters: FixedTargetParameters,
 ):
-    if chip_type in [ChipType.Oxford, ChipType.OxfordInner, ChipType.Minichip]:
-        logger.info("This is an Oxford chip")
-        # '1' = 'Oxford ' = [8, 8, 20, 20, 0.125, 3.175, 3.175]
-        (
-            xblocks,
-            yblocks,
-            x_num_steps,
-            y_num_steps,
-            w2w,
-            b2b_horz,
-            b2b_vert,
-        ) = get_format(chip_type)
-        x_step_size = w2w
-        y_step_size = w2w
-        x_block_size = ((x_num_steps - 1) * w2w) + b2b_horz
-        y_block_size = ((y_num_steps - 1) * w2w) + b2b_vert
-
-    elif chip_type == ChipType.Custom:
-        # This is set by the user in the edm screen
-        # The chip format might change every time and is read from PVs.
-        logger.info("This is a Custom Chip")
-        x_num_steps = caget(pv.me14e_gp6)
-        y_num_steps = caget(pv.me14e_gp7)
-        x_step_size = caget(pv.me14e_gp8)
-        y_step_size = caget(pv.me14e_gp99)
-        xblocks = 1
-        yblocks = 1
-        x_block_size = 0  # placeholder
-        y_block_size = 0  # placeholder
-    else:
-        logger.warning(f"Unknown chip_type, chip_type = {chip_type}")
-
     # this is where p variables for fast laser expts will be set
-    if pump_repeat in [
+    if parameters.pump_repeat in [
         PumpProbeSetting.NoPP,
         PumpProbeSetting.Short1,
         PumpProbeSetting.Short2,
         PumpProbeSetting.Medium1,
     ]:
         pump_repeat_pvar = 0
-    elif pump_repeat == PumpProbeSetting.Repeat1:
+    elif parameters.pump_repeat == PumpProbeSetting.Repeat1:
         pump_repeat_pvar = 1
-    elif pump_repeat == PumpProbeSetting.Repeat2:
+    elif parameters.pump_repeat == PumpProbeSetting.Repeat2:
         pump_repeat_pvar = 2
-    elif pump_repeat == PumpProbeSetting.Repeat3:
+    elif parameters.pump_repeat == PumpProbeSetting.Repeat3:
         pump_repeat_pvar = 3
-    elif pump_repeat == PumpProbeSetting.Repeat5:
+    elif parameters.pump_repeat == PumpProbeSetting.Repeat5:
         pump_repeat_pvar = 5
-    elif pump_repeat == PumpProbeSetting.Repeat10:
+    elif parameters.pump_repeat == PumpProbeSetting.Repeat10:
         pump_repeat_pvar = 10
     else:
-        logger.warning(f"Unknown pump_repeat, pump_repeat = {pump_repeat}")
+        logger.warning(f"Unknown pump_repeat, pump_repeat = {parameters.pump_repeat}")
 
-    logger.info(f"Pump repeat is {pump_repeat}, PVAR set to {pump_repeat_pvar}")
+    logger.info(
+        f"Pump repeat is {parameters.pump_repeat}, PVAR set to {pump_repeat_pvar}"
+    )
 
-    if pump_repeat == PumpProbeSetting.Short2:
+    if parameters.pump_repeat == PumpProbeSetting.Short2:
         pump_in_probe = 1
     else:
         pump_in_probe = 0
 
     logger.info(f"pump_in_probe set to {pump_in_probe}")
 
-    chip_dict = {
-        "X_NUM_STEPS": [11, x_num_steps],
-        "Y_NUM_STEPS": [12, y_num_steps],
-        "X_STEP_SIZE": [13, x_step_size],
-        "Y_STEP_SIZE": [14, y_step_size],
-        "DWELL_TIME": [15, exptime],
+    chip_dict: Dict[str, list] = {
+        "X_NUM_STEPS": [11, parameters.chip.x_num_steps],
+        "Y_NUM_STEPS": [12, parameters.chip.y_num_steps],
+        "X_STEP_SIZE": [13, parameters.chip.x_step_size],
+        "Y_STEP_SIZE": [14, parameters.chip.y_step_size],
+        "DWELL_TIME": [15, parameters.exposure_time_s],
         "X_START": [16, 0],
         "Y_START": [17, 0],
         "Z_START": [18, 0],
-        "X_NUM_BLOCKS": [20, xblocks],
-        "Y_NUM_BLOCKS": [21, yblocks],
-        "X_BLOCK_SIZE": [24, x_block_size],
-        "Y_BLOCK_SIZE": [25, y_block_size],
+        "X_NUM_BLOCKS": [20, parameters.chip.x_blocks],
+        "Y_NUM_BLOCKS": [21, parameters.chip.y_blocks],
+        "X_BLOCK_SIZE": [24, parameters.chip.x_block_size],
+        "Y_BLOCK_SIZE": [25, parameters.chip.y_block_size],
         "COLTYPE": [26, 41],
-        "N_EXPOSURES": [30, n_exposures],
+        "N_EXPOSURES": [30, parameters.num_exposures],
         "PUMP_REPEAT": [32, pump_repeat_pvar],
-        "LASER_DWELL": [34, pumpexptime],
-        "LASERTWO_DWELL": [35, prepumpexptime],
-        "LASER_DELAY": [37, pumpdelay],
+        "LASER_DWELL": [34, parameters.laser_dwell_s],
+        "LASERTWO_DWELL": [35, parameters.pre_pump_exposure_s],
+        "LASER_DELAY": [37, parameters.laser_delay_s],
         "PUMP_IN_PROBE": [38, pump_in_probe],
     }
 
-    chip_dict["DWELL_TIME"][1] = 1000 * float(exptime)
-    chip_dict["LASER_DWELL"][1] = 1000 * float(pumpexptime)
-    chip_dict["LASERTWO_DWELL"][1] = 1000 * float(prepumpexptime)
-    chip_dict["LASER_DELAY"][1] = 1000 * float(pumpdelay)
+    chip_dict["DWELL_TIME"][1] = 1000 * parameters.exposure_time_s
+    chip_dict["LASER_DWELL"][1] = (
+        1000 * parameters.laser_dwell_s if parameters.laser_dwell_s else 0
+    )
+    chip_dict["LASERTWO_DWELL"][1] = (
+        1000 * parameters.pre_pump_exposure_s if parameters.pre_pump_exposure_s else 0
+    )
+    chip_dict["LASER_DELAY"][1] = (
+        1000 * parameters.laser_delay_s if parameters.laser_delay_s else 0
+    )
 
     return chip_dict
 
@@ -290,26 +261,32 @@ def get_prog_num(
 
 
 @log.log_on_entry
-def datasetsizei24(n_exposures: int, chip_type: ChipType, map_type: MappingType) -> int:
+def datasetsizei24(
+    n_exposures: int,
+    chip_params: ChipDescription,
+    map_type: MappingType,
+) -> int:
+    # TODO this should go in some param and not be called 3 times!
     # Calculates how many images will be collected based on map type and N repeats
     logger.info("Calculate total number of images expected in data collection.")
 
     if map_type == MappingType.NoMap:
-        if chip_type == ChipType.Custom:
-            total_numb_imgs = int(int(caget(pv.me14e_gp6)) * int(caget(pv.me14e_gp7)))
+        if chip_params.chip_type == ChipType.Custom:
+            total_numb_imgs = chip_params.x_num_steps * chip_params.y_num_steps
             logger.info(
                 f"Map type: None \tCustom chip \tNumber of images {total_numb_imgs}"
             )
         else:
-            chip_format = get_format(chip_type)[:4]
+            chip_format = chip_params.chip_format[:4]
             total_numb_imgs = np.prod(chip_format)
             logger.info(
-                f"Map type: None \tOxford chip {str(chip_type)} \tNumber of images {total_numb_imgs}"
+                f"""Map type: None \tOxford chip {chip_params.chip_type} \t \
+                    Number of images {total_numb_imgs}"""
             )
 
     elif map_type == MappingType.Lite:
-        logger.info(f"Using Mapping Lite on chip type {str(chip_type)}")
-        chip_format = get_format(chip_type)[2:4]
+        logger.info(f"Using Mapping Lite on chip type {chip_params.chip_type}")
+        chip_format = chip_params.chip_format[2:4]
         block_count = 0
         with open(LITEMAP_PATH / "currentchip.map", "r") as f:
             for line in f.readlines():
@@ -367,7 +344,7 @@ def start_i24(
     logger.debug("Set up beamline DONE")
 
     total_numb_imgs = datasetsizei24(
-        parameters.num_exposures, parameters.chip_type, parameters.map_type
+        parameters.num_exposures, parameters.chip, parameters.map_type
     )
 
     filepath = parameters.collection_directory.as_posix()
@@ -519,7 +496,7 @@ def finish_i24(
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
 
     total_numb_imgs = datasetsizei24(
-        parameters.num_exposures, parameters.chip_type, parameters.map_type
+        parameters.num_exposures, parameters.chip, parameters.map_type
     )
     filepath = parameters.collection_directory
     filename = parameters.filename
@@ -610,7 +587,7 @@ def run_fixed_target_plan(
                 visit = {parameters.visit}
                 sub_dir = {parameters.directory}
                 n_exposures = {parameters.num_exposures}
-                chip_type = {str(parameters.chip_type)}
+                chip_type = {str(parameters.chip.chip_type)}
                 map_type = {str(parameters.map_type)}
                 dcdetdist = {parameters.detector_distance_mm}
                 exptime = {parameters.exposure_time_s}
@@ -624,19 +601,11 @@ def run_fixed_target_plan(
     logger.info("Getting Program Dictionary")
 
     # If alignment type is Oxford inner it is still an Oxford type chip
-    if parameters.chip_type == ChipType.OxfordInner:
+    if parameters.chip.chip_type == ChipType.OxfordInner:
         logger.debug("Change chip type Oxford Inner to Oxford.")
-        parameters.chip_type = ChipType.Oxford
+        parameters.chip.chip_type = ChipType.Oxford
 
-    chip_prog_dict = get_chip_prog_values(
-        parameters.chip_type.value,
-        parameters.pump_repeat.value,
-        parameters.laser_dwell_s,
-        parameters.laser_delay_s,
-        parameters.pre_pump_exposure_s,
-        exptime=parameters.exposure_time_s,
-        n_exposures=parameters.num_exposures,
-    )
+    chip_prog_dict = get_chip_prog_values(parameters)
     logger.info("Loading Motion Program Data")
     yield from load_motion_program_data(
         pmac,
@@ -655,7 +624,7 @@ def run_fixed_target_plan(
     sleep(2.0)
 
     prog_num = get_prog_num(
-        parameters.chip_type, parameters.map_type, parameters.pump_repeat
+        parameters.chip.chip_type, parameters.map_type, parameters.pump_repeat
     )
 
     # Now ready for data collection. Open fast shutter (zebra gate)
@@ -671,7 +640,7 @@ def run_fixed_target_plan(
     dcid.notify_start()
 
     tot_num_imgs = datasetsizei24(
-        parameters.num_exposures, parameters.chip_type, parameters.map_type
+        parameters.num_exposures, parameters.chip, parameters.map_type
     )
     if parameters.detector_name == "eiger":
         logger.debug("Start nexus writing service.")

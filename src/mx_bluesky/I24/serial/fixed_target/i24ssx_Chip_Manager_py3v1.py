@@ -25,7 +25,12 @@ from dodal.devices.i24.pmac import PMAC, EncReset, LaserSettings
 from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_Mapping_py3v1 as mapping
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_StartUp_py3v1 as startup
-from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, Fiducials, MappingType
+from mx_bluesky.I24.serial.fixed_target.ft_utils import (
+    ChipType,
+    Fiducials,
+    MappingType,
+    get_chip_format,
+)
 from mx_bluesky.I24.serial.parameters.constants import (
     CS_FILES_PATH,
     FULLMAP_PATH,
@@ -113,6 +118,9 @@ def write_parameter_file(
 
     filename = caget(pv.me14e_chip_name)
     det_type = yield from get_detector_type(detector_stage)
+    chip_type = int(caget(pv.me14e_gp1))
+    chip_defaults = get_chip_format(ChipType(chip_type))
+    chip_params = {"chip_type": chip_type, **chip_defaults}
     map_type = caget(pv.me14e_gp2)
 
     # If file name ends in a digit this causes processing/pilatus pain.
@@ -136,7 +144,7 @@ def write_parameter_file(
         "detector_distance_mm": caget(pv.me14e_dcdetdist),
         "detector_name": str(det_type),
         "num_exposures": caget(pv.me14e_gp3),
-        "chip_type": caget(pv.me14e_gp1),
+        "chip": chip_params,
         "map_type": map_type,
         "pump_repeat": caget(pv.me14e_gp4),
         "checker_pattern": bool(caget(pv.me14e_gp111)),

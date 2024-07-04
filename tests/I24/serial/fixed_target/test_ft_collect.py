@@ -6,7 +6,7 @@ from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
 from ophyd_async.core import get_mock_put
 
-from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, MappingType
+from mx_bluesky.I24.serial.fixed_target.ft_utils import MappingType
 from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1 import (
     datasetsizei24,
     get_chip_prog_values,
@@ -22,24 +22,22 @@ chipmap_str = """01status    P3011       1
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caput")
-def test_datasetsizei24_for_one_block_and_two_exposures(fake_caput):
+def test_datasetsizei24_for_one_block_and_two_exposures(
+    fake_caput, dummy_params_without_pp
+):
     with patch(
         "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.open",
         mock_open(read_data=chipmap_str),
     ):
-        tot_num_imgs = datasetsizei24(2, ChipType.Oxford, MappingType.Lite)
+        tot_num_imgs = datasetsizei24(2, dummy_params_without_pp.chip, MappingType.Lite)
     assert tot_num_imgs == 800
     fake_caput.assert_called_once_with("ME14E-MO-IOC-01:GP10", 800)
 
 
-def test_get_chip_prog_values():
+def test_get_chip_prog_values(dummy_params_without_pp):
+    dummy_params_without_pp.num_exposures = 2
     chip_dict = get_chip_prog_values(
-        0,
-        0,
-        0,
-        0,
-        0,
-        n_exposures=2,
+        dummy_params_without_pp,
     )
     assert isinstance(chip_dict, dict)
     assert chip_dict["X_NUM_STEPS"][1] == 20 and chip_dict["X_NUM_BLOCKS"][1] == 8
