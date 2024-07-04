@@ -486,7 +486,7 @@ def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
     map_dict["half1"] = half1
     map_dict["half2"] = half2
 
-    logger.info("Clearing GP 10-74")
+    logger.info("Clearing GP 10-74")  # Actually 11-44
     for i in range(1, 65):
         pvar = "ME14E-MO-IOC-01:GP" + str(i + 10)
         caput(pvar, 0)

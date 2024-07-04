@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, validator
+from pydantic import BaseModel, validator
 
 from mx_bluesky.I24.serial.fixed_target.ft_utils import (
     ChipType,
@@ -20,6 +20,10 @@ class SerialExperiment(BaseModel):
     exposure_time_s: float
     detector_distance_mm: float
     detector_name: Literal["eiger", "pilatus"]
+
+    @property
+    def collection_directory(self) -> Path:
+        return Path(self.visit) / self.directory
 
 
 class LaserExperiment(BaseModel):
@@ -46,7 +50,11 @@ class ExtruderParameters(SerialExperiment, LaserExperiment):
 class FixedTargetParameters(SerialExperiment, LaserExperiment):
     """Fixed target parameter model."""
 
-    model_config = ConfigDict(use_enum_values=True)
+    class Config:
+        arbitrary_types_allowed = True
+        use_enum_values = True
+
+    # model_config = ConfigDict(use_enum_values=True)
 
     num_exposures: int
     chip_type: ChipType

@@ -209,7 +209,7 @@ def run_extruder_plan(
     caput(pv.ioc12_gp8, 0)
 
     # For pixel detector
-    filepath = parameters.visit + parameters.directory
+    filepath = parameters.collection_directory.as_posix()
     logger.debug(f"Filepath {filepath}")
     logger.debug(f"Filename {parameters.filename}")
 

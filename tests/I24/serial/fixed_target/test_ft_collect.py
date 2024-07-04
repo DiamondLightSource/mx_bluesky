@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, call, mock_open, patch
+from unittest.mock import call, mock_open, patch
 
 import pytest
 from dodal.devices.hutch_shutter import HutchShutter
@@ -86,9 +86,7 @@ def test_get_prog_number(chip_type, map_type, pump_repeat, expected_prog):
         ),  # Map irrelevant, pp to Medium1, checker disabled
     ],
 )
-@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caget")
 def test_load_motion_program_data(
-    fake_caget: MagicMock,
     map_type: int,
     pump_repeat: int,
     checker: bool,
@@ -97,8 +95,7 @@ def test_load_motion_program_data(
     RE,
 ):
     test_dict = {"N_EXPOSURES": [0, 1]}
-    fake_caget.return_value = checker
-    RE(load_motion_program_data(pmac, test_dict, map_type, pump_repeat))
+    RE(load_motion_program_data(pmac, test_dict, map_type, pump_repeat, checker))
     call_list = []
     for i in expected_calls:
         call_list.append(call(i, wait=True, timeout=10.0))

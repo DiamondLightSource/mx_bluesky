@@ -186,7 +186,11 @@ def get_chip_prog_values(
 
 @log.log_on_entry
 def load_motion_program_data(
-    pmac: PMAC, motion_program_dict: Dict[str, List], map_type: int, pump_repeat: int
+    pmac: PMAC,
+    motion_program_dict: Dict[str, List],
+    map_type: int,
+    pump_repeat: int,
+    checker_pattern: bool,
 ):
     logger.info("Loading motion program data for chip.")
     logger.info(f"Pump_repeat is {PumpProbeSetting(pump_repeat)}")
@@ -206,7 +210,7 @@ def load_motion_program_data(
         prefix = 14
         logger.info(f"Setting program prefix to {prefix}")
         yield from bps.abs_set(pmac.pmac_string, "P1439=0", wait=True)
-        if bool(caget(pv.me14e_gp111)) is True:
+        if checker_pattern:
             logger.info("Checker pattern setting enabled.")
             yield from bps.abs_set(pmac.pmac_string, "P1439=1", wait=True)
         if pump_repeat == PumpProbeSetting.Medium1:
@@ -366,7 +370,7 @@ def start_i24(
         parameters.num_exposures, parameters.chip_type, parameters.map_type
     )
 
-    filepath = parameters.visit + parameters.directory
+    filepath = parameters.collection_directory.as_posix()
     filename = parameters.filename
 
     logger.debug("Acquire Region")
@@ -517,7 +521,7 @@ def finish_i24(
     total_numb_imgs = datasetsizei24(
         parameters.num_exposures, parameters.chip_type, parameters.map_type
     )
-    filepath = parameters.visit + parameters.directory
+    filepath = parameters.collection_directory
     filename = parameters.filename
     transmission = (float(caget(pv.pilat_filtertrasm)),)
     wavelength = float(caget(pv.dcm_lambda))
@@ -544,18 +548,18 @@ def finish_i24(
     logger.debug("Collection end time %s" % end_time)
 
     # Copy parameter file and eventual chip map to collection directory
-    copy_files_to_data_location(Path(filepath), map_type=parameters.map_type)
+    copy_files_to_data_location(filepath, map_type=parameters.map_type)
 
     # Write a record of what was collected to the processing directory
-    userlog_path = parameters.visit + "processing/" + parameters.directory + "/"
+    userlog_path = Path(parameters.visit) / f"processing/{parameters.directory}"
     userlog_fid = f"{filename}_parameters.txt"
     logger.debug("Write a user log in %s" % userlog_path)
 
     os.makedirs(userlog_path, exist_ok=True)
 
-    with open(userlog_path + userlog_fid, "w") as f:
+    with open(userlog_path / userlog_fid, "w") as f:
         f.write("Fixed Target Data Collection Parameters\n")
-        f.write(f"Data directory \t{filepath}\n")
+        f.write(f"Data directory \t{filepath.as_posix()}\n")
         f.write(f"Filename \t{filename}\n")
         f.write(f"Shots per pos \t{parameters.num_exposures}\n")
         f.write(f"Total N images \t{total_numb_imgs}\n")
@@ -635,7 +639,11 @@ def run_fixed_target_plan(
     )
     logger.info("Loading Motion Program Data")
     yield from load_motion_program_data(
-        pmac, chip_prog_dict, parameters.map_type, parameters.pump_repeat
+        pmac,
+        chip_prog_dict,
+        parameters.map_type,
+        parameters.pump_repeat,
+        parameters.checker_pattern,
     )
 
     start_time, dcid = yield from start_i24(
