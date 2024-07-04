@@ -128,14 +128,8 @@ def write_parameter_file(
                 "Requested filename ends in a number. Appended dash: %s" % filename
             )
 
-    # TODO fix this. Added because pilatus collection wasn't getting the correct ramdisk
-    # path
-    visit_str = caget(pv.me14e_gp100)
-    if not visit_str.endswith("/"):
-        visit_str = visit_str + "/"
-
     params_dict = {
-        "visit": visit_str,
+        "visit": caget(pv.me14e_gp100),
         "directory": caget(pv.me14e_filepath),
         "filename": filename,
         "exposure_time_s": caget(pv.me14e_exptime),

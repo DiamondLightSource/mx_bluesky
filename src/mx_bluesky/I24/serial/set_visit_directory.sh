@@ -30,6 +30,11 @@ echo "Reading visit from file: $filename"
 visit=$(sed -n '1p' $filename)
 expt_type=${1:-FT}
 
+# Append a / to the visit if missing to avoid filepaths issues later on
+if [[ "${visit: -1}" != "/" ]]; then
+    visit="${visit}/"
+fi
+
 ex_pv=BL24I-EA-IOC-12:GP1
 ft_pv=ME14E-MO-IOC-01:GP100
 
