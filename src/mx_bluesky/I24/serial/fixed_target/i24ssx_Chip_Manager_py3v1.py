@@ -315,6 +315,7 @@ def upload_full(pmac: PMAC = None) -> MsgGenerator:
 
 @log.log_on_entry
 def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
+    # TODO See https://github.com/DiamondLightSource/mx_bluesky/issues/122
     setup_logging()
     logger.info("Adjusting Lite Map EDM Screen")
     logger.debug("Please wait, adjusting lite map")
@@ -946,6 +947,7 @@ def set_pmac_strings_for_cs(pmac: PMAC, cs_str: dict):
 
 @log.log_on_entry
 def pumpprobe_calc() -> MsgGenerator:
+    # TODO See https://github.com/DiamondLightSource/mx_bluesky/issues/122
     setup_logging()
     logger.info("Calculate and show exposure and dwell time for each option.")
     exptime = float(caget(pv.me14e_exptime))
