@@ -290,7 +290,7 @@ def write_headers(
                 g.write(f"#&i24\tvisit        = {params.visit}\n")
                 g.write(f"#&i24\tsub_dir      = {params.directory}\n")
                 g.write(f"#&i24\tn_exposures  = {params.num_exposures}\n")
-                g.write(f"#&i24\tchip_type    = {params.chip_type.value}\n")
+                g.write(f"#&i24\tchip_type    = {params.chip.chip_type.value}\n")
                 g.write(f"#&i24\tmap_type     = {params.map_type.value}\n")
                 g.write(f"#&i24\tpump_repeat  = {params.pump_repeat.value}\n")
                 g.write(f"#&i24\tpumpexptime  = {params.laser_dwell_s}\n")

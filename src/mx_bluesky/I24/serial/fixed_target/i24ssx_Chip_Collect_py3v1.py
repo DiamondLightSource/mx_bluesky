@@ -277,7 +277,7 @@ def datasetsizei24(
             )
         else:
             chip_format = chip_params.chip_format[:4]
-            total_numb_imgs = np.prod(chip_format)
+            total_numb_imgs = int(np.prod(chip_format))
             logger.info(
                 f"""Map type: None \tOxford chip {chip_params.chip_type} \t \
                     Number of images {total_numb_imgs}"""
@@ -298,7 +298,7 @@ def datasetsizei24(
 
         logger.info(f"Number of exposures={n_exposures}")
 
-        total_numb_imgs = np.prod(chip_format) * block_count * n_exposures
+        total_numb_imgs = int(np.prod(chip_format) * block_count * n_exposures)
         logger.info(f"Calculated number of images: {total_numb_imgs}")
 
     elif map_type == MappingType.Full:
