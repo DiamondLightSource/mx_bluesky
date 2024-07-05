@@ -87,16 +87,6 @@ class ChipDescription(BaseModel):
         else:
             return ((self.y_num_steps - 1) * self.y_step_size) + self.b2b_vert
 
-    @property
-    def approx_chip_size(self) -> float:
-        """Returns an approximation of the chip size for the move during alignment \
-            of the fiducials
-        """
-        if self.chip_type.name == "OxfordInner":
-            return 24.60
-        else:
-            return 25.40
-
 
 class FixedTargetParameters(SerialExperiment, LaserExperiment):
     """Fixed target parameter model."""
@@ -108,6 +98,7 @@ class FixedTargetParameters(SerialExperiment, LaserExperiment):
     map_type: MappingType
     pump_repeat: PumpProbeSetting
     checker_pattern: bool = False
+    total_num_images: int = 0  # Calculated in the code for now
 
     @validator("map_type", pre=True)
     def _parse_map(cls, map_type: str | int):
@@ -125,8 +116,3 @@ class FixedTargetParameters(SerialExperiment, LaserExperiment):
         with open(filename, "r") as fh:
             raw_params = json.load(fh)
         return cls(**raw_params)
-
-    @property
-    def total_num_images(self) -> int:
-        # TODO complete
-        return 0

@@ -4,7 +4,7 @@ import pathlib
 import pprint
 import time
 from datetime import datetime
-from typing import Dict, Literal, Optional
+from typing import Dict, Literal
 
 import requests
 
@@ -20,7 +20,6 @@ def call_nexgen(
     start_time: datetime,
     parameters: ExtruderParameters | FixedTargetParameters,
     expt_type: Literal["fixed-target", "extruder"] = "fixed-target",
-    total_numb_imgs: Optional[int] = None,
 ):
     det_type = parameters.detector_name
     print(f"det_type: {det_type}")
@@ -28,7 +27,7 @@ def call_nexgen(
     if expt_type == "fixed-target" and isinstance(parameters, FixedTargetParameters):
         if (
             parameters.map_type == MappingType.NoMap
-            or parameters.chip_type == ChipType.Custom
+            or parameters.chip.chip_type == ChipType.Custom
         ):
             # NOTE Nexgen server is still on nexgen v0.7.2 (fully working for ssx)
             # Will need to be updated, for correctness sake map needs to be None.
@@ -36,6 +35,7 @@ def call_nexgen(
         else:
             currentchipmap = "/dls_sw/i24/scripts/fastchips/litemaps/currentchip.map"
         pump_status = bool(parameters.pump_repeat)
+        total_numb_imgs = parameters.total_num_images
     elif expt_type == "extruder" and isinstance(parameters, ExtruderParameters):
         # chip_prog_dict should be None for extruder (passed as input for now)
         total_numb_imgs = parameters.num_images
@@ -83,7 +83,7 @@ def call_nexgen(
             "exp_time": parameters.exposure_time_s,
             "expt_type": expt_type,
             "filename": filename_prefix,
-            "num_imgs": int(total_numb_imgs),
+            "num_imgs": total_numb_imgs,
             "pump_status": pump_status,
             "pump_exp": parameters.laser_dwell_s,
             "pump_delay": parameters.laser_delay_s,

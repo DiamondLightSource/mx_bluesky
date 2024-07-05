@@ -109,7 +109,7 @@ def get_chip_prog_values(
         logger.warning(f"Unknown pump_repeat, pump_repeat = {parameters.pump_repeat}")
 
     logger.info(
-        f"Pump repeat is {parameters.pump_repeat}, PVAR set to {pump_repeat_pvar}"
+        f"Pump repeat is {str(parameters.pump_repeat)}, PVAR set to {pump_repeat_pvar}"
     )
 
     if parameters.pump_repeat == PumpProbeSetting.Short2:
@@ -266,7 +266,6 @@ def datasetsizei24(
     chip_params: ChipDescription,
     map_type: MappingType,
 ) -> int:
-    # TODO this should go in some param and not be called 3 times!
     # Calculates how many images will be collected based on map type and N repeats
     logger.info("Calculate total number of images expected in data collection.")
 
@@ -343,18 +342,14 @@ def start_i24(
 
     logger.debug("Set up beamline DONE")
 
-    total_numb_imgs = datasetsizei24(
-        parameters.num_exposures, parameters.chip, parameters.map_type
-    )
-
     filepath = parameters.collection_directory.as_posix()
     filename = parameters.filename
 
     logger.debug("Acquire Region")
 
-    num_gates = total_numb_imgs // parameters.num_exposures
+    num_gates = parameters.total_num_images // parameters.num_exposures
 
-    logger.info(f"Total number of images: {total_numb_imgs}")
+    logger.info(f"Total number of images: {parameters.total_num_images}")
     logger.info(f"Number of exposures: {parameters.num_exposures}")
     logger.info(f"Number of gates (=Total images/N exposures): {num_gates:.4f}")
 
@@ -362,14 +357,21 @@ def start_i24(
         logger.info("Using Pilatus detector")
         logger.info(f"Fastchip Pilatus setup: filepath {filepath}")
         logger.info(f"Fastchip Pilatus setup: filename {filename}")
-        logger.info(f"Fastchip Pilatus setup: number of images {total_numb_imgs}")
+        logger.info(
+            f"Fastchip Pilatus setup: number of images {parameters.total_num_images}"
+        )
         logger.info(
             f"Fastchip Pilatus setup: exposure time {parameters.exposure_time_s}"
         )
 
         sup.pilatus(
             "fastchip",
-            [filepath, filename, total_numb_imgs, parameters.exposure_time_s],
+            [
+                filepath,
+                filename,
+                parameters.total_num_images,
+                parameters.exposure_time_s,
+            ],
         )
 
         # DCID process depends on detector PVs being set up already
@@ -380,7 +382,7 @@ def start_i24(
             visit=Path(parameters.visit).name,
             image_dir=filepath,
             start_time=start_time,
-            num_images=total_numb_imgs,
+            num_images=parameters.total_num_images,
             exposure_time=parameters.exposure_time_s,
             detector=parameters.detector_name,
             shots_per_position=parameters.num_exposures,
@@ -433,14 +435,21 @@ def start_i24(
 
         logger.info(f"Triggered Eiger setup: filepath {filepath}")
         logger.info(f"Triggered Eiger setup: filename {filename}")
-        logger.info(f"Triggered Eiger setup: number of images {total_numb_imgs}")
+        logger.info(
+            f"Triggered Eiger setup: number of images {parameters.total_num_images}"
+        )
         logger.info(
             f"Triggered Eiger setup: exposure time {parameters.exposure_time_s}"
         )
 
         sup.eiger(
             "triggered",
-            [filepath, filename, total_numb_imgs, parameters.exposure_time_s],
+            [
+                filepath,
+                filename,
+                parameters.total_num_images,
+                parameters.exposure_time_s,
+            ],
         )
 
         # DCID process depends on detector PVs being set up already
@@ -451,7 +460,7 @@ def start_i24(
             visit=Path(parameters.visit).name,
             image_dir=filepath,
             start_time=start_time,
-            num_images=total_numb_imgs,
+            num_images=parameters.total_num_images,
             exposure_time=parameters.exposure_time_s,
             detector=parameters.detector_name,
         )
@@ -495,9 +504,6 @@ def finish_i24(
 ):
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
 
-    total_numb_imgs = datasetsizei24(
-        parameters.num_exposures, parameters.chip, parameters.map_type
-    )
     filepath = parameters.collection_directory
     filename = parameters.filename
     transmission = (float(caget(pv.pilat_filtertrasm)),)
@@ -539,7 +545,7 @@ def finish_i24(
         f.write(f"Data directory \t{filepath.as_posix()}\n")
         f.write(f"Filename \t{filename}\n")
         f.write(f"Shots per pos \t{parameters.num_exposures}\n")
-        f.write(f"Total N images \t{total_numb_imgs}\n")
+        f.write(f"Total N images \t{parameters.total_num_images}\n")
         f.write(f"Exposure time \t{parameters.exposure_time_s}\n")
         f.write(f"Det distance \t{parameters.detector_distance_mm}\n")
         f.write(f"Transmission \t{transmission}\n")
@@ -615,6 +621,10 @@ def run_fixed_target_plan(
         parameters.checker_pattern,
     )
 
+    parameters.total_num_images = datasetsizei24(
+        parameters.num_exposures, parameters.chip, parameters.map_type
+    )
+
     start_time, dcid = yield from start_i24(
         zebra, aperture, backlight, beamstop, detector_stage, shutter, parameters
     )
@@ -639,22 +649,20 @@ def run_fixed_target_plan(
     logger.debug("Notify DCID of the start of the collection.")
     dcid.notify_start()
 
-    tot_num_imgs = datasetsizei24(
-        parameters.num_exposures, parameters.chip, parameters.map_type
-    )
     if parameters.detector_name == "eiger":
         logger.debug("Start nexus writing service.")
         call_nexgen(
             chip_prog_dict,
             start_time,
             parameters,
-            total_numb_imgs=tot_num_imgs,
         )
 
     logger.info("Data Collection running")
 
     aborted = False
-    timeout_time = time.time() + tot_num_imgs * parameters.exposure_time_s + 60
+    timeout_time = (
+        time.time() + parameters.total_num_images * parameters.exposure_time_s + 60
+    )
 
     # me14e_gp9 is the ABORT button
     if int(caget(pv.me14e_gp9)) == 0:

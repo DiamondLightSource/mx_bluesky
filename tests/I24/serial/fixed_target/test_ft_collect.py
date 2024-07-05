@@ -101,7 +101,6 @@ def test_load_motion_program_data(
     mock_pmac_str.assert_has_calls(call_list)
 
 
-@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.datasetsizei24")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.DCID")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caput")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caget")
@@ -113,7 +112,6 @@ def test_start_i24_with_eiger(
     fake_caget,
     fake_caput,
     fake_dcid,
-    fake_size,
     zebra: Zebra,
     shutter: HutchShutter,
     RE,
@@ -123,7 +121,7 @@ def test_start_i24_with_eiger(
     detector_stage,
     dummy_params_without_pp,
 ):
-    fake_size.return_value = 800
+    dummy_params_without_pp.total_num_images = 800
     RE(
         start_i24(
             zebra,

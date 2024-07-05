@@ -44,6 +44,14 @@ from mx_bluesky.I24.serial.setup_beamline.setup_detector import get_detector_typ
 
 logger = logging.getLogger("I24ssx.chip_manager")
 
+# An approximation of the chip size for the move during fiducials alignment.
+CHIP_MOVES = {
+    ChipType.Oxford: 25.40,
+    ChipType.OxfordInner: 24.60,
+    ChipType.Custom: 25.40,
+    ChipType.Minichip: 25.40,
+}
+
 
 def setup_logging():
     # Log should now change name daily.
@@ -600,14 +608,14 @@ def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
         yield from bps.trigger(pmac.to_xyz_zero)
         return
 
-    chip_type = int(caget(pv.me14e_gp1))
-    logger.info(f"Chip type is {ChipType(chip_type)}")
+    chip_type = ChipType(int(caget(pv.me14e_gp1)))
+    logger.info(f"Chip type is {chip_type}")
     if chip_type not in list(ChipType):
         logger.warning("Unknown chip_type move")
         return
 
-    logger.info(f"{str(ChipType(chip_type))} Move")
-    chip_move = ChipType(chip_type).get_approx_chip_size()
+    logger.info(f"{str(chip_type)} Move")
+    chip_move = CHIP_MOVES[chip_type]
 
     if place == Fiducials.origin:
         yield from bps.mv(pmac.x, 0.0, pmac.y, 0.0)
