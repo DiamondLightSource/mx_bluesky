@@ -664,7 +664,8 @@ def run_fixed_target_plan(
         time.time() + parameters.total_num_images * parameters.exposure_time_s + 60
     )
 
-    # me14e_gp9 is the ABORT button
+    # TODO me14e_gp9 is the ABORT button
+    # See https://github.com/DiamondLightSource/mx_bluesky/issues/117
     if int(caget(pv.me14e_gp9)) == 0:
         i = 0
         text_list = ["|", "/", "-", "\\"]

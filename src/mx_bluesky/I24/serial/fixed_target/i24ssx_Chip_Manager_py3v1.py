@@ -51,6 +51,8 @@ CHIP_MOVES = {
     ChipType.Custom: 25.40,
     ChipType.Minichip: 25.40,
 }
+CHIPTYPE_PV = pv.me14e_gp1
+MAP_FILEPATH_PV = pv.me14e_gp5
 
 
 def setup_logging():
@@ -82,10 +84,10 @@ def initialise_stages(
     yield from bps.abs_set(pmac.y.low_limit_travel, -30, group=group)
     yield from bps.abs_set(pmac.z.high_limit_travel, 5.1, group=group)
     yield from bps.abs_set(pmac.z.low_limit_travel, -4.1, group=group)
-    caput(pv.me14e_gp1, 1)
-    caput(pv.me14e_gp2, 0)
-    caput(pv.me14e_gp3, 1)
-    caput(pv.me14e_gp4, 0)
+    caput(pv.me14e_gp1, 1)  # chip type
+    caput(pv.me14e_gp2, 0)  # map type
+    caput(pv.me14e_gp3, 1)  # num exposures
+    caput(pv.me14e_gp4, 0)  # pump repeat
     caput(pv.me14e_filepath, "test")
     caput(pv.me14e_chip_name, "albion")
     caput(pv.me14e_dcdetdist, 1480)
@@ -104,8 +106,6 @@ def initialise_stages(
         caput(pvar, 0)
         sys.stdout.write(".")
         sys.stdout.flush()
-
-    caput(pv.me14e_gp100, "press set params to read visit")
 
     logger.info("Initialisation of the stages complete")
     yield from bps.wait(group=group)
@@ -212,12 +212,10 @@ def define_current_chip(
     print 'Setting Mapping Type to Lite'
     caput(pv.me14e_gp2, 1)
     """
-    if not pmac:
-        pmac = i24.pmac()
-    chip_type = int(caget(pv.me14e_gp1))
+    chip_type = int(caget(CHIPTYPE_PV))
     logger.info("Chip type:%s Chipid:%s" % (chip_type, chipid))
     if chipid == "oxford":
-        caput(pv.me14e_gp1, 1)
+        caput(CHIPTYPE_PV, 0)
 
     with open(PVAR_FILE_PATH / f"{chipid}.pvar", "r") as f:
         logger.info("Opening %s.pvar" % chipid)
@@ -256,7 +254,7 @@ def upload_parameters(
     setup_logging()
     logger.info("Uploading Parameters to the GeoBrick")
     if chipid == "oxford":
-        caput(pv.me14e_gp1, 0)
+        caput(CHIPTYPE_PV, 0)
         width = 8
 
     map_file: Path = LITEMAP_PATH / "currentchip.map"
@@ -535,7 +533,7 @@ def load_lite_map() -> MsgGenerator:
         'H1': '64', 'H2': '63', 'H3': '62', 'H4': '61', 'H5': '60', 'H6': '59', 'H7': '58', 'H8': '57',
     }
     # fmt: on
-    chip_type = int(caget(pv.me14e_gp1))
+    chip_type = int(caget(CHIPTYPE_PV))
     if chip_type in [ChipType.Oxford, ChipType.OxfordInner]:
         logger.info("Oxford Block Order")
         rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
@@ -564,7 +562,7 @@ def load_lite_map() -> MsgGenerator:
                 btn_names[button_name] = label
         block_dict = btn_names
 
-    litemap_fid = str(caget(pv.me14e_gp5)) + ".lite"
+    litemap_fid = f"{caget(MAP_FILEPATH_PV)}.lite"
     logger.info("Please wait, loading LITE map")
     logger.debug("Loading Lite Map")
     logger.info("Opening %s" % (LITEMAP_PATH / litemap_fid))
@@ -586,10 +584,10 @@ def load_full_map() -> MsgGenerator:
     setup_logging()
     params = startup.read_parameter_file()
 
-    fullmap_fid = FULLMAP_PATH / f"{str(caget(pv.me14e_gp5))}.spec"
+    fullmap_fid = FULLMAP_PATH / f"{caget(MAP_FILEPATH_PV)}.spec"
     logger.info("Opening %s" % fullmap_fid)
-    mapping.plot_file(fullmap_fid, params.chip_type.value)
-    mapping.convert_chip_to_hex(fullmap_fid, params.chip_type.value)
+    mapping.plot_file(fullmap_fid, params.chip.chip_type.value)
+    mapping.convert_chip_to_hex(fullmap_fid, params.chip.chip_type.value)
     shutil.copy2(fullmap_fid.with_suffix(".full"), FULLMAP_PATH / "currentchip.full")
     logger.info(
         "Copying %s to %s"
@@ -608,7 +606,7 @@ def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
         yield from bps.trigger(pmac.to_xyz_zero)
         return
 
-    chip_type = ChipType(int(caget(pv.me14e_gp1)))
+    chip_type = ChipType(int(caget(CHIPTYPE_PV)))
     logger.info(f"Chip type is {chip_type}")
     if chip_type not in list(ChipType):
         logger.warning("Unknown chip_type move")
@@ -783,7 +781,7 @@ def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     opposite and adjacent RBV after calibration of scale factors.
     """
     setup_logging()
-    chip_type = int(caget(pv.me14e_gp1))
+    chip_type = int(caget(CHIPTYPE_PV))
     fiducial_dict = {}
     fiducial_dict[0] = [25.400, 25.400]
     fiducial_dict[1] = [24.600, 24.600]
@@ -970,7 +968,6 @@ def pumpprobe_calc() -> MsgGenerator:
         rounded = round(repeat, 4)
         caput(pv_name, rounded)
         logger.info("Repeat (%s): %s s" % (pv_name, rounded))
-    # logger.info("repeat10 (%s): %s s" % (pv.me14e_gp108, round(repeat10, 4)))
     logger.debug("PP calculations done")
     yield from bps.null()
 
@@ -978,10 +975,11 @@ def pumpprobe_calc() -> MsgGenerator:
 @log.log_on_entry
 def block_check(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     setup_logging()
+    # TODO See https://github.com/DiamondLightSource/mx_bluesky/issues/117
     caput(pv.me14e_gp9, 0)
     while True:
         if int(caget(pv.me14e_gp9)) == 0:
-            chip_type = int(caget(pv.me14e_gp1))
+            chip_type = int(caget(CHIPTYPE_PV))
             if chip_type == ChipType.Minichip:
                 logger.info("Oxford mini chip in use.")
                 block_start_list = scrape_pvar_file("minichip_oxford.pvar")
