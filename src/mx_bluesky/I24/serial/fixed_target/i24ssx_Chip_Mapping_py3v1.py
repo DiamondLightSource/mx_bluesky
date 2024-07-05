@@ -14,7 +14,7 @@ from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType
 from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1 import (
     check_files,
-    get_format,
+    get_chip_parameters,
     get_shot_order,
     get_xy,
     read_parameter_file,
@@ -87,7 +87,7 @@ def plot_file(fid, chip_type):
 @log.log_on_entry
 def convert_chip_to_hex(fid, chip_type):
     chip_dict = read_file_make_dict(fid, chip_type, True)
-    chip_format = get_format(chip_type)
+    chip_format = get_chip_parameters(ChipType(chip_type))
     check_files(["%s.full" % chip_type])
     with open("%s.full" % fid[:-5], "w") as g:
         # Normal
@@ -105,7 +105,7 @@ def convert_chip_to_hex(fid, chip_type):
             for addr in shot_order_list:
                 sorted_pres_list.append(chip_dict[addr])
 
-            windows_per_block = chip_format[2]
+            windows_per_block = chip_format.x_num_steps
             number_of_lines = len(sorted_pres_list) / windows_per_block
             hex_length = windows_per_block / 4
             pad = 7 - hex_length
@@ -151,8 +151,8 @@ def main():
     fid = PARAM_FILE_PATH_FT / f"{params.filename}.spec"
     logger.info("FID = %s" % fid)
 
-    plot_file(fid, params.chip_type.value)
-    convert_chip_to_hex(fid, params.chip_type.value)
+    plot_file(fid, params.chip.chip_type.value)
+    convert_chip_to_hex(fid, params.chip.chip_type.value)
 
 
 if __name__ == "__main__":

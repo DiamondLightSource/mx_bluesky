@@ -12,8 +12,8 @@ from typing import List
 import numpy as np
 
 from mx_bluesky.I24.serial import log
-from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType
-from mx_bluesky.I24.serial.parameters import FixedTargetParameters
+from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, get_chip_format
+from mx_bluesky.I24.serial.parameters import ChipDescription, FixedTargetParameters
 from mx_bluesky.I24.serial.parameters.constants import (
     HEADER_FILES_PATH,
     PARAM_FILE_NAME,
@@ -29,12 +29,20 @@ def setup_logging():
     log.config(logfile)
 
 
-def read_parameter_file(param_path: Path | str = PARAM_FILE_PATH_FT):
+def read_parameter_file(
+    param_path: Path | str = PARAM_FILE_PATH_FT,
+) -> FixedTargetParameters:
     if not isinstance(param_path, Path):
         param_path = Path(param_path)
     params_file = param_path / PARAM_FILE_NAME
     params = FixedTargetParameters.from_file(params_file)
     return params
+
+
+def get_chip_parameters(chip_type: ChipType) -> ChipDescription:
+    chip_defaults = get_chip_format(ChipType(chip_type))
+    chip_params = {"chip_type": chip_type.value, **chip_defaults}
+    return ChipDescription(**chip_params)
 
 
 @log.log_on_entry
@@ -49,32 +57,6 @@ def fiducials(chip_type: int):
     return fiducial_list
 
 
-@log.log_on_entry
-def get_format(chip_type: ChipType):
-    if chip_type == ChipType.Oxford:
-        w2w = 0.125
-        b2b_horz = 0.800
-        b2b_vert = 0.800
-        chip_format = [8, 8, 20, 20]
-    elif chip_type == ChipType.OxfordInner:
-        w2w = 0.600
-        b2b_horz = 0.0
-        b2b_vert = 0.0
-        chip_format = [1, 1, 25, 25]
-    elif chip_type == ChipType.Minichip:
-        w2w = 0.125
-        b2b_horz = 0
-        b2b_vert = 0
-        chip_format = [1, 1, 20, 20]
-    else:
-        msg = f"Unknown chip_type, {chip_type}"
-        logger.error(msg)
-        raise ValueError(msg)
-    cell_format = chip_format + [w2w, b2b_horz, b2b_vert]
-    logger.info(f"Cell format for chip type {str(chip_type)}: {cell_format}")
-    return cell_format
-
-
 def get_xy(addr: str, chip_type: ChipType):
     entry = addr.split("_")[-2:]
     R, C = entry[0][0], entry[0][1]
@@ -85,18 +67,18 @@ def get_xy(addr: str, chip_type: ChipType):
     windowR = lowercase_list.index(r2)
     windowC = lowercase_list.index(c2)
 
-    (
-        x_block_num,
-        y_block_num,
-        x_window_num,
-        y_window_num,
-        w2w,
-        b2b_horz,
-        b2b_vert,
-    ) = get_format(chip_type)
+    chip_params = get_chip_parameters(chip_type)
 
-    x = (blockC * b2b_horz) + (blockC * (x_window_num - 1) * w2w) + (windowC * w2w)
-    y = (blockR * b2b_vert) + (blockR * (y_window_num - 1) * w2w) + (windowR * w2w)
+    x = (
+        (blockC * chip_params.b2b_horz)
+        + (blockC * (chip_params.x_num_steps - 1) * chip_params.x_step_size)
+        + (windowC * chip_params.x_step_size)
+    )
+    y = (
+        (blockR * chip_params.b2b_vert)
+        + (blockR * (chip_params.y_num_steps - 1) * chip_params.y_step_size)
+        + (windowR * chip_params.y_step_size)
+    )
     return x, y
 
 
@@ -155,9 +137,9 @@ def zippum(list_1_args, list_2_args):
 
 
 def get_alphanumeric(chip_type: ChipType):
-    cell_format = get_format(chip_type)
-    blk_num = cell_format[0]
-    wnd_num = cell_format[2]
+    cell_format = get_chip_parameters(chip_type)
+    blk_num = cell_format.x_blocks
+    wnd_num = cell_format.x_num_steps
     uppercase_list = list(string.ascii_uppercase)[:blk_num]
     lowercase_list = list(string.ascii_lowercase + string.ascii_uppercase + "0")[
         :wnd_num
@@ -179,9 +161,9 @@ def get_alphanumeric(chip_type: ChipType):
 
 @log.log_on_entry
 def get_shot_order(chip_type: ChipType):
-    cell_format = get_format(chip_type)
-    blk_num = cell_format[0]
-    wnd_num = cell_format[2]
+    cell_format = get_chip_parameters(chip_type)
+    blk_num = cell_format.x_blocks
+    wnd_num = cell_format.x_num_steps
     uppercase_list = list(string.ascii_uppercase)[:blk_num]
     number_list = [str(x) for x in range(1, blk_num + 1)]
     lowercase_list = list(string.ascii_lowercase + string.ascii_uppercase + "0")[
@@ -231,17 +213,17 @@ def write_file(
         raise ValueError(msg)
     chip_file_path = save_path / f"chips/{params.directory}/{params.filename}{suffix}"
 
-    fiducial_list = fiducials(params.chip_type.value)
+    fiducial_list = fiducials(params.chip.chip_type.value)
     if order == "alphanumeric":
-        addr_list = get_alphanumeric(params.chip_type)
+        addr_list = get_alphanumeric(params.chip.chip_type)
 
     elif order == "shot":
-        addr_list = get_shot_order(params.chip_type)
+        addr_list = get_shot_order(params.chip.chip_type)
 
     with open(chip_file_path, "a") as g:
         for addr in addr_list:
             xtal_name = "_".join([params.filename, addr])
-            (x, y) = get_xy(xtal_name, params.chip_type)
+            (x, y) = get_xy(xtal_name, params.chip.chip_type)
             if addr in fiducial_list:
                 pres = "0"
             else:
