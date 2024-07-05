@@ -16,6 +16,7 @@ from pprint import pformat
 from time import sleep
 
 import bluesky.plan_stubs as bps
+import bluesky.preprocessors as bpp
 from blueapi.core import MsgGenerator
 from dodal.common import inject
 from dodal.devices.hutch_shutter import HutchShutter, ShutterDemand
@@ -182,21 +183,16 @@ def write_parameter_file(detector_stage: DetectorMotion):
 
 
 @log.log_on_entry
-def run_extruder_plan(
-    zebra: Zebra = inject("zebra"),
-    aperture: Aperture = inject("aperture"),
-    backlight: DualBacklight = inject("backlight"),
-    beamstop: Beamstop = inject("beamstop"),
-    detector_stage: DetectorMotion = inject("detector_motion"),
-    shutter: HutchShutter = inject("shutter"),
+def _run_extruder_plan(
+    zebra: Zebra,
+    aperture: Aperture,
+    backlight: DualBacklight,
+    beamstop: Beamstop,
+    detector_stage: DetectorMotion,
+    shutter: HutchShutter,
+    parameters: ExtruderParameters,
+    start_time: datetime,
 ) -> MsgGenerator:
-    setup_logging()
-    start_time = datetime.now()
-    logger.info("Collection start time: %s" % start_time.ctime())
-
-    yield from write_parameter_file(detector_stage)
-    parameters = ExtruderParameters.from_file(PARAM_FILE_PATH / PARAM_FILE_NAME)
-
     # Setting up the beamline
     logger.debug("Open hutch shutter")
     yield from bps.abs_set(shutter, ShutterDemand.OPEN, wait=True)
@@ -440,4 +436,94 @@ def run_extruder_plan(
 
     # Copy parameter file
     shutil.copy2(PARAM_FILE_PATH / PARAM_FILE_NAME, Path(filepath) / PARAM_FILE_NAME)
-    return 1
+
+
+def run_aborted_plan(zebra: Zebra, shutter: HutchShutter) -> MsgGenerator:
+    """A plan to tidy up things in case the collection is aborted before the end."""
+    # TODO complete
+    yield from bps.null()
+
+
+def tidy_up_at_collection_end_plan(
+    zebra: Zebra,
+    shutter: HutchShutter,
+    parameters: ExtruderParameters,
+    dcid: DCID | None = None,
+    aborted: bool = False,  # TODO figure this out!
+) -> MsgGenerator:
+    """A plan to tidy up at the end of a collection.
+
+    Args:
+        zebra (Zebra): _description_
+        shutter (HutchShutter): _description_
+        parameters (ExtruderParameters): _description_
+    """
+    yield from reset_zebra_when_collection_done_plan(zebra)
+
+    end_time = datetime.now()
+
+    if parameters.detector_name == "pilatus":
+        logger.info("Pilatus Acquire STOP")
+        caput(pv.pilat_acquire, 0)
+    elif parameters.detector_name == "eiger":
+        logger.info("Eiger Acquire STOP")
+        caput(pv.eiger_acquire, 0)
+        caput(pv.eiger_ODcapture, "Done")
+
+    sleep(0.5)
+
+    # Clean Up
+    if parameters.detector_name == "pilatus":
+        sup.pilatus("return-to-normal")
+    elif parameters.detector_name == "eiger":
+        sup.eiger("return-to-normal")
+        logger.debug(parameters.filename + "_" + caget(pv.eiger_seqID))
+    logger.debug("End of Run")
+    logger.debug("Close hutch shutter")
+    yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
+
+    dcid.collection_complete(end_time, aborted=aborted)
+    dcid.notify_end()
+    logger.info("End Time = %s" % end_time.ctime())
+
+    # Copy parameter file
+    # TODO Need 118 to tidy this one up, for now:
+    filepath = Path(parameters.visit) / parameters.directory
+    shutil.copy2(PARAM_FILE_PATH / PARAM_FILE_NAME, filepath / PARAM_FILE_NAME)
+
+
+@log.log_on_entry
+def run_extruder_plan(
+    zebra: Zebra = inject("zebra"),
+    aperture: Aperture = inject("aperture"),
+    backlight: DualBacklight = inject("backlight"),
+    beamstop: Beamstop = inject("beamstop"),
+    detector_stage: DetectorMotion = inject("detector_motion"),
+    shutter: HutchShutter = inject("shutter"),
+) -> MsgGenerator:
+    setup_logging()
+    start_time = datetime.now()
+    logger.info("Collection start time: %s" % start_time.ctime())
+
+    yield from write_parameter_file(detector_stage)
+    parameters = ExtruderParameters.from_file(PARAM_FILE_PATH / PARAM_FILE_NAME)
+
+    yield from bpp.contingency_wrapper(
+        _run_extruder_plan(
+            zebra,
+            aperture,
+            backlight,
+            beamstop,
+            detector_stage,
+            shutter,
+            parameters,
+            start_time,
+        ),
+        except_plan=lambda e: (
+            yield from run_aborted_plan(zebra, shutter)
+        ),  # TODO complete
+        final_plan=lambda: (
+            yield from tidy_up_at_collection_end_plan(zebra, shutter, parameters, None)
+        ),  # TODO complete and fix
+    )
+    pass
