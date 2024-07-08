@@ -234,7 +234,7 @@ def load_motion_program_data(
 @log.log_on_entry
 def get_prog_num(
     chip_type: ChipType, map_type: MappingType, pump_repeat: PumpProbeSetting
-):
+) -> int:
     logger.info("Get Program Number")
     if pump_repeat == PumpProbeSetting.NoPP:
         if chip_type in [ChipType.Oxford, ChipType.OxfordInner]:
