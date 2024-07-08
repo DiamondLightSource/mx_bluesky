@@ -38,6 +38,7 @@ from mx_bluesky.I24.serial.setup_beamline.setup_zebra_plans import (
     TTL_EIGER,
     TTL_PILATUS,
     arm_zebra,
+    disarm_zebra,
     open_fast_shutter,
     reset_zebra_when_collection_done_plan,
     set_shutter_mode,
@@ -48,6 +49,8 @@ from mx_bluesky.I24.serial.write_nexus import call_nexgen
 
 usage = "%(prog)s command [options]"
 logger = logging.getLogger("I24ssx.extruder")
+
+ABORTED = False
 
 SAFE_DET_Z = 1480
 
@@ -191,6 +194,7 @@ def _run_extruder_plan(
     detector_stage: DetectorMotion,
     shutter: HutchShutter,
     parameters: ExtruderParameters,
+    dcid: DCID,
     start_time: datetime,
 ) -> MsgGenerator:
     # Setting up the beamline
@@ -204,9 +208,6 @@ def _run_extruder_plan(
     yield from sup.move_detector_stage_to_position_plan(
         detector_stage, parameters.detector_distance_mm
     )
-
-    # Set the abort PV to zero
-    caput(pv.ioc12_gp8, 0)
 
     # For pixel detector
     filepath = parameters.visit + parameters.directory
@@ -334,17 +335,6 @@ def _run_extruder_plan(
         logger.error(err)
         raise ValueError(err)
 
-    # Do DCID creation BEFORE arming the detector
-    dcid = DCID(
-        emit_errors=False,
-        ssx_type=SSXType.EXTRUDER,
-        visit=Path(parameters.visit).name,
-        image_dir=filepath,
-        start_time=start_time,
-        num_images=parameters.num_images,
-        exposure_time=parameters.exposure_time_s,
-    )
-
     # Collect
     logger.info("Fast shutter opening")
     yield from open_fast_shutter(zebra)
@@ -361,86 +351,49 @@ def _run_extruder_plan(
         logger.debug("Call nexgen server for nexus writing.")
         call_nexgen(None, start_time, parameters, "extruder")
 
-    aborted = False
     timeout_time = time.time() + parameters.num_images * parameters.exposure_time_s + 10
 
-    if int(caget(pv.ioc12_gp8)) == 0:  # ioc12_gp8 is the ABORT button
-        yield from arm_zebra(zebra)
-        sleep(GATE_START)  # Sleep for the same length of gate_start, hard coded to 1
-        i = 0
-        text_list = ["|", "/", "-", "\\"]
-        while True:
-            line_of_text = "\r\t\t\t Waiting   " + 30 * ("%s" % text_list[i % 4])
-            flush_print(line_of_text)
-            sleep(0.5)
-            i += 1
-            zebra_arm_status = yield from bps.rd(zebra.pc.arm.armed)
-            if int(caget(pv.ioc12_gp8)) != 0:
-                aborted = True
-                logger.warning("Data Collection Aborted")
-                if parameters.detector_name == "pilatus":
-                    caput(pv.pilat_acquire, 0)
-                elif parameters.detector_name == "eiger":
-                    caput(pv.eiger_acquire, 0)
-                sleep(1.0)
-                break
-            elif zebra_arm_status == 0:  # not zebra.pc.is_armed():
-                # As soon as zebra is disarmed, exit.
-                # Epics updates this PV once the collection is done.
-                logger.info("Zebra disarmed - Collection done.")
-                break
-            elif time.time() >= timeout_time:
-                logger.warning(
-                    """
-                    Something went wrong and data collection timed out. Aborting.
+    yield from arm_zebra(zebra)
+    sleep(GATE_START)  # Sleep for the same length of gate_start, hard coded to 1
+    i = 0
+    text_list = ["|", "/", "-", "\\"]
+    while True:
+        line_of_text = "\r\t\t\t Waiting   " + 30 * ("%s" % text_list[i % 4])
+        flush_print(line_of_text)
+        sleep(0.5)
+        i += 1
+        zebra_arm_status = yield from bps.rd(zebra.pc.arm.armed)
+        if zebra_arm_status == 0:  # not zebra.pc.is_armed():
+            # As soon as zebra is disarmed, exit.
+            # Epics updates this PV once the collection is done.
+            logger.info("Zebra disarmed - Collection done.")
+            break
+        if time.time() >= timeout_time:
+            logger.warning(
                 """
-                )
-                if parameters.detector_name == "pilatus":
-                    caput(pv.pilat_acquire, 0)
-                elif parameters.detector_name == "eiger":
-                    caput(pv.eiger_acquire, 0)
-                sleep(1.0)
-                break
-    else:
-        aborted = True
-        logger.warning("Data Collection ended due to GP 8 not equalling 0")
+                Something went wrong and data collection timed out. Aborting.
+            """
+            )
+            raise TimeoutError("Data collection timed out.")
 
-    caput(pv.ioc12_gp8, 1)
-    yield from reset_zebra_when_collection_done_plan(zebra)
-
-    end_time = datetime.now()
-
-    if parameters.detector_name == "pilatus":
-        logger.info("Pilatus Acquire STOP")
-        caput(pv.pilat_acquire, 0)
-    elif parameters.detector_name == "eiger":
-        logger.info("Eiger Acquire STOP")
-        caput(pv.eiger_acquire, 0)
-        caput(pv.eiger_ODcapture, "Done")
-
-    sleep(0.5)
-
-    # Clean Up
-    if parameters.detector_name == "pilatus":
-        sup.pilatus("return-to-normal")
-    elif parameters.detector_name == "eiger":
-        sup.eiger("return-to-normal")
-        logger.debug(parameters.filename + "_" + caget(pv.eiger_seqID))
-    logger.debug("End of Run")
-    logger.debug("Close hutch shutter")
-    yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
-
-    dcid.collection_complete(end_time, aborted=aborted)
-    dcid.notify_end()
-    logger.info("End Time = %s" % end_time.ctime())
-
-    # Copy parameter file
-    shutil.copy2(PARAM_FILE_PATH / PARAM_FILE_NAME, Path(filepath) / PARAM_FILE_NAME)
+    logger.debug("Collection completed without errors.")
+    global ABORTED
+    ABORTED = False
 
 
-def run_aborted_plan(zebra: Zebra, shutter: HutchShutter) -> MsgGenerator:
+def run_aborted_plan(
+    zebra: Zebra, shutter: HutchShutter, detector_name: str
+) -> MsgGenerator:
     """A plan to tidy up things in case the collection is aborted before the end."""
-    # TODO complete
+    global ABORTED
+    ABORTED = True
+    logger.warning("Data Collection Aborted")
+    yield from disarm_zebra(zebra)  # If aborted/timed out zebra still armed
+    if detector_name == "pilatus":
+        caput(pv.pilat_acquire, 0)
+    elif detector_name == "eiger":
+        caput(pv.eiger_acquire, 0)
+    sleep(1.0)
     yield from bps.null()
 
 
@@ -448,8 +401,7 @@ def tidy_up_at_collection_end_plan(
     zebra: Zebra,
     shutter: HutchShutter,
     parameters: ExtruderParameters,
-    dcid: DCID | None = None,
-    aborted: bool = False,  # TODO figure this out!
+    dcid: DCID,
 ) -> MsgGenerator:
     """A plan to tidy up at the end of a collection.
 
@@ -482,7 +434,7 @@ def tidy_up_at_collection_end_plan(
     logger.debug("Close hutch shutter")
     yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
 
-    dcid.collection_complete(end_time, aborted=aborted)
+    dcid.collection_complete(end_time, aborted=ABORTED)
     dcid.notify_end()
     logger.info("End Time = %s" % end_time.ctime())
 
@@ -508,6 +460,17 @@ def run_extruder_plan(
     yield from write_parameter_file(detector_stage)
     parameters = ExtruderParameters.from_file(PARAM_FILE_PATH / PARAM_FILE_NAME)
 
+    # Do DCID creation BEFORE arming the detector
+    dcid = DCID(
+        emit_errors=False,
+        ssx_type=SSXType.EXTRUDER,
+        visit=Path(parameters.visit).name,
+        image_dir=parameters.visit + parameters.directory,  # See 118 TODO
+        start_time=start_time,
+        num_images=parameters.num_images,
+        exposure_time=parameters.exposure_time_s,
+    )
+
     yield from bpp.contingency_wrapper(
         _run_extruder_plan(
             zebra,
@@ -517,13 +480,15 @@ def run_extruder_plan(
             detector_stage,
             shutter,
             parameters,
+            dcid,
             start_time,
         ),
         except_plan=lambda e: (
-            yield from run_aborted_plan(zebra, shutter)
+            yield from run_aborted_plan(zebra, shutter, parameters.detector_name)
         ),  # TODO complete
         final_plan=lambda: (
-            yield from tidy_up_at_collection_end_plan(zebra, shutter, parameters, None)
+            yield from tidy_up_at_collection_end_plan(zebra, shutter, parameters, dcid)
         ),  # TODO complete and fix
+        auto_raise=False,
     )
     pass
