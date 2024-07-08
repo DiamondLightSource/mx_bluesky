@@ -32,7 +32,10 @@ from mx_bluesky.I24.serial.parameters import ExtruderParameters, SSXType
 from mx_bluesky.I24.serial.parameters.constants import PARAM_FILE_NAME, PARAM_FILE_PATH
 from mx_bluesky.I24.serial.setup_beamline import Pilatus, caget, caput, pv
 from mx_bluesky.I24.serial.setup_beamline import setup_beamline as sup
-from mx_bluesky.I24.serial.setup_beamline.setup_detector import get_detector_type
+from mx_bluesky.I24.serial.setup_beamline.setup_detector import (
+    UnknownDetectorType,
+    get_detector_type,
+)
 from mx_bluesky.I24.serial.setup_beamline.setup_zebra_plans import (
     GATE_START,
     TTL_EIGER,
@@ -333,7 +336,7 @@ def _run_extruder_plan(
     else:
         err = f"Unknown Detector Type, det_type = {parameters.detector_name}"
         logger.error(err)
-        raise ValueError(err)
+        raise UnknownDetectorType(err)
 
     # Collect
     logger.info("Fast shutter opening")
