@@ -164,12 +164,8 @@ def write_parameter_file(detector_stage: DetectorMotion):
     pump_exp = float(caget(pv.ioc12_gp9)) if pump_status else None
     pump_delay = float(caget(pv.ioc12_gp10)) if pump_status else None
 
-    visit_str = caget(pv.ioc12_gp1)
-    if not visit_str.endswith("/"):
-        visit_str = visit_str + "/"
-
     params_dict = {
-        "visit": visit_str,
+        "visit": log._read_visit_directory_from_file(),
         "directory": caget(pv.ioc12_gp2),
         "filename": filename,
         "exposure_time_s": float(caget(pv.ioc12_gp5)),
@@ -213,7 +209,7 @@ def _run_extruder_plan(
     )
 
     # For pixel detector
-    filepath = parameters.visit + parameters.directory
+    filepath = parameters.collection_directory.as_posix()
     logger.debug(f"Filepath {filepath}")
     logger.debug(f"Filename {parameters.filename}")
 

@@ -30,15 +30,6 @@ class ChipType(IntEnum):
         """Returns the chip name."""
         return self.name
 
-    def get_approx_chip_size(self) -> float:
-        """Returns an approximation of the chip size for the move during alignment \
-            of the fiducials
-        """
-        if self.name == "OxfordInner":
-            return 24.60
-        else:
-            return 25.40
-
 
 class PumpProbeSetting(IntEnum):
     NoPP = 0
@@ -50,6 +41,10 @@ class PumpProbeSetting(IntEnum):
     Repeat5 = 6
     Repeat10 = 7
     Medium1 = 8
+
+    def __str__(self) -> str:
+        """Returns the pump-probe setting name."""
+        return self.name
 
 
 class Fiducials(str, Enum):
