@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Dict, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, validator
 
@@ -9,7 +9,6 @@ from mx_bluesky.I24.serial.fixed_target.ft_utils import (
     MappingType,
     PumpProbeSetting,
 )
-from mx_bluesky.I24.serial.setup_beamline import caget, pv
 
 
 class SerialExperiment(BaseModel):
@@ -117,33 +116,3 @@ class FixedTargetParameters(SerialExperiment, LaserExperiment):
         with open(filename, "r") as fh:
             raw_params = json.load(fh)
         return cls(**raw_params)
-
-
-def get_chip_format(chip_type: ChipType) -> ChipDescription:
-    """Default parameter values."""
-    defaults: Dict[str, int | float] = {}
-    match chip_type:
-        case ChipType.Oxford:
-            defaults["x_num_steps"] = defaults["y_num_steps"] = 20
-            defaults["x_step_size"] = defaults["y_step_size"] = 0.125
-            defaults["x_blocks"] = defaults["y_blocks"] = 8
-            defaults["b2b_horz"] = defaults["b2b_vert"] = 0.800
-        case ChipType.OxfordInner:
-            defaults["x_num_steps"] = defaults["y_num_steps"] = 25
-            defaults["x_step_size"] = defaults["y_step_size"] = 0.600
-            defaults["x_blocks"] = defaults["y_blocks"] = 1
-            defaults["b2b_horz"] = defaults["b2b_vert"] = 0.0
-        case ChipType.Minichip:
-            defaults["x_num_steps"] = defaults["y_num_steps"] = 20
-            defaults["x_step_size"] = defaults["y_step_size"] = 0.125
-            defaults["x_blocks"] = defaults["y_blocks"] = 1
-            defaults["b2b_horz"] = defaults["b2b_vert"] = 0.0
-        case ChipType.Custom:
-            defaults["x_num_steps"] = int(caget(pv.me14e_gp6))
-            defaults["y_num_steps"] = int(caget(pv.me14e_gp7))
-            defaults["x_step_size"] = float(caget(pv.me14e_gp8))
-            defaults["y_step_size"] = float(caget(pv.me14e_gp99))
-            defaults["x_blocks"] = defaults["y_blocks"] = 1
-            defaults["b2b_horz"] = defaults["b2b_vert"] = 0.0
-    chip_params = {"chip_type": chip_type.value, **defaults}
-    return ChipDescription(**chip_params)
