@@ -380,9 +380,7 @@ def run_main_extruder_plan(
     ABORTED = False
 
 
-def run_aborted_plan(
-    zebra: Zebra, shutter: HutchShutter, detector_name: str
-) -> MsgGenerator:
+def run_aborted_plan(zebra: Zebra, detector_name: str) -> MsgGenerator:
     """A plan to tidy up things in case the collection is aborted before the end."""
     global ABORTED
     ABORTED = True
@@ -393,7 +391,6 @@ def run_aborted_plan(
     elif detector_name == "eiger":
         caput(pv.eiger_acquire, 0)
     sleep(1.0)
-    yield from bps.null()
 
 
 def tidy_up_at_collection_end_plan(
@@ -402,7 +399,7 @@ def tidy_up_at_collection_end_plan(
     parameters: ExtruderParameters,
     dcid: DCID,
 ) -> MsgGenerator:
-    """A plan to tidy up at the end of a collection.
+    """A plan to tidy up at the end of a collection, successful or aborted.
 
     Args:
         zebra (Zebra): The Zebra device.
@@ -478,7 +475,7 @@ def run_extruder_plan(
             start_time,
         ),
         except_plan=lambda e: (
-            yield from run_aborted_plan(zebra, shutter, parameters.detector_name)
+            yield from run_aborted_plan(zebra, parameters.detector_name)
         ),  # TODO complete
         final_plan=lambda: (
             yield from tidy_up_at_collection_end_plan(zebra, shutter, parameters, dcid)

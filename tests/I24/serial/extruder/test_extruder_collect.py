@@ -11,6 +11,7 @@ from mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2 import (
     enter_hutch,
     initialise_extruder,
     laser_check,
+    run_aborted_plan,
     run_main_extruder_plan,
     tidy_up_at_collection_end_plan,
 )
@@ -254,3 +255,13 @@ def test_tidy_up_at_collection_end_plan_with_eiger(
     fake_caput.assert_has_calls(call_list)
 
     fake_sup.eiger.assert_called_once_with("return-to-normal")
+
+
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.sleep")
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.disarm_zebra")
+def test_run_aborted_plan_with_pilatus(mock_disarm, fake_caput, fake_sleep, RE, zebra):
+    RE(run_aborted_plan(zebra, "pilatus"))
+
+    mock_disarm.assert_called_once()
+    fake_caput.assert_has_calls([call(ANY, 0)])
