@@ -13,6 +13,7 @@ from time import sleep
 from typing import Dict, List
 
 import bluesky.plan_stubs as bps
+import bluesky.preprocessors as bpp
 import numpy as np
 from blueapi.core import MsgGenerator
 from dodal.common import inject
@@ -504,7 +505,6 @@ def finish_i24(
 ):
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
 
-    filepath = parameters.collection_directory
     filename = parameters.filename
     transmission = (float(caget(pv.pilat_filtertrasm)),)
     wavelength = float(caget(pv.dcm_lambda))
@@ -530,9 +530,6 @@ def finish_i24(
     end_time = time.ctime()
     logger.debug("Collection end time %s" % end_time)
 
-    # Copy parameter file and eventual chip map to collection directory
-    copy_files_to_data_location(filepath, map_type=parameters.map_type)
-
     # Write a record of what was collected to the processing directory
     userlog_path = Path(parameters.visit) / f"processing/{parameters.directory}"
     userlog_fid = f"{filename}_parameters.txt"
@@ -542,7 +539,7 @@ def finish_i24(
 
     with open(userlog_path / userlog_fid, "w") as f:
         f.write("Fixed Target Data Collection Parameters\n")
-        f.write(f"Data directory \t{filepath.as_posix()}\n")
+        f.write(f"Data directory \t{parameters.collection_directory.as_posix()}\n")
         f.write(f"Filename \t{filename}\n")
         f.write(f"Shots per pos \t{parameters.num_exposures}\n")
         f.write(f"Total N images \t{parameters.total_num_images}\n")
@@ -570,40 +567,21 @@ def run_aborted_plan(pmac: PMAC):
     yield from bps.abs_set(pmac.pmac_string, "P2401=0", wait=True)
 
 
-def run_fixed_target_plan(
-    zebra: Zebra = inject("zebra"),
-    pmac: PMAC = inject("pmac"),
-    aperture: Aperture = inject("aperture"),
-    backlight: DualBacklight = inject("backlight"),
-    beamstop: Beamstop = inject("beamstop"),
-    detector_stage: DetectorMotion = inject("detector_motion"),
-    shutter: HutchShutter = inject("shutter"),
+def _run_fixed_target_plan(
+    zebra: Zebra,
+    pmac: PMAC,
+    aperture: Aperture,
+    backlight: DualBacklight,
+    beamstop: Beamstop,
+    detector_stage: DetectorMotion,
+    shutter: HutchShutter,
+    parameters: FixedTargetParameters,
 ) -> MsgGenerator:
     setup_logging()
     # ABORT BUTTON
     logger.info("Running a chip collection on I24")
     caput(pv.me14e_gp9, 0)
 
-    logger.info("Getting parameters from file.")
-    parameters = FixedTargetParameters.from_file(PARAM_FILE_PATH_FT / PARAM_FILE_NAME)
-
-    log_msg = f"""
-            Parameters for I24 serial collection: \n
-                Chip name is {parameters.filename}
-                visit = {parameters.visit}
-                sub_dir = {parameters.directory}
-                n_exposures = {parameters.num_exposures}
-                chip_type = {str(parameters.chip.chip_type)}
-                map_type = {str(parameters.map_type)}
-                dcdetdist = {parameters.detector_distance_mm}
-                exptime = {parameters.exposure_time_s}
-                det_type = {parameters.detector_name}
-                pump_repeat = {str(parameters.pump_repeat)}
-                pumpexptime = {parameters.laser_dwell_s}
-                pumpdelay = {parameters.laser_delay_s}
-                prepumpexptime = {parameters.pre_pump_exposure_s}
-        """
-    logger.info(log_msg)
     logger.info("Getting Program Dictionary")
 
     # If alignment type is Oxford inner it is still an Oxford type chip
@@ -724,3 +702,61 @@ def run_fixed_target_plan(
     logger.debug(f"Chip name = {parameters.filename} sub_dir = {parameters.directory}")
     logger.debug(f"Start Time = {start_time}")
     logger.debug(f"End Time = {end_time}")
+
+
+@log.log_on_entry
+def run_fixed_target_plan(
+    zebra: Zebra = inject("zebra"),
+    pmac: PMAC = inject("pmac"),
+    aperture: Aperture = inject("aperture"),
+    backlight: DualBacklight = inject("backlight"),
+    beamstop: Beamstop = inject("beamstop"),
+    detector_stage: DetectorMotion = inject("detector_motion"),
+    shutter: HutchShutter = inject("shutter"),
+) -> MsgGenerator:
+    setup_logging()
+
+    logger.info("Getting parameters from file.")
+    parameters = FixedTargetParameters.from_file(PARAM_FILE_PATH_FT / PARAM_FILE_NAME)
+
+    log_msg = f"""
+            Parameters for I24 serial collection: \n
+                Chip name is {parameters.filename}
+                visit = {parameters.visit}
+                sub_dir = {parameters.directory}
+                n_exposures = {parameters.num_exposures}
+                chip_type = {str(parameters.chip.chip_type)}
+                map_type = {str(parameters.map_type)}
+                dcdetdist = {parameters.detector_distance_mm}
+                exptime = {parameters.exposure_time_s}
+                det_type = {parameters.detector_name}
+                pump_repeat = {str(parameters.pump_repeat)}
+                pumpexptime = {parameters.laser_dwell_s}
+                pumpdelay = {parameters.laser_delay_s}
+                prepumpexptime = {parameters.pre_pump_exposure_s}
+        """
+    logger.info(log_msg)
+
+    # TODO dcid is created halfway through but need it to notify end after
+    # collection or abort. How do I return in the wrapper?
+
+    yield from bpp.contingency_wrapper(
+        _run_fixed_target_plan(
+            zebra,
+            pmac,
+            aperture,
+            backlight,
+            beamstop,
+            detector_stage,
+            shutter,
+            parameters,
+        ),
+        except_plan=lambda e: (yield from run_aborted_plan(pmac)),
+        final_plan=lambda: (),
+        auto_raise=False,  # ... etc
+    )
+
+    # Copy parameter file and eventual chip map to collection directory
+    copy_files_to_data_location(
+        parameters.collection_directory, map_type=parameters.map_type
+    )
