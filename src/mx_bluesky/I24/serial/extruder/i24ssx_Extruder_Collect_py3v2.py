@@ -405,9 +405,9 @@ def tidy_up_at_collection_end_plan(
     """A plan to tidy up at the end of a collection.
 
     Args:
-        zebra (Zebra): _description_
-        shutter (HutchShutter): _description_
-        parameters (ExtruderParameters): _description_
+        zebra (Zebra): The Zebra device.
+        shutter (HutchShutter): The HutchShutter device.
+        parameters (ExtruderParameters): Collection parameters.
     """
     yield from reset_zebra_when_collection_done_plan(zebra)
 
@@ -428,7 +428,7 @@ def tidy_up_at_collection_end_plan(
         sup.pilatus("return-to-normal")
     elif parameters.detector_name == "eiger":
         sup.eiger("return-to-normal")
-        logger.debug(parameters.filename + "_" + caget(pv.eiger_seqID))
+        logger.debug(f"{parameters.filename}_{caget(pv.eiger_seqID)}")
     logger.debug("End of Run")
     logger.debug("Close hutch shutter")
     yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
