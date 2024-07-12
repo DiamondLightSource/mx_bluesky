@@ -52,6 +52,9 @@ CHIP_MOVES = {
     ChipType.Minichip: 25.40,
 }
 CHIPTYPE_PV = pv.me14e_gp1
+MAPTYPE_PV = pv.me14e_gp2
+NUM_EXPOSURES_PV = pv.me14e_gp3
+PUMP_REPEAT_PV = pv.me14e_gp4
 MAP_FILEPATH_PV = pv.me14e_gp5
 
 
@@ -84,10 +87,10 @@ def initialise_stages(
     yield from bps.abs_set(pmac.y.low_limit_travel, -30, group=group)
     yield from bps.abs_set(pmac.z.high_limit_travel, 5.1, group=group)
     yield from bps.abs_set(pmac.z.low_limit_travel, -4.1, group=group)
-    caput(pv.me14e_gp1, 1)  # chip type
-    caput(pv.me14e_gp2, 0)  # map type
-    caput(pv.me14e_gp3, 1)  # num exposures
-    caput(pv.me14e_gp4, 0)  # pump repeat
+    caput(CHIPTYPE_PV, 1)  # chip type
+    caput(MAPTYPE_PV, 0)  # map type
+    caput(NUM_EXPOSURES_PV, 1)  # num exposures
+    caput(PUMP_REPEAT_PV, 0)  # pump repeat
     caput(pv.me14e_filepath, "test")
     caput(pv.me14e_chip_name, "albion")
     caput(pv.me14e_dcdetdist, 1480)
@@ -126,10 +129,10 @@ def write_parameter_file(
 
     filename = caget(pv.me14e_chip_name)
     det_type = yield from get_detector_type(detector_stage)
-    chip_type = int(caget(pv.me14e_gp1))
+    chip_type = int(caget(CHIPTYPE_PV))
     chip_defaults = get_chip_format(ChipType(chip_type))
     chip_params = {"chip_type": chip_type, **chip_defaults}
-    map_type = caget(pv.me14e_gp2)
+    map_type = caget(MAPTYPE_PV)
 
     # If file name ends in a digit this causes processing/pilatus pain.
     # Append an underscore
@@ -151,10 +154,10 @@ def write_parameter_file(
         "exposure_time_s": caget(pv.me14e_exptime),
         "detector_distance_mm": caget(pv.me14e_dcdetdist),
         "detector_name": str(det_type),
-        "num_exposures": caget(pv.me14e_gp3),
+        "num_exposures": caget(NUM_EXPOSURES_PV),
         "chip": chip_params,
         "map_type": map_type,
-        "pump_repeat": caget(pv.me14e_gp4),
+        "pump_repeat": caget(PUMP_REPEAT_PV),
         "checker_pattern": bool(caget(pv.me14e_gp111)),
         "laser_dwell_s": caget(pv.me14e_gp103),
         "laser_delay_s": caget(pv.me14e_gp110),
@@ -411,7 +414,7 @@ def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
         28,
         27,
         10,
-    ] + x77
+    ] + x77  # noqa
     x44 = [22, 21, 20, 19, 30, 35, 46, 45, 44, 43, 38, 27, 28, 29, 36, 37]
     x49 = [x + 1 for x in range(49)]
     x66 = [
