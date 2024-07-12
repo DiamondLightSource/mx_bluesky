@@ -148,7 +148,7 @@ def write_parameter_file(
             )
 
     params_dict = {
-        "visit": caget(pv.me14e_gp100),
+        "visit": log._read_visit_directory_from_file(),
         "directory": caget(pv.me14e_filepath),
         "filename": filename,
         "exposure_time_s": caget(pv.me14e_exptime),

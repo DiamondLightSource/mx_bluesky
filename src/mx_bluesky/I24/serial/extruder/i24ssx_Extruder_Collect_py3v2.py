@@ -158,7 +158,7 @@ def write_parameter_file(detector_stage: DetectorMotion):
     pump_delay = float(caget(pv.ioc12_gp10)) if pump_status else None
 
     params_dict = {
-        "visit": caget(pv.ioc12_gp1),
+        "visit": log._read_visit_directory_from_file(),
         "directory": caget(pv.ioc12_gp2),
         "filename": filename,
         "exposure_time_s": float(caget(pv.ioc12_gp5)),

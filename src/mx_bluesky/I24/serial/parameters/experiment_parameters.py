@@ -14,7 +14,7 @@ from mx_bluesky.I24.serial.fixed_target.ft_utils import (
 class SerialExperiment(BaseModel):
     """Generic parameters common to all serial experiments."""
 
-    visit: str
+    visit: Path
     directory: str
     filename: str
     exposure_time_s: float
