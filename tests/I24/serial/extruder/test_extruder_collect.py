@@ -1,4 +1,4 @@
-from unittest.mock import call, patch
+from unittest.mock import MagicMock, call, patch
 
 import bluesky.plan_stubs as bps
 import pytest
@@ -11,7 +11,7 @@ from mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2 import (
     enter_hutch,
     initialise_extruder,
     laser_check,
-    run_extruder_plan,
+    run_main_extruder_plan,
 )
 from mx_bluesky.I24.serial.parameters import ExtruderParameters
 from mx_bluesky.I24.serial.setup_beamline import Eiger, Pilatus
@@ -153,7 +153,20 @@ def test_run_extruder_quickshot_with_eiger(
 ):
     mock_params.from_file.return_value = dummy_params
     fake_det.return_value = Eiger()
-    RE(run_extruder_plan(zebra, aperture, backlight, beamstop, detector_stage, shutter))
+    fake_start_time = MagicMock()
+    RE(
+        run_main_extruder_plan(
+            zebra,
+            aperture,
+            backlight,
+            beamstop,
+            detector_stage,
+            shutter,
+            dummy_params,
+            fake_dcid,
+            fake_start_time,
+        )
+    )
     assert fake_nexgen.call_count == 1
     assert fake_dcid.call_count == 1
     assert fake_sup.setup_beamline_for_collection_plan.call_count == 1
@@ -206,7 +219,20 @@ def test_run_extruder_pump_probe_with_pilatus(
 ):
     mock_params.from_file.return_value = dummy_params_pp
     fake_det.return_value = Pilatus()
-    RE(run_extruder_plan(zebra, aperture, backlight, beamstop, detector_stage, shutter))
+    fake_start_time = MagicMock()
+    RE(
+        run_main_extruder_plan(
+            zebra,
+            aperture,
+            backlight,
+            beamstop,
+            detector_stage,
+            shutter,
+            dummy_params_pp,
+            fake_dcid,
+            fake_start_time,
+        )
+    )
     assert fake_dcid.call_count == 1
     assert fake_sup.move_detector_stage_to_position_plan.call_count == 1
     mock_pp_plan.assert_called_once()
