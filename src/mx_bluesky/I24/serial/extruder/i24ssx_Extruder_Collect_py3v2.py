@@ -185,7 +185,7 @@ def write_parameter_file(detector_stage: DetectorMotion):
 
 
 @log.log_on_entry
-def _run_extruder_plan(
+def run_main_extruder_plan(
     zebra: Zebra,
     aperture: Aperture,
     backlight: DualBacklight,
@@ -459,14 +459,14 @@ def run_extruder_plan(
         emit_errors=False,
         ssx_type=SSXType.EXTRUDER,
         visit=Path(parameters.visit).name,
-        image_dir=parameters.visit + parameters.directory,  # See 118 TODO
+        image_dir=parameters.collection_directory.as_posix(),
         start_time=start_time,
         num_images=parameters.num_images,
         exposure_time=parameters.exposure_time_s,
     )
 
     yield from bpp.contingency_wrapper(
-        _run_extruder_plan(
+        run_main_extruder_plan(
             zebra,
             aperture,
             backlight,
@@ -487,6 +487,7 @@ def run_extruder_plan(
     )
 
     # Copy parameter file
-    # TODO Need 118 to tidy this one up, for now:
-    filepath = Path(parameters.visit) / parameters.directory
-    shutil.copy2(PARAM_FILE_PATH / PARAM_FILE_NAME, filepath / PARAM_FILE_NAME)
+    shutil.copy2(
+        PARAM_FILE_PATH / PARAM_FILE_NAME,
+        parameters.collection_directory / PARAM_FILE_NAME,
+    )
