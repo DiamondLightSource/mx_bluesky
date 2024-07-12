@@ -476,10 +476,10 @@ def run_extruder_plan(
         ),
         except_plan=lambda e: (
             yield from run_aborted_plan(zebra, parameters.detector_name)
-        ),  # TODO complete
+        ),
         final_plan=lambda: (
             yield from tidy_up_at_collection_end_plan(zebra, shutter, parameters, dcid)
-        ),  # TODO complete and fix
+        ),
         auto_raise=False,
     )
 
