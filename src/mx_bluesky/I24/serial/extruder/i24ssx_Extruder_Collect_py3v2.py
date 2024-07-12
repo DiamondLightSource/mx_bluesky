@@ -441,11 +441,6 @@ def tidy_up_at_collection_end_plan(
     dcid.notify_end()
     logger.info("End Time = %s" % end_time.ctime())
 
-    # Copy parameter file
-    # TODO Need 118 to tidy this one up, for now:
-    filepath = Path(parameters.visit) / parameters.directory
-    shutil.copy2(PARAM_FILE_PATH / PARAM_FILE_NAME, filepath / PARAM_FILE_NAME)
-
 
 @log.log_on_entry
 def run_extruder_plan(
@@ -494,4 +489,8 @@ def run_extruder_plan(
         ),  # TODO complete and fix
         auto_raise=False,
     )
-    pass
+
+    # Copy parameter file
+    # TODO Need 118 to tidy this one up, for now:
+    filepath = Path(parameters.visit) / parameters.directory
+    shutil.copy2(PARAM_FILE_PATH / PARAM_FILE_NAME, filepath / PARAM_FILE_NAME)
