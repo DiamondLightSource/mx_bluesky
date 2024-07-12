@@ -29,8 +29,8 @@ from mx_bluesky.I24.serial.fixed_target.ft_utils import (
     ChipType,
     Fiducials,
     MappingType,
-    get_chip_format,
 )
+from mx_bluesky.I24.serial.parameters import get_chip_format
 from mx_bluesky.I24.serial.parameters.constants import (
     CS_FILES_PATH,
     FULLMAP_PATH,
@@ -129,9 +129,7 @@ def write_parameter_file(
 
     filename = caget(pv.me14e_chip_name)
     det_type = yield from get_detector_type(detector_stage)
-    chip_type = int(caget(CHIPTYPE_PV))
-    chip_defaults = get_chip_format(ChipType(chip_type))
-    chip_params = {"chip_type": chip_type, **chip_defaults}
+    chip_params = get_chip_format(ChipType(int(caget(CHIPTYPE_PV))))
     map_type = caget(MAPTYPE_PV)
 
     # If file name ends in a digit this causes processing/pilatus pain.
@@ -155,7 +153,7 @@ def write_parameter_file(
         "detector_distance_mm": caget(pv.me14e_dcdetdist),
         "detector_name": str(det_type),
         "num_exposures": caget(NUM_EXPOSURES_PV),
-        "chip": chip_params,
+        "chip": chip_params.dict(),
         "map_type": map_type,
         "pump_repeat": caget(PUMP_REPEAT_PV),
         "checker_pattern": bool(caget(pv.me14e_gp111)),

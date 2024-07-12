@@ -2,7 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, get_chip_format
+from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType
+from mx_bluesky.I24.serial.parameters import get_chip_format
 
 
 @pytest.mark.parametrize(
@@ -15,7 +16,7 @@ def test_get_chip_format_for_oxford_chips(
     expected_step_size: float,
     expected_num_steps: int,
 ):
-    test_defaults = get_chip_format(ChipType(chip_type))
+    test_defaults = get_chip_format(ChipType(chip_type)).dict()
 
     assert (
         test_defaults["x_num_steps"] == expected_num_steps
@@ -25,11 +26,11 @@ def test_get_chip_format_for_oxford_chips(
     assert test_defaults["x_step_size"] == expected_step_size
 
 
-@patch("mx_bluesky.I24.serial.fixed_target.ft_utils.caget")
+@patch("mx_bluesky.I24.serial.parameters.utils.caget")
 def test_get_chip_format_for_custom_chips(fake_caget: MagicMock):
     fake_caget.side_effect = ["10", "2", "0.2", "0.2"]
     test_chip_type = ChipType(2)
-    test_defaults = get_chip_format(test_chip_type)
+    test_defaults = get_chip_format(test_chip_type).dict()
 
     assert test_defaults["x_num_steps"] == 10
     assert test_defaults["y_num_steps"] == 2

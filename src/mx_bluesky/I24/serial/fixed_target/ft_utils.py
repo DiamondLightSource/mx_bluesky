@@ -7,10 +7,6 @@ New ones may be added if needed in the future.
 """
 
 from enum import Enum, IntEnum
-from typing import Dict, Mapping
-
-import mx_bluesky.I24.serial.setup_beamline.pv as pv
-from mx_bluesky.I24.serial.setup_beamline import caget
 
 
 class MappingType(IntEnum):
@@ -56,32 +52,3 @@ class Fiducials(str, Enum):
     zero = "zero"
     fid1 = "f1"
     fid2 = "f2"
-
-
-def get_chip_format(chip_type: ChipType) -> Mapping:
-    """Default parameter values."""
-    defaults: Dict[str, int | float] = {}
-    match chip_type:
-        case ChipType.Oxford:
-            defaults["x_num_steps"] = defaults["y_num_steps"] = 20
-            defaults["x_step_size"] = defaults["y_step_size"] = 0.125
-            defaults["x_blocks"] = defaults["y_blocks"] = 8
-            defaults["b2b_horz"] = defaults["b2b_vert"] = 0.800
-        case ChipType.OxfordInner:
-            defaults["x_num_steps"] = defaults["y_num_steps"] = 25
-            defaults["x_step_size"] = defaults["y_step_size"] = 0.600
-            defaults["x_blocks"] = defaults["y_blocks"] = 1
-            defaults["b2b_horz"] = defaults["b2b_vert"] = 0.0
-        case ChipType.Minichip:
-            defaults["x_num_steps"] = defaults["y_num_steps"] = 20
-            defaults["x_step_size"] = defaults["y_step_size"] = 0.125
-            defaults["x_blocks"] = defaults["y_blocks"] = 1
-            defaults["b2b_horz"] = defaults["b2b_vert"] = 0.0
-        case ChipType.Custom:
-            defaults["x_num_steps"] = int(caget(pv.me14e_gp6))
-            defaults["y_num_steps"] = int(caget(pv.me14e_gp7))
-            defaults["x_step_size"] = float(caget(pv.me14e_gp8))
-            defaults["y_step_size"] = float(caget(pv.me14e_gp99))
-            defaults["x_blocks"] = defaults["y_blocks"] = 1
-            defaults["b2b_horz"] = defaults["b2b_vert"] = 0.0
-    return defaults

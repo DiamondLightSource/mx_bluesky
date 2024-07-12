@@ -12,8 +12,8 @@ from typing import List
 import numpy as np
 
 from mx_bluesky.I24.serial import log
-from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, get_chip_format
-from mx_bluesky.I24.serial.parameters import ChipDescription, FixedTargetParameters
+from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType
+from mx_bluesky.I24.serial.parameters import FixedTargetParameters, get_chip_format
 from mx_bluesky.I24.serial.parameters.constants import (
     HEADER_FILES_PATH,
     PARAM_FILE_NAME,
@@ -39,12 +39,6 @@ def read_parameter_file(
     return params
 
 
-def get_chip_parameters(chip_type: ChipType) -> ChipDescription:
-    chip_defaults = get_chip_format(ChipType(chip_type))
-    chip_params = {"chip_type": chip_type.value, **chip_defaults}
-    return ChipDescription(**chip_params)
-
-
 @log.log_on_entry
 def fiducials(chip_type: int):
     if chip_type in [ChipType.Oxford, ChipType.OxfordInner, ChipType.Minichip]:
@@ -67,7 +61,7 @@ def get_xy(addr: str, chip_type: ChipType):
     windowR = lowercase_list.index(r2)
     windowC = lowercase_list.index(c2)
 
-    chip_params = get_chip_parameters(chip_type)
+    chip_params = get_chip_format(chip_type)
 
     x = (
         (blockC * chip_params.b2b_horz)
@@ -137,7 +131,7 @@ def zippum(list_1_args, list_2_args):
 
 
 def get_alphanumeric(chip_type: ChipType):
-    cell_format = get_chip_parameters(chip_type)
+    cell_format = get_chip_format(chip_type)
     blk_num = cell_format.x_blocks
     wnd_num = cell_format.x_num_steps
     uppercase_list = list(string.ascii_uppercase)[:blk_num]
@@ -161,7 +155,7 @@ def get_alphanumeric(chip_type: ChipType):
 
 @log.log_on_entry
 def get_shot_order(chip_type: ChipType):
-    cell_format = get_chip_parameters(chip_type)
+    cell_format = get_chip_format(chip_type)
     blk_num = cell_format.x_blocks
     wnd_num = cell_format.x_num_steps
     uppercase_list = list(string.ascii_uppercase)[:blk_num]

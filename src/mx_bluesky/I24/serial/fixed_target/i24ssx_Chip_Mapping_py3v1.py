@@ -14,12 +14,12 @@ from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType
 from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1 import (
     check_files,
-    get_chip_parameters,
     get_shot_order,
     get_xy,
     read_parameter_file,
     write_file,
 )
+from mx_bluesky.I24.serial.parameters import get_chip_format
 from mx_bluesky.I24.serial.parameters.constants import PARAM_FILE_PATH_FT
 
 logger = logging.getLogger("I24ssx.chip_mapping")
@@ -87,7 +87,7 @@ def plot_file(fid, chip_type):
 @log.log_on_entry
 def convert_chip_to_hex(fid, chip_type):
     chip_dict = read_file_make_dict(fid, chip_type, True)
-    chip_format = get_chip_parameters(ChipType(chip_type))
+    chip_format = get_chip_format(ChipType(chip_type))
     check_files(["%s.full" % chip_type])
     with open("%s.full" % fid[:-5], "w") as g:
         # Normal

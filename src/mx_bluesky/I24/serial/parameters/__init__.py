@@ -4,5 +4,12 @@ from mx_bluesky.I24.serial.parameters.experiment_parameters import (
     ExtruderParameters,
     FixedTargetParameters,
 )
+from mx_bluesky.I24.serial.parameters.utils import get_chip_format
 
-__all__ = ["SSXType", "ExtruderParameters", "ChipDescription", "FixedTargetParameters"]
+__all__ = [
+    "SSXType",
+    "ExtruderParameters",
+    "ChipDescription",
+    "FixedTargetParameters",
+    "get_chip_format",
+]
