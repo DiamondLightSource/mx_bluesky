@@ -380,12 +380,14 @@ def start_i24(
         dcid = DCID(
             emit_errors=False,
             ssx_type=SSXType.FIXED,
-            visit=Path(parameters.visit).name,
+            detector=parameters.detector_name,
+        )
+        dcid.generate_dcid(
+            visit=parameters.visit.name,
             image_dir=filepath,
             start_time=start_time,
             num_images=parameters.total_num_images,
             exposure_time=parameters.exposure_time_s,
-            detector=parameters.detector_name,
             shots_per_position=parameters.num_exposures,
             pump_exposure_time=parameters.laser_dwell_s,
             pump_delay=parameters.laser_delay_s,
@@ -458,12 +460,14 @@ def start_i24(
         dcid = DCID(
             emit_errors=False,
             ssx_type=SSXType.FIXED,
-            visit=Path(parameters.visit).name,
+            detector=parameters.detector_name,
+        )
+        dcid.generate_dcid(
+            visit=parameters.visit.name,
             image_dir=filepath,
             start_time=start_time,
             num_images=parameters.total_num_images,
             exposure_time=parameters.exposure_time_s,
-            detector=parameters.detector_name,
         )
 
         logger.debug("Arm Zebra.")

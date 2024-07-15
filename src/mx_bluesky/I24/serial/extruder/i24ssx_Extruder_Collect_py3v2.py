@@ -334,6 +334,18 @@ def run_main_extruder_plan(
         logger.error(err)
         raise UnknownDetectorType(err)
 
+    # Do DCID creation BEFORE arming the detector
+    dcid.generate_dcid(
+        visit=parameters.visit.name,
+        image_dir=parameters.collection_directory.as_posix(),
+        start_time=start_time,
+        num_images=parameters.num_images,
+        exposure_time=parameters.exposure_time_s,
+        pump_exposure_time=parameters.laser_dwell_s,
+        pump_delay=parameters.laser_delay_s,
+        pump_status=int(parameters.pump_status),
+    )
+
     # Collect
     logger.info("Fast shutter opening")
     yield from open_fast_shutter(zebra)
@@ -451,15 +463,11 @@ def run_extruder_plan(
     yield from write_parameter_file(detector_stage)
     parameters = ExtruderParameters.from_file(PARAM_FILE_PATH / PARAM_FILE_NAME)
 
-    # Do DCID creation BEFORE arming the detector
+    # DCID - not generated yet
     dcid = DCID(
         emit_errors=False,
         ssx_type=SSXType.EXTRUDER,
-        visit=Path(parameters.visit).name,
-        image_dir=parameters.collection_directory.as_posix(),
-        start_time=start_time,
-        num_images=parameters.num_images,
-        exposure_time=parameters.exposure_time_s,
+        detector=parameters.detector_name,
     )
 
     yield from bpp.contingency_wrapper(

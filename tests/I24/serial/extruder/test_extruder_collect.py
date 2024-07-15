@@ -160,6 +160,7 @@ def test_run_extruder_quickshot_with_eiger(
         )
     )
     assert fake_nexgen.call_count == 1
+    assert fake_dcid.generate_dcid.call_count == 1
     assert fake_dcid.notify_start.call_count == 1
     assert fake_sup.setup_beamline_for_collection_plan.call_count == 1
     # Check temporary piilatus hack is in there
@@ -211,6 +212,7 @@ def test_run_extruder_pump_probe_with_pilatus(
             fake_start_time,
         )
     )
+    assert fake_dcid.generate_dcid.call_count == 1
     assert fake_dcid.notify_start.call_count == 1
     assert fake_sup.move_detector_stage_to_position_plan.call_count == 1
     mock_pp_plan.assert_called_once()
