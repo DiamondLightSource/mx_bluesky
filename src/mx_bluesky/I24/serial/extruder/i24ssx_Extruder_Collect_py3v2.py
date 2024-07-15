@@ -185,7 +185,7 @@ def write_parameter_file(detector_stage: DetectorMotion):
 
 
 @log.log_on_entry
-def run_main_extruder_plan(
+def main_extruder_plan(
     zebra: Zebra,
     aperture: Aperture,
     backlight: DualBacklight,
@@ -392,8 +392,9 @@ def run_main_extruder_plan(
     ABORTED = False
 
 
-def run_aborted_plan(zebra: Zebra, detector_name: str) -> MsgGenerator:
-    """A plan to tidy up things in case the collection is aborted before the end."""
+@log.log_on_entry
+def collection_aborted_plan(zebra: Zebra, detector_name: str) -> MsgGenerator:
+    """A plan to run in case the collection is aborted before the end."""
     global ABORTED
     ABORTED = True
     logger.warning("Data Collection Aborted")
@@ -405,6 +406,7 @@ def run_aborted_plan(zebra: Zebra, detector_name: str) -> MsgGenerator:
     sleep(1.0)
 
 
+@log.log_on_entry
 def tidy_up_at_collection_end_plan(
     zebra: Zebra,
     shutter: HutchShutter,
@@ -447,7 +449,6 @@ def tidy_up_at_collection_end_plan(
     logger.info("End Time = %s" % end_time.ctime())
 
 
-@log.log_on_entry
 def run_extruder_plan(
     zebra: Zebra = inject("zebra"),
     aperture: Aperture = inject("aperture"),
@@ -471,7 +472,7 @@ def run_extruder_plan(
     )
 
     yield from bpp.contingency_wrapper(
-        run_main_extruder_plan(
+        main_extruder_plan(
             zebra,
             aperture,
             backlight,
@@ -483,7 +484,7 @@ def run_extruder_plan(
             start_time,
         ),
         except_plan=lambda e: (
-            yield from run_aborted_plan(zebra, parameters.detector_name)
+            yield from collection_aborted_plan(zebra, parameters.detector_name)
         ),
         final_plan=lambda: (
             yield from tidy_up_at_collection_end_plan(zebra, shutter, parameters, dcid)

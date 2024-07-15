@@ -8,11 +8,11 @@ from ophyd_async.core import get_mock_put
 from mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2 import (
     TTL_EIGER,
     TTL_PILATUS,
+    collection_aborted_plan,
     enter_hutch,
     initialise_extruder,
     laser_check,
-    run_aborted_plan,
-    run_main_extruder_plan,
+    main_extruder_plan,
     tidy_up_at_collection_end_plan,
 )
 from mx_bluesky.I24.serial.parameters import ExtruderParameters
@@ -147,7 +147,7 @@ def test_run_extruder_quickshot_with_eiger(
     # Mock end of data collection (zebra disarmed)
     fake_read.side_effect = [fake_generator(0)]
     RE(
-        run_main_extruder_plan(
+        main_extruder_plan(
             zebra,
             aperture,
             backlight,
@@ -200,7 +200,7 @@ def test_run_extruder_pump_probe_with_pilatus(
     # Mock end of data collection (zebra disarmed)
     fake_read.side_effect = [fake_generator(0)]
     RE(
-        run_main_extruder_plan(
+        main_extruder_plan(
             zebra,
             aperture,
             backlight,
@@ -262,8 +262,8 @@ def test_tidy_up_at_collection_end_plan_with_eiger(
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.sleep")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.disarm_zebra")
-def test_run_aborted_plan_with_pilatus(mock_disarm, fake_caput, fake_sleep, RE, zebra):
-    RE(run_aborted_plan(zebra, "pilatus"))
+def test_aborted_plan_with_pilatus(mock_disarm, fake_caput, fake_sleep, RE, zebra):
+    RE(collection_aborted_plan(zebra, "pilatus"))
 
     mock_disarm.assert_called_once()
     fake_caput.assert_has_calls([call(ANY, 0)])

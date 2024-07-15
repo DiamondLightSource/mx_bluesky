@@ -63,9 +63,7 @@ class DCID:
             stop collection if you can't get a DCID
         timeout: Length of time to wait for the DB server before giving up
         ssx_type: The type of SSX experiment this is for
-        visit: The name of the visit e.g. "mx12345-4"
-        image_dir: The location the images will be written
-
+        detector: The detector in use for current collection.
 
 
     Attributes:
@@ -76,7 +74,7 @@ class DCID:
     def __init__(
         self,
         *,
-        server: str = None,
+        server: str | None = None,
         emit_errors: bool = True,
         timeout: float = 10,
         ssx_type: SSXType = SSXType.FIXED,
@@ -106,14 +104,20 @@ class DCID:
         self,
         visit: str,
         image_dir: str,
-        start_time: datetime.datetime,
         num_images: int,
         exposure_time: float,
+        start_time: datetime.datetime | None = None,
         shots_per_position: int = 1,
         pump_exposure_time: float | None = None,
         pump_delay: float | None = None,
         pump_status: int = 0,
     ):
+        """Generate an ispyb DCID.
+
+        Args:
+            visit: The name of the visit e.g. "mx12345-4"
+            image_dir: The location the images will be written
+        """
         try:
             if not start_time:
                 start_time = datetime.datetime.now().astimezone()

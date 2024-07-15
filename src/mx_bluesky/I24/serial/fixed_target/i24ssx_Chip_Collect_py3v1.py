@@ -55,9 +55,9 @@ from mx_bluesky.I24.serial.setup_beamline.setup_zebra_plans import (
 )
 from mx_bluesky.I24.serial.write_nexus import call_nexgen
 
-logger = logging.getLogger("I24ssx.fixed_target")
+ABORTED = False
 
-usage = "%(prog)s [options]"
+logger = logging.getLogger("I24ssx.fixed_target")
 
 
 def setup_logging():
@@ -325,8 +325,12 @@ def start_i24(
     detector_stage: DetectorMotion,
     shutter: HutchShutter,
     parameters: FixedTargetParameters,
+    dcid: DCID,
 ):
-    """Returns a tuple of (start_time, dcid)"""
+    """Set up for I24 fixed target data collection, trigger the detector and open \
+    the hutch shutter.
+    Returns the start_time.
+    """
 
     logger.info("Start I24 data collection.")
     start_time = datetime.now()
@@ -377,11 +381,6 @@ def start_i24(
 
         # DCID process depends on detector PVs being set up already
         logger.debug("Start DCID process")
-        dcid = DCID(
-            emit_errors=False,
-            ssx_type=SSXType.FIXED,
-            detector=parameters.detector_name,
-        )
         dcid.generate_dcid(
             visit=parameters.visit.name,
             image_dir=filepath,
@@ -457,17 +456,16 @@ def start_i24(
 
         # DCID process depends on detector PVs being set up already
         logger.debug("Start DCID process")
-        dcid = DCID(
-            emit_errors=False,
-            ssx_type=SSXType.FIXED,
-            detector=parameters.detector_name,
-        )
         dcid.generate_dcid(
             visit=parameters.visit.name,
             image_dir=filepath,
             start_time=start_time,
             num_images=parameters.total_num_images,
             exposure_time=parameters.exposure_time_s,
+            shots_per_position=parameters.num_exposures,
+            pump_exposure_time=parameters.laser_dwell_s,
+            pump_delay=parameters.laser_delay_s,
+            pump_status=parameters.pump_repeat.value,
         )
 
         logger.debug("Arm Zebra.")
@@ -497,7 +495,7 @@ def start_i24(
     # Open the hutch shutter
     yield from bps.abs_set(shutter, ShutterDemand.OPEN, wait=True)
 
-    return start_time.ctime(), dcid
+    return start_time
 
 
 @log.log_on_entry
@@ -566,12 +564,16 @@ def run_aborted_plan(pmac: PMAC):
         either by pressing the Abort button or because of a timeout, and to reset the \
         P variable.
     """
+    global ABORTED
+    ABORTED = True
+    logger.warning("Data Collection Aborted")
     yield from bps.abs_set(pmac.pmac_string, "A", wait=True)
     yield from bps.sleep(1.0)
     yield from bps.abs_set(pmac.pmac_string, "P2401=0", wait=True)
 
 
-def _run_fixed_target_plan(
+@log.log_on_entry
+def main_fixed_target_plan(
     zebra: Zebra,
     pmac: PMAC,
     aperture: Aperture,
@@ -580,11 +582,9 @@ def _run_fixed_target_plan(
     detector_stage: DetectorMotion,
     shutter: HutchShutter,
     parameters: FixedTargetParameters,
+    dcid: DCID,
 ) -> MsgGenerator:
-    setup_logging()
-    # ABORT BUTTON
     logger.info("Running a chip collection on I24")
-    caput(pv.me14e_gp9, 0)
 
     logger.info("Getting Program Dictionary")
 
@@ -607,8 +607,8 @@ def _run_fixed_target_plan(
         parameters.num_exposures, parameters.chip, parameters.map_type
     )
 
-    start_time, dcid = yield from start_i24(
-        zebra, aperture, backlight, beamstop, detector_stage, shutter, parameters
+    start_time = yield from start_i24(
+        zebra, aperture, backlight, beamstop, detector_stage, shutter, parameters, dcid
     )
 
     logger.info("Moving to Start")
@@ -629,9 +629,11 @@ def _run_fixed_target_plan(
 
     # Kick off the StartOfCollect script
     logger.debug("Notify DCID of the start of the collection.")
-    dcid.notify_start()
+    dcid.notify_start()  # NOTE This can bo before run_program
 
     if parameters.detector_name == "eiger":
+        # TODO can be moved before prog_num once
+        # https://github.com/DiamondLightSource/nexgen/issues/266 is done
         logger.debug("Start nexus writing service.")
         call_nexgen(
             chip_prog_dict,
@@ -641,47 +643,51 @@ def _run_fixed_target_plan(
 
     logger.info("Data Collection running")
 
-    aborted = False
     timeout_time = (
         time.time() + parameters.total_num_images * parameters.exposure_time_s + 60
     )
 
-    # TODO me14e_gp9 is the ABORT button
-    # See https://github.com/DiamondLightSource/mx_bluesky/issues/117
-    if int(caget(pv.me14e_gp9)) == 0:
-        i = 0
-        text_list = ["|", "/", "-", "\\"]
-        while True:
-            line_of_text = "\r\t\t\t Waiting   " + 30 * ("%s" % text_list[i % 4])
-            flush_print(line_of_text)
-            sleep(0.5)
-            i += 1
-            status = yield from bps.rd(pmac.scanstatus)
-            if int(caget(pv.me14e_gp9)) != 0:
-                aborted = True
-                logger.warning("Data Collection Aborted")
-                yield from run_aborted_plan(pmac)
-                break
-            elif int(status) == 0:
-                # As soon as the PVAR P2401 is set to 0, exit.
-                # Epics checks the geobrick and updates this PV every 1s or so.
-                # Once the collection is done, it will be set to 0.
-                print(status)
-                logger.warning("Data Collection Finished")
-                break
-            elif time.time() >= timeout_time:
-                aborted = True
-                logger.warning(
-                    """
-                    Something went wrong and data collection timed out. Aborting.
-                    """
-                )
-                yield from run_aborted_plan(pmac)
-                break
-    else:
-        aborted = True
-        logger.warning("Data Collection ended due to GP 9 not equalling 0")
+    i = 0
+    text_list = ["|", "/", "-", "\\"]
+    while True:
+        # TODO use https://github.com/DiamondLightSource/dodal/pull/661
+        # See Dodal 650
+        line_of_text = "\r\t\t\t Waiting   " + 30 * ("%s" % text_list[i % 4])
+        flush_print(line_of_text)
+        sleep(0.5)
+        i += 1
+        status = yield from bps.rd(pmac.scanstatus)
+        if int(status) == 0:
+            # As soon as the PVAR P2401 is set to 0, exit.
+            # Epics checks the geobrick and updates this PV every 1s or so.
+            # Once the collection is done, it will be set to 0.
+            print(status)
+            logger.warning("Data Collection Finished")
+            break
+        if time.time() >= timeout_time:
+            logger.warning(
+                """
+                Something went wrong and data collection timed out. Aborting.
+                """
+            )
+            raise TimeoutError("Data collection timed out.")
 
+    logger.debug("Collection completed without errors.")
+    global ABORTED
+    ABORTED = False
+
+
+@log.log_on_entry
+def tidy_up_after_collection_plan(
+    zebra: Zebra,
+    pmac: PMAC,
+    shutter: HutchShutter,
+    parameters: FixedTargetParameters,
+    dcid: DCID,
+) -> MsgGenerator:
+    """A plan to be run to tidy things up at the end af a fixed target collection, \
+    both successful or aborted.
+    """
     logger.info("Closing fast shutter")
     yield from close_fast_shutter(zebra)
     sleep(2.0)
@@ -698,17 +704,14 @@ def _run_fixed_target_plan(
 
     end_time = yield from finish_i24(zebra, pmac, shutter, parameters)
 
-    dcid.collection_complete(end_time, aborted=aborted)
+    dcid.collection_complete(end_time, aborted=ABORTED)
     logger.debug("Notify DCID of end of collection.")
     dcid.notify_end()
 
     logger.debug("Quick summary of settings")
     logger.debug(f"Chip name = {parameters.filename} sub_dir = {parameters.directory}")
-    logger.debug(f"Start Time = {start_time}")
-    logger.debug(f"End Time = {end_time}")
 
 
-@log.log_on_entry
 def run_fixed_target_plan(
     zebra: Zebra = inject("zebra"),
     pmac: PMAC = inject("pmac"),
@@ -741,11 +744,15 @@ def run_fixed_target_plan(
         """
     logger.info(log_msg)
 
-    # TODO dcid is created halfway through but need it to notify end after
-    # collection or abort. How do I return in the wrapper?
+    # DCID instance - do not create yet
+    dcid = DCID(
+        emit_errors=False,
+        ssx_type=SSXType.FIXED,
+        detector=parameters.detector_name,
+    )
 
     yield from bpp.contingency_wrapper(
-        _run_fixed_target_plan(
+        main_fixed_target_plan(
             zebra,
             pmac,
             aperture,
@@ -754,10 +761,15 @@ def run_fixed_target_plan(
             detector_stage,
             shutter,
             parameters,
+            dcid,
         ),
         except_plan=lambda e: (yield from run_aborted_plan(pmac)),
-        final_plan=lambda: (),
-        auto_raise=False,  # ... etc
+        final_plan=lambda: (
+            yield from tidy_up_after_collection_plan(
+                zebra, pmac, shutter, parameters, dcid
+            )
+        ),
+        auto_raise=False,
     )
 
     # Copy parameter file and eventual chip map to collection directory
