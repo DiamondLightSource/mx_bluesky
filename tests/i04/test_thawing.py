@@ -34,8 +34,6 @@ async def smargon() -> AsyncGenerator[Smargon, None]:
     RunEngine()
     smargon = Smargon(name="smargon")
     await smargon.connect(mock=True)
-    # smargon.omega.user_setpoint._use_limits = False
-    # smargon.omega.velocity._use_limits = False
 
     set_mock_value(smargon.omega.user_readback, 0.0)
 
