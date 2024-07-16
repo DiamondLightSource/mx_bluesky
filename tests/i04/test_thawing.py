@@ -1,16 +1,14 @@
-from functools import partial
-from typing import Generator
-from unittest.mock import ANY, MagicMock, call, patch
+from typing import AsyncGenerator
+from unittest.mock import ANY, MagicMock, call
 
 import pytest
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i04
 from dodal.devices.smargon import Smargon
 from dodal.devices.thawer import Thawer, ThawerStates
-from ophyd.epics_motor import EpicsMotor
 from ophyd.sim import NullStatus
-from ophyd.status import Status
-from ophyd_async.core import get_mock_put
+from ophyd_async.core import callback_on_mock_put, get_mock_put, set_mock_value
+from ophyd_async.epics.motion import Motor
 
 from mx_bluesky.i04.thawing_plan import thaw
 
@@ -19,30 +17,29 @@ class MyException(Exception):
     pass
 
 
-def mock_set(motor: EpicsMotor, val):
-    motor.user_setpoint.sim_put(val)  # type: ignore
-    motor.user_readback.sim_put(val)  # type: ignore
-    return Status(done=True, success=True)
-
-
-def patch_motor(motor: EpicsMotor):
-    return patch.object(motor, "set", MagicMock(side_effect=partial(mock_set, motor)))
+def patch_motor(motor: Motor, initial_position: float = 0):
+    set_mock_value(motor.user_setpoint, initial_position)
+    set_mock_value(motor.user_readback, initial_position)
+    set_mock_value(motor.deadband, 0.001)
+    set_mock_value(motor.motor_done_move, 1)
+    set_mock_value(motor.velocity, 3)
+    return callback_on_mock_put(
+        motor.user_setpoint,
+        lambda pos, *args, **kwargs: set_mock_value(motor.user_readback, pos),
+    )
 
 
 @pytest.fixture
-def smargon() -> Generator[Smargon, None, None]:
-    smargon = i04.smargon(fake_with_ophyd_sim=True)
-    smargon.omega.user_setpoint._use_limits = False
-    smargon.omega.velocity._use_limits = False
+async def smargon() -> AsyncGenerator[Smargon, None]:
+    RunEngine()
+    smargon = Smargon(name="smargon")
+    await smargon.connect(mock=True)
+    # smargon.omega.user_setpoint._use_limits = False
+    # smargon.omega.velocity._use_limits = False
 
-    smargon.omega.user_readback.sim_put(0.0)  # type:ignore
+    set_mock_value(smargon.omega.user_readback, 0.0)
 
-    with (
-        patch_motor(smargon.omega),
-        patch.object(
-            smargon.omega.velocity, "set", MagicMock(return_value=NullStatus())
-        ),
-    ):
+    with patch_motor(smargon.omega):
         yield smargon
 
 
@@ -55,13 +52,12 @@ async def thawer() -> Thawer:
 def _do_thaw_and_confirm_cleanup(
     move_mock: MagicMock, smargon: Smargon, thawer: Thawer, do_thaw_func
 ):
-    smargon.omega.velocity.sim_put(initial_velocity := 10)  # type: ignore
-    with patch.object(smargon.omega, "set", move_mock):
-        do_thaw_func()
-        last_thawer_call = get_mock_put(thawer.control).call_args_list[-1]
-        assert last_thawer_call == call(ThawerStates.OFF, wait=ANY, timeout=ANY)
-        last_velocity_call = smargon.omega.velocity.set.call_args_list[-1]
-        assert last_velocity_call == call(initial_velocity)
+    set_mock_value(smargon.omega.velocity, initial_velocity := 10)
+    do_thaw_func()
+    last_thawer_call = get_mock_put(thawer.control).call_args_list[-1]
+    assert last_thawer_call == call(ThawerStates.OFF, wait=ANY, timeout=ANY)
+    last_velocity_call = get_mock_put(smargon.omega.velocity).call_args_list[-1]
+    assert last_velocity_call == call(initial_velocity, wait=ANY, timeout=ANY)
 
 
 def test_given_thaw_succeeds_then_velocity_restored_and_thawer_turned_off(
@@ -84,9 +80,9 @@ def test_given_moving_smargon_gives_error_then_velocity_restored_and_thawer_turn
         with pytest.raises(MyException):
             RE(thaw(10, thawer=thawer, smargon=smargon))
 
-    _do_thaw_and_confirm_cleanup(
-        MagicMock(side_effect=MyException()), smargon, thawer, do_thaw_func
-    )
+            _do_thaw_and_confirm_cleanup(
+                MagicMock(side_effect=MyException()), smargon, thawer, do_thaw_func
+            )
 
 
 @pytest.mark.parametrize(
@@ -102,8 +98,8 @@ def test_given_different_rotations_and_times_then_velocity_correct(
 ):
     RE = RunEngine()
     RE(thaw(time, rotation, thawer=thawer, smargon=smargon))
-    first_velocity_call = smargon.omega.velocity.set.call_args_list[0]
-    assert first_velocity_call == call(expected_speed)
+    first_velocity_call = get_mock_put(smargon.omega.velocity).call_args_list[0]
+    assert first_velocity_call == call(expected_speed, wait=ANY, timeout=ANY)
 
 
 @pytest.mark.parametrize(
@@ -117,7 +113,9 @@ def test_given_different_rotations_and_times_then_velocity_correct(
 def test_given_different_rotations_then_motor_moved_relative(
     smargon: Smargon, thawer: Thawer, start_pos, rotation, expected_end
 ):
-    smargon.omega.user_readback.sim_put(start_pos)  # type: ignore
+    set_mock_value(smargon.omega.user_readback, start_pos)
     RE = RunEngine()
     RE(thaw(10, rotation, thawer=thawer, smargon=smargon))
-    smargon.omega.set.assert_called_once_with(expected_end)
+    get_mock_put(smargon.omega.user_setpoint).assert_called_with(
+        expected_end, wait=ANY, timeout=ANY
+    )
