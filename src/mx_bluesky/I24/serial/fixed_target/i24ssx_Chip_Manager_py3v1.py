@@ -27,7 +27,12 @@ from dodal.devices.i24.pmac import PMAC, EncReset, LaserSettings
 from mx_bluesky.I24.serial import log
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_Mapping_py3v1 as mapping
 from mx_bluesky.I24.serial.fixed_target import i24ssx_Chip_StartUp_py3v1 as startup
-from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, Fiducials, MappingType
+from mx_bluesky.I24.serial.fixed_target.ft_utils import (
+    ChipType,
+    Fiducials,
+    MappingType,
+)
+from mx_bluesky.I24.serial.parameters import get_chip_format
 from mx_bluesky.I24.serial.parameters.constants import (
     CS_FILES_PATH,
     FULLMAP_PATH,
@@ -40,6 +45,19 @@ from mx_bluesky.I24.serial.setup_beamline import Pilatus, caget, caput, pv
 from mx_bluesky.I24.serial.setup_beamline.setup_detector import get_detector_type
 
 logger = logging.getLogger("I24ssx.chip_manager")
+
+# An approximation of the chip size for the move during fiducials alignment.
+CHIP_MOVES = {
+    ChipType.Oxford: 25.40,
+    ChipType.OxfordInner: 24.60,
+    ChipType.Custom: 25.40,
+    ChipType.Minichip: 25.40,
+}
+CHIPTYPE_PV = pv.me14e_gp1
+MAPTYPE_PV = pv.me14e_gp2
+NUM_EXPOSURES_PV = pv.me14e_gp3
+PUMP_REPEAT_PV = pv.me14e_gp4
+MAP_FILEPATH_PV = pv.me14e_gp5
 
 
 def setup_logging():
@@ -71,10 +89,10 @@ def initialise_stages(
     yield from bps.abs_set(pmac.y.low_limit_travel, -30, group=group)
     yield from bps.abs_set(pmac.z.high_limit_travel, 5.1, group=group)
     yield from bps.abs_set(pmac.z.low_limit_travel, -4.1, group=group)
-    caput(pv.me14e_gp1, 1)
-    caput(pv.me14e_gp2, 0)
-    caput(pv.me14e_gp3, 1)
-    caput(pv.me14e_gp4, 0)
+    caput(CHIPTYPE_PV, 1)  # chip type
+    caput(MAPTYPE_PV, 0)  # map type
+    caput(NUM_EXPOSURES_PV, 1)  # num exposures
+    caput(PUMP_REPEAT_PV, 0)  # pump repeat
     caput(pv.me14e_filepath, "test")
     caput(pv.me14e_chip_name, "albion")
     caput(pv.me14e_dcdetdist, 1480)
@@ -93,8 +111,6 @@ def initialise_stages(
         caput(pvar, 0)
         sys.stdout.write(".")
         sys.stdout.flush()
-
-    caput(pv.me14e_gp100, "press set params to read visit")
 
     logger.info("Initialisation of the stages complete")
     yield from bps.wait(group=group)
@@ -115,7 +131,8 @@ def write_parameter_file(
 
     filename = caget(pv.me14e_chip_name)
     det_type = yield from get_detector_type(detector_stage)
-    map_type = caget(pv.me14e_gp2)
+    chip_params = get_chip_format(ChipType(int(caget(CHIPTYPE_PV))))
+    map_type = caget(MAPTYPE_PV)
 
     # If file name ends in a digit this causes processing/pilatus pain.
     # Append an underscore
@@ -131,16 +148,16 @@ def write_parameter_file(
             )
 
     params_dict = {
-        "visit": caget(pv.me14e_gp100),
+        "visit": log._read_visit_directory_from_file(),
         "directory": caget(pv.me14e_filepath),
         "filename": filename,
         "exposure_time_s": caget(pv.me14e_exptime),
         "detector_distance_mm": caget(pv.me14e_dcdetdist),
         "detector_name": str(det_type),
-        "num_exposures": caget(pv.me14e_gp3),
-        "chip_type": caget(pv.me14e_gp1),
+        "num_exposures": caget(NUM_EXPOSURES_PV),
+        "chip": chip_params.dict(),
         "map_type": map_type,
-        "pump_repeat": caget(pv.me14e_gp4),
+        "pump_repeat": caget(PUMP_REPEAT_PV),
         "checker_pattern": bool(caget(pv.me14e_gp111)),
         "laser_dwell_s": caget(pv.me14e_gp103),
         "laser_delay_s": caget(pv.me14e_gp110),
@@ -198,12 +215,10 @@ def define_current_chip(
     print 'Setting Mapping Type to Lite'
     caput(pv.me14e_gp2, 1)
     """
-    if not pmac:
-        pmac = i24.pmac()
-    chip_type = int(caget(pv.me14e_gp1))
+    chip_type = int(caget(CHIPTYPE_PV))
     logger.info("Chip type:%s Chipid:%s" % (chip_type, chipid))
     if chipid == "oxford":
-        caput(pv.me14e_gp1, 1)
+        caput(CHIPTYPE_PV, 0)
 
     with open(PVAR_FILE_PATH / f"{chipid}.pvar", "r") as f:
         logger.info("Opening %s.pvar" % chipid)
@@ -242,7 +257,7 @@ def upload_parameters(
     setup_logging()
     logger.info("Uploading Parameters to the GeoBrick")
     if chipid == "oxford":
-        caput(pv.me14e_gp1, 0)
+        caput(CHIPTYPE_PV, 0)
         width = 8
 
     map_file: Path = LITEMAP_PATH / "currentchip.map"
@@ -303,6 +318,7 @@ def upload_full(pmac: PMAC = None) -> MsgGenerator:
 
 @log.log_on_entry
 def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
+    # TODO See https://github.com/DiamondLightSource/mx_bluesky/issues/122
     setup_logging()
     logger.info("Adjusting Lite Map EDM Screen")
     logger.debug("Please wait, adjusting lite map")
@@ -398,7 +414,7 @@ def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
         28,
         27,
         10,
-    ] + x77
+    ] + x77  # noqa
     x44 = [22, 21, 20, 19, 30, 35, 46, 45, 44, 43, 38, 27, 28, 29, 36, 37]
     x49 = [x + 1 for x in range(49)]
     x66 = [
@@ -488,7 +504,7 @@ def load_stock_map(map_choice: str = "clear") -> MsgGenerator:
     map_dict["half1"] = half1
     map_dict["half2"] = half2
 
-    logger.info("Clearing GP 10-74")
+    logger.info("Clearing GP 10-74")  # Actually 11-44
     for i in range(1, 65):
         pvar = "ME14E-MO-IOC-01:GP" + str(i + 10)
         caput(pvar, 0)
@@ -521,7 +537,7 @@ def load_lite_map() -> MsgGenerator:
         'H1': '64', 'H2': '63', 'H3': '62', 'H4': '61', 'H5': '60', 'H6': '59', 'H7': '58', 'H8': '57',
     }
     # fmt: on
-    chip_type = int(caget(pv.me14e_gp1))
+    chip_type = int(caget(CHIPTYPE_PV))
     if chip_type in [ChipType.Oxford, ChipType.OxfordInner]:
         logger.info("Oxford Block Order")
         rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
@@ -550,7 +566,7 @@ def load_lite_map() -> MsgGenerator:
                 btn_names[button_name] = label
         block_dict = btn_names
 
-    litemap_fid = str(caget(pv.me14e_gp5)) + ".lite"
+    litemap_fid = f"{caget(MAP_FILEPATH_PV)}.lite"
     logger.info("Please wait, loading LITE map")
     logger.debug("Loading Lite Map")
     logger.info("Opening %s" % (LITEMAP_PATH / litemap_fid))
@@ -572,10 +588,10 @@ def load_full_map() -> MsgGenerator:
     setup_logging()
     params = startup.read_parameter_file()
 
-    fullmap_fid = FULLMAP_PATH / f"{str(caget(pv.me14e_gp5))}.spec"
+    fullmap_fid = FULLMAP_PATH / f"{caget(MAP_FILEPATH_PV)}.spec"
     logger.info("Opening %s" % fullmap_fid)
-    mapping.plot_file(fullmap_fid, params.chip_type.value)
-    mapping.convert_chip_to_hex(fullmap_fid, params.chip_type.value)
+    mapping.plot_file(fullmap_fid, params.chip.chip_type.value)
+    mapping.convert_chip_to_hex(fullmap_fid, params.chip.chip_type.value)
     shutil.copy2(fullmap_fid.with_suffix(".full"), FULLMAP_PATH / "currentchip.full")
     logger.info(
         "Copying %s to %s"
@@ -594,14 +610,14 @@ def moveto(place: str = "origin", pmac: PMAC = inject("pmac")) -> MsgGenerator:
         yield from bps.trigger(pmac.to_xyz_zero)
         return
 
-    chip_type = int(caget(pv.me14e_gp1))
-    logger.info(f"Chip type is {ChipType(chip_type)}")
+    chip_type = ChipType(int(caget(CHIPTYPE_PV)))
+    logger.info(f"Chip type is {chip_type}")
     if chip_type not in list(ChipType):
         logger.warning("Unknown chip_type move")
         return
 
-    logger.info(f"{str(ChipType(chip_type))} Move")
-    chip_move = ChipType(chip_type).get_approx_chip_size()
+    logger.info(f"{str(chip_type)} Move")
+    chip_move = CHIP_MOVES[chip_type]
 
     if place == Fiducials.origin:
         yield from bps.mv(pmac.x, 0.0, pmac.y, 0.0)
@@ -781,7 +797,7 @@ def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     opposite and adjacent RBV after calibration of scale factors.
     """
     setup_logging()
-    chip_type = int(caget(pv.me14e_gp1))
+    chip_type = int(caget(CHIPTYPE_PV))
     fiducial_dict = {}
     fiducial_dict[0] = [25.400, 25.400]
     fiducial_dict[1] = [24.600, 24.600]
@@ -946,6 +962,7 @@ def set_pmac_strings_for_cs(pmac: PMAC, cs_str: dict):
 
 @log.log_on_entry
 def pumpprobe_calc() -> MsgGenerator:
+    # TODO See https://github.com/DiamondLightSource/mx_bluesky/issues/122
     setup_logging()
     logger.info("Calculate and show exposure and dwell time for each option.")
     exptime = float(caget(pv.me14e_exptime))
@@ -968,7 +985,6 @@ def pumpprobe_calc() -> MsgGenerator:
         rounded = round(repeat, 4)
         caput(pv_name, rounded)
         logger.info("Repeat (%s): %s s" % (pv_name, rounded))
-    # logger.info("repeat10 (%s): %s s" % (pv.me14e_gp108, round(repeat10, 4)))
     logger.debug("PP calculations done")
     yield from bps.null()
 
@@ -976,10 +992,11 @@ def pumpprobe_calc() -> MsgGenerator:
 @log.log_on_entry
 def block_check(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     setup_logging()
+    # TODO See https://github.com/DiamondLightSource/mx_bluesky/issues/117
     caput(pv.me14e_gp9, 0)
     while True:
         if int(caget(pv.me14e_gp9)) == 0:
-            chip_type = int(caget(pv.me14e_gp1))
+            chip_type = int(caget(CHIPTYPE_PV))
             if chip_type == ChipType.Minichip:
                 logger.info("Oxford mini chip in use.")
                 block_start_list = scrape_pvar_file("minichip_oxford.pvar")

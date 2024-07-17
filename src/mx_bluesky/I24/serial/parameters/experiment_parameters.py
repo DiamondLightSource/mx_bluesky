@@ -14,12 +14,16 @@ from mx_bluesky.I24.serial.fixed_target.ft_utils import (
 class SerialExperiment(BaseModel):
     """Generic parameters common to all serial experiments."""
 
-    visit: str
+    visit: Path
     directory: str
     filename: str
     exposure_time_s: float
     detector_distance_mm: float
     detector_name: Literal["eiger", "pilatus"]
+
+    @property
+    def collection_directory(self) -> Path:
+        return Path(self.visit) / self.directory
 
 
 class LaserExperiment(BaseModel):
@@ -43,16 +47,20 @@ class ExtruderParameters(SerialExperiment, LaserExperiment):
         return cls(**raw_params)
 
 
-class FixedTargetParameters(SerialExperiment, LaserExperiment):
-    """Fixed target parameter model."""
+class ChipDescription(BaseModel):
+    """Parameters defining the chip in use for FT collection."""
 
     model_config = ConfigDict(use_enum_values=True)
 
-    num_exposures: int
     chip_type: ChipType
-    map_type: MappingType
-    pump_repeat: PumpProbeSetting
-    checker_pattern: bool = False
+    x_num_steps: int
+    y_num_steps: int
+    x_step_size: float
+    y_step_size: float
+    x_blocks: int
+    y_blocks: int
+    b2b_horz: float
+    b2b_vert: float
 
     @validator("chip_type", pre=True)
     def _parse_chip(cls, chip_type: str | int):
@@ -60,6 +68,37 @@ class FixedTargetParameters(SerialExperiment, LaserExperiment):
             return ChipType[chip_type]
         else:
             return ChipType(chip_type)
+
+    @property
+    def chip_format(self) -> list[int]:
+        return [self.x_blocks, self.y_blocks, self.x_num_steps, self.y_num_steps]
+
+    @property
+    def x_block_size(self) -> float:
+        if self.chip_type.name == "Custom":
+            return 0.0  # placeholder
+        else:
+            return ((self.x_num_steps - 1) * self.x_step_size) + self.b2b_horz
+
+    @property
+    def y_block_size(self) -> float:
+        if self.chip_type.name == "Custom":
+            return 0.0  # placeholder
+        else:
+            return ((self.y_num_steps - 1) * self.y_step_size) + self.b2b_vert
+
+
+class FixedTargetParameters(SerialExperiment, LaserExperiment):
+    """Fixed target parameter model."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    num_exposures: int
+    chip: ChipDescription
+    map_type: MappingType
+    pump_repeat: PumpProbeSetting
+    checker_pattern: bool = False
+    total_num_images: int = 0  # Calculated in the code for now
 
     @validator("map_type", pre=True)
     def _parse_map(cls, map_type: str | int):

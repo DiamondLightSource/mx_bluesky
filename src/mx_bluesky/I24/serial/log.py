@@ -14,6 +14,14 @@ from dodal.log import LOGGER as dodal_logger
 
 VISIT_PATH = Path("/dls_sw/i24/etc/ssx_current_visit.txt")
 
+
+class OphydDebugFilter(logging.Filter):  # NOTE yet to be fully tested
+    """Do not send ophyd debug log messages to stream handler."""
+
+    def filter(self, record):
+        return not record.getMessage().lower().startswith("ophyd")
+
+
 # Logging set up
 logger = logging.getLogger("I24ssx")
 logger.addHandler(logging.NullHandler())
@@ -22,6 +30,11 @@ logger.parent = dodal_logger
 logging_config = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "ophyd_filter": {
+            "()": OphydDebugFilter,
+        }
+    },
     "formatters": {
         "default": {
             "class": "logging.Formatter",
@@ -33,6 +46,7 @@ logging_config = {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "default",
+            "filters": ["ophyd_filter"],
             "stream": "ext://sys.stdout",
         }
     },
@@ -82,14 +96,14 @@ def default_logging_setup(dev_mode: bool = False):
     - Remove dodal stream handler to avoid double messages (for now, use only the \
         i24ssx default stream to keep the output expected by the scientists.)
     """
-    handlers = set_up_all_logging_handlers(
+    handlers = set_up_all_logging_handlers(  # noqa: F841
         dodal_logger,
         _get_logging_file_path(),
         "dodal.log",
         dev_mode,
         ERROR_LOG_BUFFER_LINES,
     )
-    integrate_bluesky_and_ophyd_logging(dodal_logger, handlers)
+    integrate_bluesky_and_ophyd_logging(dodal_logger)
     # Remove dodal StreamHandler to avoid duplication of messages above debug
     dodal_logger.removeHandler(dodal_logger.handlers[0])
 
