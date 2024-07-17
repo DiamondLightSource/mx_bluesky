@@ -538,13 +538,13 @@ def finish_i24(
 ):
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
 
-    filename = parameters.filename
+    complete_filename: str
     transmission = float(caget(pv.pilat_filtertrasm))
     wavelength = float(caget(pv.dcm_lambda))
 
     if parameters.detector_name == "pilatus":
         logger.debug("Finish I24 Pilatus")
-        filename = filename + "_" + caget(pv.pilat_filenum)
+        complete_filename = f"{parameters.filename}_{caget(pv.pilat_filenum)}"
         yield from reset_zebra_when_collection_done_plan(zebra)
         sup.pilatus("return-to-normal")
         sleep(0.2)
@@ -552,7 +552,7 @@ def finish_i24(
         logger.debug("Finish I24 Eiger")
         yield from reset_zebra_when_collection_done_plan(zebra)
         sup.eiger("return-to-normal")
-        filename = cagetstring(pv.eiger_ODfilenameRBV)
+        complete_filename = cagetstring(pv.eiger_ODfilenameRBV)  # type: ignore
 
     # Detector independent moves
     logger.info("Move chip back to home position by setting PMAC_STRING pv.")
@@ -564,7 +564,7 @@ def finish_i24(
     logger.debug("Collection end time %s" % end_time)
 
     # Write a record of what was collected to the processing directory
-    write_userlog(parameters, filename, transmission, wavelength)
+    write_userlog(parameters, complete_filename, transmission, wavelength)
     sleep(0.5)
 
     return end_time

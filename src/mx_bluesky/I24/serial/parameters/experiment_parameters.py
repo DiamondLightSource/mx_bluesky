@@ -21,6 +21,12 @@ class SerialExperiment(BaseModel):
     detector_distance_mm: float
     detector_name: Literal["eiger", "pilatus"]
 
+    @validator("visit", pre=True)
+    def _parse_visit(cls, visit: str | Path):
+        if isinstance(visit, str):
+            return Path(visit)
+        return visit
+
     @property
     def collection_directory(self) -> Path:
         return Path(self.visit) / self.directory

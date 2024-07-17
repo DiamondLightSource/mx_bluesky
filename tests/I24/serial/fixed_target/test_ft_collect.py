@@ -171,7 +171,14 @@ def test_finish_i24(
 ):
     fake_caget.side_effect = [0.0, 0.6]
     RE(finish_i24(zebra, pmac, shutter, dummy_params_without_pp))
-    # TODO FINISH ME!
+
+    fake_sup.eiger.assert_called_once_with("return-to-normal")
+
+    mock_pmac_string = get_mock_put(pmac.pmac_string)
+    mock_pmac_string.assert_has_calls([call("!x0y0z0", wait=True, timeout=ANY)])
+
+    mock_shutter = get_mock_put(shutter.control)
+    mock_shutter.assert_has_calls([call("Close", wait=True, timeout=ANY)])
 
 
 def test_run_aborted_plan(pmac: PMAC, RE):
