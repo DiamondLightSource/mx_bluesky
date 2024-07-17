@@ -1,4 +1,4 @@
-from unittest.mock import call, mock_open, patch
+from unittest.mock import ANY, MagicMock, call, mock_open, patch
 
 import pytest
 from dodal.devices.hutch_shutter import HutchShutter
@@ -12,7 +12,9 @@ from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1 import (
     get_chip_prog_values,
     get_prog_num,
     load_motion_program_data,
+    run_aborted_plan,
     start_i24,
+    tidy_up_after_collection_plan,
 )
 
 chipmap_str = """01status    P3011       1
@@ -147,3 +149,45 @@ def test_start_i24_with_eiger(
     ]
     mock_shutter = get_mock_put(shutter.control)
     mock_shutter.assert_has_calls(shutter_call_list)
+
+
+def test_run_aborted_plan(pmac: PMAC, RE):
+    RE(run_aborted_plan(pmac))
+
+    mock_pmac_string = get_mock_put(pmac.pmac_string)
+    pmac_string_calls = [
+        call("A", wait=True, timeout=ANY),
+        call("P2401=0", wait=True, timeout=ANY),
+    ]
+    mock_pmac_string.assert_has_calls(pmac_string_calls)
+
+
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.finish_i24")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sleep")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.DCID")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caput")
+async def test_tidy_up_after_collection_plan(
+    fake_caput,
+    fake_dcid,
+    fake_sleep,
+    mock_finish,
+    zebra,
+    pmac,
+    shutter,
+    RE,
+    dummy_params_without_pp,
+):
+    mock_finish.return_value = MagicMock()
+    RE(
+        tidy_up_after_collection_plan(
+            zebra, pmac, shutter, dummy_params_without_pp, fake_dcid
+        )
+    )
+    assert await zebra.inputs.soft_in_2.get_value() == "No"
+
+    fake_dcid.collection_complete.assert_called_once()
+    fake_dcid.notify_end.assert_called_once()
+
+    fake_caput.assert_has_calls([call(ANY, 0), call(ANY, "Done")])
+
+    mock_finish.assert_called_once()
