@@ -9,6 +9,7 @@ from ophyd_async.core import get_mock_put
 from mx_bluesky.I24.serial.fixed_target.ft_utils import MappingType
 from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1 import (
     datasetsizei24,
+    finish_i24,
     get_chip_prog_values,
     get_prog_num,
     load_motion_program_data,
@@ -149,6 +150,23 @@ def test_start_i24_with_eiger(
     ]
     mock_shutter = get_mock_put(shutter.control)
     mock_shutter.assert_has_calls(shutter_call_list)
+
+
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.write_userlog")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caget")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sup")
+def test_finish_i24(
+    fake_sup,
+    fake_caget,
+    fake_userlog,
+    zebra,
+    pmac,
+    shutter,
+    dummy_params_without_pp,
+    RE,
+):
+    RE(finish_i24(zebra, pmac, shutter, dummy_params_without_pp))
+    # TODO FINISH ME!
 
 
 def test_run_aborted_plan(pmac: PMAC, RE):

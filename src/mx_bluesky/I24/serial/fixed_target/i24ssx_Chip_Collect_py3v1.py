@@ -3,7 +3,6 @@ Fixed target data collection
 """
 
 import logging
-import os
 import shutil
 import sys
 import time
@@ -82,6 +81,38 @@ def copy_files_to_data_location(
     shutil.copy2(param_path / "parameters.txt", dest_dir / "parameters.txt")
     if map_type == MappingType.Lite:
         shutil.copy2(map_file / "currentchip.map", dest_dir / "currentchip.map")
+
+
+def write_userlog(
+    parameters: FixedTargetParameters,
+    filename: str,
+    transmission: float,
+    wavelength: float,
+):
+    # Write a record of what was collected to the processing directory
+    userlog_path = Path(parameters.visit) / f"processing/{parameters.directory}"
+    userlog_fid = f"{filename}_parameters.txt"
+    logger.debug("Write a user log in %s" % userlog_path)
+
+    userlog_path.mkdir(parents=True, exist_ok=True)
+
+    text = f"""
+        Fixed Target Data Collection Parameters\n
+        Data directory \t{parameters.collection_directory.as_posix()}\n
+        Filename \t{filename}\n
+        Shots per pos \t{parameters.num_exposures}\n
+        Total N images \t{parameters.total_num_images}\n
+        Exposure time \t{parameters.exposure_time_s}\n
+        Det distance \t{parameters.detector_distance_mm}\n
+        Transmission \t{transmission}\n
+        Wavelength \t{wavelength}\n
+        Detector type \t{parameters.detector_name}\n
+        Pump status \t{parameters.pump_repeat}\n
+        Pump exp time \t{parameters.laser_dwell_s}\n
+        Pump delay \t{parameters.laser_delay_s}\n
+    """
+    with open(userlog_path / userlog_fid, "w") as f:
+        f.write(text)
 
 
 @log.log_on_entry
@@ -508,7 +539,7 @@ def finish_i24(
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
 
     filename = parameters.filename
-    transmission = (float(caget(pv.pilat_filtertrasm)),)
+    transmission = float(caget(pv.pilat_filtertrasm))
     wavelength = float(caget(pv.dcm_lambda))
 
     if parameters.detector_name == "pilatus":
@@ -533,27 +564,7 @@ def finish_i24(
     logger.debug("Collection end time %s" % end_time)
 
     # Write a record of what was collected to the processing directory
-    userlog_path = Path(parameters.visit) / f"processing/{parameters.directory}"
-    userlog_fid = f"{filename}_parameters.txt"
-    logger.debug("Write a user log in %s" % userlog_path)
-
-    os.makedirs(userlog_path, exist_ok=True)
-
-    with open(userlog_path / userlog_fid, "w") as f:
-        f.write("Fixed Target Data Collection Parameters\n")
-        f.write(f"Data directory \t{parameters.collection_directory.as_posix()}\n")
-        f.write(f"Filename \t{filename}\n")
-        f.write(f"Shots per pos \t{parameters.num_exposures}\n")
-        f.write(f"Total N images \t{parameters.total_num_images}\n")
-        f.write(f"Exposure time \t{parameters.exposure_time_s}\n")
-        f.write(f"Det distance \t{parameters.detector_distance_mm}\n")
-        f.write(f"Transmission \t{transmission}\n")
-        f.write(f"Wavelength \t{wavelength}\n")
-        f.write(f"Detector type \t{parameters.detector_name}\n")
-        f.write(f"Pump status \t{parameters.pump_repeat}\n")
-        f.write(f"Pump exp time \t{parameters.laser_dwell_s}\n")
-        f.write(f"Pump delay \t{parameters.laser_delay_s}\n")
-
+    write_userlog(parameters, filename, transmission, wavelength)
     sleep(0.5)
 
     return end_time
