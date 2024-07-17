@@ -8,7 +8,6 @@ from typing import Optional
 from bluesky.log import logger as bluesky_logger
 from dodal.log import (
     ERROR_LOG_BUFFER_LINES,
-    # integrate_bluesky_and_ophyd_logging,
     set_up_all_logging_handlers,
 )
 from dodal.log import LOGGER as dodal_logger
@@ -22,7 +21,6 @@ class OphydDebugFilter(logging.Filter):  # NOTE yet to be fully tested
 
     def filter(self, record):
         return "ophyd" not in record.getMessage().lower()
-        # return not record.getMessage().lower().startswith("DEBUG:ophyd")
 
 
 # Logging set up
@@ -92,6 +90,7 @@ def _get_logging_file_path() -> Path:
 
 
 def integrate_bluesky_and_ophyd_logging(parent_logger: logging.Logger):
+    """Integrate only bluesky and ophyd_async loggers."""
     for logger in [bluesky_logger, ophyd_async_logger]:
         logger.parent = parent_logger
         logger.setLevel(logging.DEBUG)
