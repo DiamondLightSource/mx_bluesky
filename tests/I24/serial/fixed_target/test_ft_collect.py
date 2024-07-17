@@ -153,11 +153,15 @@ def test_start_i24_with_eiger(
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.write_userlog")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sleep")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.cagetstring")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caget")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sup")
 def test_finish_i24(
     fake_sup,
     fake_caget,
+    fake_cagetstring,
+    fake_sleep,
     fake_userlog,
     zebra,
     pmac,
@@ -165,6 +169,7 @@ def test_finish_i24(
     dummy_params_without_pp,
     RE,
 ):
+    fake_caget.side_effect = [0.0, 0.6]
     RE(finish_i24(zebra, pmac, shutter, dummy_params_without_pp))
     # TODO FINISH ME!
 
