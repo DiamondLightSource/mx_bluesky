@@ -632,7 +632,7 @@ def moveto_preset(
             beamstop.pos_select, BeamstopPositions.ROBOT, group=place
         )
         yield from bps.abs_set(backlight, BacklightPositions.OUT, group=place)
-        yield from bps.mv(det_stage.z, 1300)
+        yield from bps.abs_set(det_stage.z, 1300, group=place)
         yield from bps.wait(group=place)
 
     elif place == "collect_position":
