@@ -157,7 +157,11 @@ def test_start_i24_with_eiger(
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.cagetstring")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caget")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sup")
+@patch(
+    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.reset_zebra_when_collection_done_plan"
+)
 def test_finish_i24(
+    fake_reset_zebra,
     fake_sup,
     fake_caget,
     fake_cagetstring,
@@ -170,7 +174,10 @@ def test_finish_i24(
     RE,
 ):
     fake_caget.side_effect = [0.0, 0.6]
+    fake_cagetstring.return_value = "chip_01"
     RE(finish_i24(zebra, pmac, shutter, dummy_params_without_pp))
+
+    fake_reset_zebra.assert_called_once()
 
     fake_sup.eiger.assert_called_once_with("return-to-normal")
 
@@ -179,6 +186,8 @@ def test_finish_i24(
 
     mock_shutter = get_mock_put(shutter.control)
     mock_shutter.assert_has_calls([call("Close", wait=True, timeout=ANY)])
+
+    fake_userlog.assert_called_once_with(dummy_params_without_pp, "chip_01", 0.0, 0.6)
 
 
 def test_run_aborted_plan(pmac: PMAC, RE):
