@@ -634,9 +634,9 @@ def main_fixed_target_plan(
     logger.info("Opening fast shutter.")
     yield from open_fast_shutter(zebra)
 
-    logger.info(f"Run PMAC with program number {prog_num}")
-    yield from bps.abs_set(pmac.pmac_string, f"&2b{prog_num}r", wait=True)
-    sleep(1.0)
+    # logger.info(f"Run PMAC with program number {prog_num}")
+    # yield from bps.abs_set(pmac.pmac_string, f"&2b{prog_num}r", wait=True)
+    # sleep(1.0)
 
     # Kick off the StartOfCollect script
     logger.debug("Notify DCID of the start of the collection.")
@@ -652,6 +652,9 @@ def main_fixed_target_plan(
             parameters,
         )
 
+    logger.info(f"Run PMAC with program number {prog_num}")
+    yield from bps.abs_set(pmac.run_program, prog_num, wait=True)
+    # TODO Not sure bit before will even work with this?
     logger.info("Data Collection running")
 
     timeout_time = (
