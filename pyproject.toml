@@ -23,7 +23,7 @@ dependencies = [
     "pydantic",
     "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@a4adbadfaae60b5158cf19647dba42b79280e103",
     "fastapi[all]<0.99",
-    "blueapi>=0.4.3-a3",
+    "blueapi @ git+https://github.com/DiamondLightSource/blueapi.git@main",
 ]
 dynamic = ["version"]
 license.file = "LICENSE"
