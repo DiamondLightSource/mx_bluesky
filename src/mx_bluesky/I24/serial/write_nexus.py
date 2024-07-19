@@ -91,7 +91,7 @@ def call_nexgen(
             "transmission": transmission[0],
             "visitpath": os.fspath(meta_h5.parent),
             "wavelength": wavelength,
-            "bit_depth": bit_depth,
+            "bit_depth": bit_depth,  # NOTE requires nexgen-server to use nexgen>=0.9.4
         }
         logger.info(f"Sending POST request to {url} with payload:")
         logger.info(pprint.pformat(payload))
