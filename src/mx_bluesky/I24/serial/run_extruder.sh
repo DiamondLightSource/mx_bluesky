@@ -15,5 +15,5 @@ edm -x "${edm_path}/EX-gui/DiamondExtruder-I24-py3v1.edl"
 
 echo "Edm screen closed, bye!"
 
-pgrep blueapi | xargs kill -9
+pgrep blueapi | xargs kill
 echo "Blueapi process killed"
