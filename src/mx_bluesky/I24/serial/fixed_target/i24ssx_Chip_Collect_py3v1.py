@@ -19,6 +19,7 @@ from dodal.common import inject
 from dodal.devices.hutch_shutter import HutchShutter, ShutterDemand
 from dodal.devices.i24.aperture import Aperture
 from dodal.devices.i24.beamstop import Beamstop
+from dodal.devices.i24.dcm import DCM
 from dodal.devices.i24.dual_backlight import DualBacklight
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC
@@ -534,13 +535,14 @@ def finish_i24(
     zebra: Zebra,
     pmac: PMAC,
     shutter: HutchShutter,
+    dcm: DCM,
     parameters: FixedTargetParameters,
 ):
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
 
     complete_filename: str
     transmission = float(caget(pv.pilat_filtertrasm))
-    wavelength = float(caget(pv.dcm_lambda))
+    wavelength = yield from bps.rd(dcm.wavelength_in_a)
 
     if parameters.detector_name == "pilatus":
         logger.debug("Finish I24 Pilatus")
@@ -592,6 +594,7 @@ def main_fixed_target_plan(
     beamstop: Beamstop,
     detector_stage: DetectorMotion,
     shutter: HutchShutter,
+    dcm: DCM,
     parameters: FixedTargetParameters,
     dcid: DCID,
 ) -> MsgGenerator:
@@ -642,6 +645,7 @@ def main_fixed_target_plan(
     logger.debug("Notify DCID of the start of the collection.")
     dcid.notify_start()  # NOTE This can bo before run_program
 
+    wavelength = yield from bps.rd(dcm.wavelength_in_a)
     if parameters.detector_name == "eiger":
         # TODO can be moved before prog_num once
         # https://github.com/DiamondLightSource/nexgen/issues/266 is done
@@ -650,6 +654,7 @@ def main_fixed_target_plan(
             chip_prog_dict,
             start_time,
             parameters,
+            wavelength,
         )
 
     logger.info(f"Run PMAC with program number {prog_num}")
@@ -696,6 +701,7 @@ def tidy_up_after_collection_plan(
     zebra: Zebra,
     pmac: PMAC,
     shutter: HutchShutter,
+    dcm: DCM,
     parameters: FixedTargetParameters,
     dcid: DCID,
 ) -> MsgGenerator:
@@ -716,7 +722,7 @@ def tidy_up_after_collection_plan(
         caput(pv.eiger_acquire, 0)
         caput(pv.eiger_ODcapture, "Done")
 
-    end_time = yield from finish_i24(zebra, pmac, shutter, parameters)
+    end_time = yield from finish_i24(zebra, pmac, shutter, dcm, parameters)
 
     dcid.collection_complete(end_time, aborted=ABORTED)
     logger.debug("Notify DCID of end of collection.")
@@ -734,6 +740,7 @@ def run_fixed_target_plan(
     beamstop: Beamstop = inject("beamstop"),
     detector_stage: DetectorMotion = inject("detector_motion"),
     shutter: HutchShutter = inject("shutter"),
+    dcm: DCM = inject("dcm"),
 ) -> MsgGenerator:
     setup_logging()
 
@@ -774,13 +781,14 @@ def run_fixed_target_plan(
             beamstop,
             detector_stage,
             shutter,
+            dcm,
             parameters,
             dcid,
         ),
         except_plan=lambda e: (yield from run_aborted_plan(pmac)),
         final_plan=lambda: (
             yield from tidy_up_after_collection_plan(
-                zebra, pmac, shutter, parameters, dcid
+                zebra, pmac, shutter, dcm, parameters, dcid
             )
         ),
         auto_raise=False,

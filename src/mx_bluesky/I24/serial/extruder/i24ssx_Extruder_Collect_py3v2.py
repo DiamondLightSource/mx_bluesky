@@ -22,6 +22,7 @@ from dodal.common import inject
 from dodal.devices.hutch_shutter import HutchShutter, ShutterDemand
 from dodal.devices.i24.aperture import Aperture
 from dodal.devices.i24.beamstop import Beamstop
+from dodal.devices.i24.dcm import DCM
 from dodal.devices.i24.dual_backlight import DualBacklight
 from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3, Zebra
@@ -192,6 +193,7 @@ def main_extruder_plan(
     beamstop: Beamstop,
     detector_stage: DetectorMotion,
     shutter: HutchShutter,
+    dcm: DCM,
     parameters: ExtruderParameters,
     dcid: DCID,
     start_time: datetime,
@@ -359,8 +361,9 @@ def main_extruder_plan(
     dcid.notify_start()
 
     if parameters.detector_name == "eiger":
+        wavelength = yield from bps.rd(dcm.wavelength_in_a)
         logger.debug("Call nexgen server for nexus writing.")
-        call_nexgen(None, start_time, parameters, "extruder")
+        call_nexgen(None, start_time, parameters, wavelength, "extruder")
 
     timeout_time = time.time() + parameters.num_images * parameters.exposure_time_s + 10
 
@@ -456,6 +459,7 @@ def run_extruder_plan(
     beamstop: Beamstop = inject("beamstop"),
     detector_stage: DetectorMotion = inject("detector_motion"),
     shutter: HutchShutter = inject("shutter"),
+    dcm: DCM = inject("dcm"),
 ) -> MsgGenerator:
     setup_logging()
     start_time = datetime.now()
@@ -480,6 +484,7 @@ def run_extruder_plan(
             detector_stage,
             shutter,
             parameters,
+            dcm,
             dcid,
             start_time,
         ),

@@ -155,13 +155,6 @@ dcm_pitch2 = "BL24I-MO-DCM-01:XTAL2:PITCH"
 dcm_lambda = "BL24I-MO-DCM-01:LAMBDA"
 dcm_energy = "BL24I-MO-DCM-01:ENERGY"
 
-# OLD Mono. Left for short term reference only 10Nov21
-# dcm_bragg  = 'BL24I-OP-DCM-01:BRAGG'
-# dcm_t2     = 'BL24I-OP-DCM-01:T2'
-# dcm_roll1  = 'BL24I-OP-DCM-01:ROLL1'
-# dcm_pitch2 = 'BL24I-OP-DCM-01:PITCH2'
-# dcm_lambda = 'BL24I-OP-DCM-01:LAMBDA'
-# dcm_energy = 'BL24I-OP-DCM-01:ENERGY'
 # S2
 s2_x_plus = "BL24I-AL-SLITS-02:X:PLUS"
 s2_x_minus = "BL24I-AL-SLITS-02:X:MINUS"

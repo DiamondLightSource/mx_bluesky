@@ -1,5 +1,6 @@
 from unittest.mock import ANY, MagicMock, call, mock_open, patch
 
+import bluesky.plan_stubs as bps
 import pytest
 from dodal.devices.hutch_shutter import HutchShutter
 from dodal.devices.i24.pmac import PMAC
@@ -22,6 +23,11 @@ chipmap_str = """01status    P3011       1
 02status    P3021       0
 03status    P3031       0
 04status    P3041       0"""
+
+
+def fake_generator(value):
+    yield from bps.null()
+    return value
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caput")
@@ -160,7 +166,9 @@ def test_start_i24_with_eiger(
 @patch(
     "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.reset_zebra_when_collection_done_plan"
 )
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.bps.rd")
 def test_finish_i24(
+    fake_read,
     fake_reset_zebra,
     fake_sup,
     fake_caget,
@@ -170,12 +178,14 @@ def test_finish_i24(
     zebra,
     pmac,
     shutter,
+    dcm,
     dummy_params_without_pp,
     RE,
 ):
-    fake_caget.side_effect = [0.0, 0.6]
+    fake_read.side_effect = [fake_generator(0.6)]
+    fake_caget.return_value = 0.0
     fake_cagetstring.return_value = "chip_01"
-    RE(finish_i24(zebra, pmac, shutter, dummy_params_without_pp))
+    RE(finish_i24(zebra, pmac, shutter, dcm, dummy_params_without_pp))
 
     fake_reset_zebra.assert_called_once()
 
@@ -213,13 +223,14 @@ async def test_tidy_up_after_collection_plan(
     zebra,
     pmac,
     shutter,
+    dcm,
     RE,
     dummy_params_without_pp,
 ):
     mock_finish.return_value = MagicMock()
     RE(
         tidy_up_after_collection_plan(
-            zebra, pmac, shutter, dummy_params_without_pp, fake_dcid
+            zebra, pmac, shutter, dcm, dummy_params_without_pp, fake_dcid
         )
     )
     assert await zebra.inputs.soft_in_2.get_value() == "No"

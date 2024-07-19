@@ -3,6 +3,9 @@ from typing import List
 from unittest.mock import ANY, MagicMock, call, mock_open, patch
 
 import pytest
+from dodal.devices.i24.beamstop import Beamstop
+from dodal.devices.i24.dual_backlight import DualBacklight
+from dodal.devices.i24.I24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC
 from ophyd_async.core import get_mock_put
 
@@ -96,20 +99,28 @@ async def test_moveto_chip_aspecific(fake_log: MagicMock, pmac: PMAC, RE):
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.caput")
 async def test_moveto_preset(
-    fake_caput: MagicMock, fake_log: MagicMock, pmac: PMAC, RE
+    fake_caput: MagicMock,
+    fake_log: MagicMock,
+    pmac: PMAC,
+    beamstop: Beamstop,
+    backlight: DualBacklight,
+    detector_stage: DetectorMotion,
+    RE,
 ):
-    RE(moveto_preset("zero", pmac))
+    RE(moveto_preset("zero", pmac, beamstop, backlight, detector_stage))
     assert await pmac.pmac_string.get_value() == "!x0y0z0"
 
-    RE(moveto_preset("load_position", pmac))
-    assert fake_caput.call_count == 3
+    RE(moveto_preset("load_position", pmac, beamstop, backlight, detector_stage))
+    assert await beamstop.pos_select.get_value() == "Robot"
+    assert await backlight.backlight_position.pos_level.get_value() == "Out"
+    assert await detector_stage.z.user_readback.get_value() == 1300
 
 
 @pytest.mark.parametrize(
-    "pos_request, expected_num_caput, expected_pmac_move",
+    "pos_request, expected_num_caput, expected_pmac_move, other_devices",
     [
-        ("collect_position", 3, [0.0, 0.0, 0.0]),
-        ("microdrop_position", 0, [6.0, -7.8, 0.0]),
+        ("collect_position", 1, [0.0, 0.0, 0.0], True),
+        ("microdrop_position", 0, [6.0, -7.8, 0.0], False),
     ],
 )
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Manager_py3v1.setup_logging")
@@ -120,15 +131,23 @@ async def test_moveto_preset_with_pmac_move(
     pos_request: str,
     expected_num_caput: int,
     expected_pmac_move: List,
+    other_devices: bool,
     pmac: PMAC,
+    beamstop: Beamstop,
+    backlight: DualBacklight,
+    detector_stage: DetectorMotion,
     RE,
 ):
-    RE(moveto_preset(pos_request, pmac))
+    RE(moveto_preset(pos_request, pmac, beamstop, backlight, detector_stage))
     assert fake_caput.call_count == expected_num_caput
 
     assert await pmac.x.user_readback.get_value() == expected_pmac_move[0]
     assert await pmac.y.user_readback.get_value() == expected_pmac_move[1]
     assert await pmac.z.user_readback.get_value() == expected_pmac_move[2]
+
+    if other_devices:
+        assert await beamstop.pos_select.get_value() == "Data Collection"
+        assert await backlight.backlight_position.pos_level.get_value() == "In"
 
 
 @pytest.mark.parametrize(

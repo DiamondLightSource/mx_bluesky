@@ -141,11 +141,12 @@ def test_run_extruder_quickshot_with_eiger(
     backlight,
     beamstop,
     detector_stage,
+    dcm,
     dummy_params,
 ):
     fake_start_time = MagicMock()
     # Mock end of data collection (zebra disarmed)
-    fake_read.side_effect = [fake_generator(0)]
+    fake_read.side_effect = [fake_generator(0.6), fake_generator(0)]
     RE(
         main_extruder_plan(
             zebra,
@@ -154,12 +155,13 @@ def test_run_extruder_quickshot_with_eiger(
             beamstop,
             detector_stage,
             shutter,
+            dcm,
             dummy_params,
             fake_dcid,
             fake_start_time,
         )
     )
-    assert fake_nexgen.call_count == 1
+    fake_nexgen.assert_called_once_with(None, ANY, dummy_params, 0.6, "extruder")
     assert fake_dcid.generate_dcid.call_count == 1
     assert fake_dcid.notify_start.call_count == 1
     assert fake_sup.setup_beamline_for_collection_plan.call_count == 1
@@ -194,6 +196,7 @@ def test_run_extruder_pump_probe_with_pilatus(
     backlight,
     beamstop,
     detector_stage,
+    dcm,
     dummy_params_pp,
 ):
     fake_start_time = MagicMock()
@@ -207,6 +210,7 @@ def test_run_extruder_pump_probe_with_pilatus(
             beamstop,
             detector_stage,
             shutter,
+            dcm,
             dummy_params_pp,
             fake_dcid,
             fake_start_time,

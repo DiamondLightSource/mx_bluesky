@@ -10,15 +10,16 @@ import requests
 
 from mx_bluesky.I24.serial.fixed_target.ft_utils import ChipType, MappingType
 from mx_bluesky.I24.serial.parameters import ExtruderParameters, FixedTargetParameters
-from mx_bluesky.I24.serial.setup_beamline import Eiger, caget, cagetstring, pv
+from mx_bluesky.I24.serial.setup_beamline import Eiger, caget, cagetstring
 
 logger = logging.getLogger("I24ssx.nexus_writer")
 
 
 def call_nexgen(
-    chip_prog_dict: Dict,
+    chip_prog_dict: Dict | None,
     start_time: datetime,
     parameters: ExtruderParameters | FixedTargetParameters,
+    wavelength: float,
     expt_type: Literal["fixed-target", "extruder"] = "fixed-target",
 ):
     det_type = parameters.detector_name
@@ -42,7 +43,7 @@ def call_nexgen(
         currentchipmap = None
         pump_status = parameters.pump_status
 
-    filename_prefix = cagetstring(pv.eiger_ODfilenameRBV)
+    filename_prefix = cagetstring(Eiger.pv.filenameRBV)
     meta_h5 = (
         pathlib.Path(parameters.visit)
         / parameters.directory
@@ -62,11 +63,10 @@ def call_nexgen(
         logger.warning(f"Giving up waiting for {meta_h5} after {max_wait} seconds")
         return False
 
-    transmission = (float(caget(pv.pilat_filtertrasm)),)
-    wavelength = float(caget(pv.dcm_lambda))
+    transmission = (float(caget(Eiger.pv.transmission)),)
 
     if det_type == Eiger.name:
-        bit_depth = int(caget(pv.eiger_bitdepthrbv))
+        bit_depth = int(caget(Eiger.pv.bit_depth))
         logger.debug(
             f"Call to nexgen server with the following chip definition: \n{chip_prog_dict}"
         )
@@ -77,7 +77,7 @@ def call_nexgen(
 
         payload = {
             "beamline": "i24",
-            "beam_center": [caget(pv.eiger_beamx), caget(pv.eiger_beamy)],
+            "beam_center": [caget(Eiger.pv.beamx), caget(Eiger.pv.beamy)],
             "chipmap": currentchipmap,
             "chip_info": chip_prog_dict,
             "det_dist": parameters.detector_distance_mm,
@@ -91,7 +91,7 @@ def call_nexgen(
             "transmission": transmission[0],
             "visitpath": os.fspath(meta_h5.parent),
             "wavelength": wavelength,
-            "bit_depth": bit_depth,  # NOTE requires nexgen-server to use nexgen>=0.9.4
+            "bit_depth": bit_depth,
         }
         logger.info(f"Sending POST request to {url} with payload:")
         logger.info(pprint.pformat(payload))
