@@ -637,18 +637,12 @@ def main_fixed_target_plan(
     logger.info("Opening fast shutter.")
     yield from open_fast_shutter(zebra)
 
-    # logger.info(f"Run PMAC with program number {prog_num}")
-    # yield from bps.abs_set(pmac.pmac_string, f"&2b{prog_num}r", wait=True)
-    # sleep(1.0)
-
     # Kick off the StartOfCollect script
     logger.debug("Notify DCID of the start of the collection.")
     dcid.notify_start()  # NOTE This can bo before run_program
 
     wavelength = yield from bps.rd(dcm.wavelength_in_a)
     if parameters.detector_name == "eiger":
-        # TODO can be moved before prog_num once
-        # https://github.com/DiamondLightSource/nexgen/issues/266 is done
         logger.debug("Start nexus writing service.")
         call_nexgen(
             chip_prog_dict,
@@ -659,7 +653,7 @@ def main_fixed_target_plan(
 
     logger.info(f"Run PMAC with program number {prog_num}")
     yield from bps.abs_set(pmac.run_program, prog_num, wait=True)
-    # TODO Not sure bit before will even work with this?
+    # TODO Not sure bit below will even work with this?
     logger.info("Data Collection running")
 
     timeout_time = (
