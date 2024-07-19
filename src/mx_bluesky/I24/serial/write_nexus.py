@@ -66,6 +66,7 @@ def call_nexgen(
     wavelength = float(caget(pv.dcm_lambda))
 
     if det_type == Eiger.name:
+        bit_depth = int(caget(pv.eiger_bitdepthrbv))
         logger.debug(
             f"Call to nexgen server with the following chip definition: \n{chip_prog_dict}"
         )
@@ -90,6 +91,7 @@ def call_nexgen(
             "transmission": transmission[0],
             "visitpath": os.fspath(meta_h5.parent),
             "wavelength": wavelength,
+            "bit_depth": bit_depth,
         }
         logger.info(f"Sending POST request to {url} with payload:")
         logger.info(pprint.pformat(payload))
