@@ -64,6 +64,7 @@ class Eiger:
         sequence_id = pv.eiger_seqID
         beamx = pv.eiger_beamx
         beamy = pv.eiger_beamy
+        bit_depth = pv.eiger_bitdepthrbv
 
     def __str__(self) -> str:
         return self.name

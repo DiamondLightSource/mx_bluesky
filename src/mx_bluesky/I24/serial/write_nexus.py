@@ -66,7 +66,7 @@ def call_nexgen(
     transmission = (float(caget(Eiger.pv.transmission)),)
 
     if det_type == Eiger.name:
-        bit_depth = int(caget(pv.eiger_bitdepthrbv))
+        bit_depth = int(caget(Eiger.pv.bit_depth))
         logger.debug(
             f"Call to nexgen server with the following chip definition: \n{chip_prog_dict}"
         )
