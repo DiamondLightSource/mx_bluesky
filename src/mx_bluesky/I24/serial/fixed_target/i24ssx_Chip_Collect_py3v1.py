@@ -669,14 +669,6 @@ def main_fixed_target_plan(
         flush_print(line_of_text)
         sleep(0.5)
         i += 1
-        status = yield from bps.rd(pmac.scanstatus)
-        if int(status) == 0:
-            # As soon as the PVAR P2401 is set to 0, exit.
-            # Epics checks the geobrick and updates this PV every 1s or so.
-            # Once the collection is done, it will be set to 0.
-            print(status)
-            logger.warning("Data Collection Finished")
-            break
         if time.time() >= timeout_time:
             logger.warning(
                 """
