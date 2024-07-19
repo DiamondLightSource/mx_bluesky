@@ -4,7 +4,7 @@ major 4
 minor 0
 release 1
 x 1018
-y 134
+y 277
 w 700
 h 900
 font "arial-medium-r-18.0"
@@ -854,31 +854,6 @@ value {
   "Transmission"
 }
 autoSize
-endObjectProperties
-
-# (Message Button)
-object activeMessageButtonClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 561
-y 400
-w 100
-h 40
-fgColor index 0
-onColor index 21
-offColor index 21
-topShadowColor index 1
-botShadowColor index 11
-controlPv "BL24I-EA-IOC-12:GP8"
-pressValue "1"
-releaseValue "1"
-onLabel "Abort"
-offLabel "Abort"
-toggle
-3d
-font "arial-medium-r-24.0"
 endObjectProperties
 
 # (Message Button)
@@ -2272,6 +2247,28 @@ numPvs 4
 numDsps 1
 displayFileName {
   0 "EDM_LOCATION/DetStage.edl"
+}
+endObjectProperties
+
+# (Shell Command)
+object shellCmdClass
+beginObjectProperties
+major 4
+minor 3
+release 0
+x 559
+y 399
+w 100
+h 40
+fgColor index 0
+bgColor index 21
+topShadowColor index 0
+botShadowColor index 11
+font "arial-medium-r-24.0"
+buttonLabel "Abort"
+numCmds 1
+command {
+  0 "blueapi -c CONFIG_LOCATION controller abort"
 }
 endObjectProperties
 

@@ -4,7 +4,7 @@ major 4
 minor 0
 release 1
 x 2870
-y 208
+y 245
 w 1030
 h 950
 font "arial-medium-r-18.0"
@@ -1348,28 +1348,6 @@ value {
   "Map Type"
 }
 autoSize
-endObjectProperties
-
-# (Shell Command)
-object shellCmdClass
-beginObjectProperties
-major 4
-minor 3
-release 0
-x 805
-y 730
-w 135
-h 50
-fgColor index 1
-bgColor index 20
-topShadowColor index 3
-botShadowColor index 14
-font "helvetica-bold-r-24.0"
-buttonLabel "Abort"
-numCmds 1
-command {
-  0 "caput ME14E-MO-IOC-01:GP9 1"
-}
 endObjectProperties
 
 # (Static Text)
@@ -4087,6 +4065,28 @@ numPvs 4
 numDsps 1
 displayFileName {
   0 "EDM_LOCATION/DetStage.edl"
+}
+endObjectProperties
+
+# (Shell Command)
+object shellCmdClass
+beginObjectProperties
+major 4
+minor 3
+release 0
+x 800
+y 730
+w 135
+h 50
+fgColor index 0
+bgColor index 20
+topShadowColor index 0
+botShadowColor index 14
+font "helvetica-bold-r-24.0"
+buttonLabel "Abort"
+numCmds 1
+command {
+  0 "blueapi -c CONFIG_LOCATION controller abort"
 }
 endObjectProperties
 
