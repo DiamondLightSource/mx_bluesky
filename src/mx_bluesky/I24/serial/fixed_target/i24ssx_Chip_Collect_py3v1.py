@@ -639,7 +639,7 @@ def main_fixed_target_plan(
 
     # Kick off the StartOfCollect script
     logger.debug("Notify DCID of the start of the collection.")
-    dcid.notify_start()  # NOTE This can bo before run_program
+    dcid.notify_start()
 
     wavelength = yield from bps.rd(dcm.wavelength_in_a)
     if parameters.detector_name == "eiger":
@@ -651,31 +651,13 @@ def main_fixed_target_plan(
             wavelength,
         )
 
+    timeout_time = parameters.total_num_images * parameters.exposure_time_s + 60
+    # TODO FIXME this is ok for multiple exposure and pump repeat shorts but
+    # it won't work with various pump repeats depending on timings.
+    # Need to calculate it. pumpprobecalc might come in handy there
     logger.info(f"Run PMAC with program number {prog_num}")
-    yield from bps.abs_set(pmac.run_program, prog_num, wait=True)
-    # TODO Not sure bit below will even work with this?
+    yield from bps.abs_set(pmac.run_program, prog_num, timeout_time, wait=True)
     logger.info("Data Collection running")
-
-    timeout_time = (
-        time.time() + parameters.total_num_images * parameters.exposure_time_s + 60
-    )
-
-    i = 0
-    text_list = ["|", "/", "-", "\\"]
-    while True:
-        # TODO use https://github.com/DiamondLightSource/dodal/pull/661
-        # See Dodal 650
-        line_of_text = "\r\t\t\t Waiting   " + 30 * ("%s" % text_list[i % 4])
-        flush_print(line_of_text)
-        sleep(0.5)
-        i += 1
-        if time.time() >= timeout_time:
-            logger.warning(
-                """
-                Something went wrong and data collection timed out. Aborting.
-                """
-            )
-            raise TimeoutError("Data collection timed out.")
 
     logger.debug("Collection completed without errors.")
     global ABORTED
