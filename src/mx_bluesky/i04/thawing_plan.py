@@ -1,6 +1,7 @@
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
-from dodal.common import MsgGenerator, inject
+from dls_bluesky_core.core import MsgGenerator
+from dodal.common import inject
 from dodal.devices.smargon import Smargon
 from dodal.devices.thawer import Thawer, ThawerStates
 
@@ -22,12 +23,13 @@ def thaw(
                                      Defaults to inject("smargon")
     """
     inital_velocity = yield from bps.rd(smargon.omega.velocity)
-    new_velocity = abs(rotation / time_to_thaw)
+    new_velocity = abs(rotation / time_to_thaw) * 2.0
 
     def do_thaw():
         yield from bps.abs_set(smargon.omega.velocity, new_velocity, wait=True)
         yield from bps.abs_set(thawer.control, ThawerStates.ON, wait=True)
         yield from bps.rel_set(smargon.omega, rotation, wait=True)
+        yield from bps.rel_set(smargon.omega, -rotation, wait=True)
 
     def cleanup():
         yield from bps.abs_set(smargon.omega.velocity, inital_velocity, wait=True)

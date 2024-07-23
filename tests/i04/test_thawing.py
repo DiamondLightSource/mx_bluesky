@@ -86,9 +86,9 @@ def test_given_moving_smargon_gives_error_then_velocity_restored_and_thawer_turn
 @pytest.mark.parametrize(
     "time, rotation, expected_speed",
     [
-        (10, 360, 36),
-        (3.5, 100, pytest.approx(28.5714285)),
-        (50, -100, 2),
+        (10, 360, 72),
+        (3.5, 100, pytest.approx(57.142857)),
+        (50, -100, 4),
     ],
 )
 def test_given_different_rotations_and_times_then_velocity_correct(
@@ -114,6 +114,7 @@ def test_given_different_rotations_then_motor_moved_relative(
     set_mock_value(smargon.omega.user_readback, start_pos)
     RE = RunEngine()
     RE(thaw(10, rotation, thawer=thawer, smargon=smargon))
-    get_mock_put(smargon.omega.user_setpoint).assert_called_with(
-        expected_end, wait=ANY, timeout=ANY
-    )
+    assert get_mock_put(smargon.omega.user_setpoint).call_args_list == [
+        call(expected_end, wait=ANY, timeout=ANY),
+        call(start_pos, wait=ANY, timeout=ANY),
+    ]
