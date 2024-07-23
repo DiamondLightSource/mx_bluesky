@@ -24,7 +24,9 @@ def setup_beamline_for_collection_plan(
     yield from bps.abs_set(aperture.position, AperturePositions.IN, group=group)
     yield from bps.abs_set(backlight, BacklightPositions.OUT, group=group)
     yield from bps.sleep(3)  # Not sure needed - to test
-    yield from bps.abs_set(beamstop.pos_select, BeamstopPositions.DATA_COLLECTION)
+    yield from bps.abs_set(
+        beamstop.pos_select, BeamstopPositions.DATA_COLLECTION, group=group
+    )
     yield from bps.abs_set(beamstop.y_rotation, 0, group=group)
     yield from bps.sleep(4)  # Not sure needed - to test
 
