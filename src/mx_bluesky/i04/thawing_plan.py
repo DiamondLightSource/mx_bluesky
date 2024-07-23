@@ -1,7 +1,7 @@
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
-from dodal.common import inject
 from dls_bluesky_core.core import MsgGenerator
+from dodal.common import inject
 from dodal.devices.smargon import Smargon
 from dodal.devices.thawer import Thawer, ThawerStates
 
