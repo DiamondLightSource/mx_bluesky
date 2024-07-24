@@ -31,5 +31,12 @@ def get_chip_format(chip_type: ChipType) -> ChipDescription:
             defaults["y_step_size"] = float(caget(pv.me14e_gp99))
             defaults["x_blocks"] = defaults["y_blocks"] = 1
             defaults["b2b_horz"] = defaults["b2b_vert"] = 0.0
+        case ChipType.MISP:
+            # TODO double check this because in other parts of the code
+            # they're read from PVs
+            defaults["x_num_steps"] = defaults["y_num_steps"] = 78
+            defaults["x_step_size"] = defaults["y_step_size"] = 0.1193
+            defaults["x_blocks"] = defaults["y_blocks"] = 1
+            defaults["b2b_horz"] = defaults["b2b_vert"] = 0.0
     chip_params: Dict[str, Any] = {"chip_type": chip_type, **defaults}
     return ChipDescription(**chip_params)
