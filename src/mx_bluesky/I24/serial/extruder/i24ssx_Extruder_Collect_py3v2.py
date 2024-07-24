@@ -54,8 +54,6 @@ from mx_bluesky.I24.serial.write_nexus import call_nexgen
 usage = "%(prog)s command [options]"
 logger = logging.getLogger("I24ssx.extruder")
 
-ABORTED = False
-
 SAFE_DET_Z = 1480
 
 
@@ -391,22 +389,22 @@ def main_extruder_plan(
             raise TimeoutError("Data collection timed out.")
 
     logger.debug("Collection completed without errors.")
-    global ABORTED
-    ABORTED = False
 
 
 @log.log_on_entry
-def collection_aborted_plan(zebra: Zebra, detector_name: str) -> MsgGenerator:
+def collection_aborted_plan(
+    zebra: Zebra, detector_name: str, dcid: DCID
+) -> MsgGenerator:
     """A plan to run in case the collection is aborted before the end."""
-    global ABORTED
-    ABORTED = True
     logger.warning("Data Collection Aborted")
     yield from disarm_zebra(zebra)  # If aborted/timed out zebra still armed
     if detector_name == "pilatus":
         caput(pv.pilat_acquire, 0)
     elif detector_name == "eiger":
         caput(pv.eiger_acquire, 0)
-    sleep(1.0)
+    sleep(0.5)
+    end_time = datetime.now()
+    dcid.collection_complete(end_time, aborted=True)
 
 
 @log.log_on_entry
@@ -424,8 +422,6 @@ def tidy_up_at_collection_end_plan(
         parameters (ExtruderParameters): Collection parameters.
     """
     yield from reset_zebra_when_collection_done_plan(zebra)
-
-    end_time = datetime.now()
 
     if parameters.detector_name == "pilatus":
         logger.info("Pilatus Acquire STOP")
@@ -447,9 +443,20 @@ def tidy_up_at_collection_end_plan(
     logger.debug("Close hutch shutter")
     yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
 
-    dcid.collection_complete(end_time, aborted=ABORTED)
     dcid.notify_end()
+
+
+@log.log_on_entry
+def collection_complete_plan(collection_directory: Path, dcid: DCID):
+    end_time = datetime.now()
+    dcid.collection_complete(end_time, aborted=False)
     logger.info("End Time = %s" % end_time.ctime())
+
+    # Copy parameter file
+    shutil.copy2(
+        PARAM_FILE_PATH / PARAM_FILE_NAME,
+        collection_directory / PARAM_FILE_NAME,
+    )
 
 
 def run_extruder_plan(
@@ -489,16 +496,13 @@ def run_extruder_plan(
             start_time,
         ),
         except_plan=lambda e: (
-            yield from collection_aborted_plan(zebra, parameters.detector_name)
+            yield from collection_aborted_plan(zebra, parameters.detector_name, dcid)
+        ),
+        else_plan=lambda: (
+            yield from collection_complete_plan(parameters.collection_directory, dcid)
         ),
         final_plan=lambda: (
             yield from tidy_up_at_collection_end_plan(zebra, shutter, parameters, dcid)
         ),
         auto_raise=False,
-    )
-
-    # Copy parameter file
-    shutil.copy2(
-        PARAM_FILE_PATH / PARAM_FILE_NAME,
-        parameters.collection_directory / PARAM_FILE_NAME,
     )

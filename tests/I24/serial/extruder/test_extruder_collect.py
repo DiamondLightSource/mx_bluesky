@@ -253,7 +253,6 @@ def test_tidy_up_at_collection_end_plan_with_eiger(
     mock_shutter = get_mock_put(shutter.control)
     mock_shutter.assert_has_calls([call("Close", wait=True, timeout=10.0)])
 
-    assert fake_dcid.collection_complete.call_count == 1
     assert fake_dcid.notify_end.call_count == 1
     assert fake_caget.call_count == 1
 
@@ -265,9 +264,13 @@ def test_tidy_up_at_collection_end_plan_with_eiger(
 
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.sleep")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.DCID")
 @patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.disarm_zebra")
-def test_aborted_plan_with_pilatus(mock_disarm, fake_caput, fake_sleep, RE, zebra):
-    RE(collection_aborted_plan(zebra, "pilatus"))
+def test_aborted_plan_with_pilatus(
+    mock_disarm, fake_dcid, fake_caput, fake_sleep, RE, zebra
+):
+    RE(collection_aborted_plan(zebra, "pilatus", fake_dcid))
 
     mock_disarm.assert_called_once()
     fake_caput.assert_has_calls([call(ANY, 0)])
+    fake_dcid.collection_complete.assert_called_once_with(ANY, aborted=True)
