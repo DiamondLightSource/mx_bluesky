@@ -25,6 +25,7 @@ class ChipType(IntEnum):
     OxfordInner = 1
     Custom = 2
     Minichip = 3  # Mini oxford, 1 city block only
+    MISP = 4  # New PSI polymer chip
 
     def __str__(self) -> str:
         """Returns the chip name."""
