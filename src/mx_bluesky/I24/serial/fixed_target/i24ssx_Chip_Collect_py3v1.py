@@ -642,8 +642,8 @@ def main_fixed_target_plan(
 
     timeout_time = parameters.total_num_images * parameters.exposure_time_s + 60
     # TODO FIXME this is ok for multiple exposure and pump repeat shorts but
-    # it won't work with various pump repeats depending on timings.
-    # Need to calculate it. pumpprobecalc might come in handy there
+    # it may not work with various pump repeats depending on timings.
+    # See https://github.com/DiamondLightSource/mx_bluesky/issues/133
     logger.info(f"Run PMAC with program number {prog_num}")
     yield from bps.abs_set(pmac.run_program, prog_num, timeout_time, wait=True)
 
