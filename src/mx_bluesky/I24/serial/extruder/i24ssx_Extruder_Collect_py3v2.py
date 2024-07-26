@@ -388,6 +388,15 @@ def main_extruder_plan(
             )
             raise TimeoutError("Data collection timed out.")
 
+    if parameters.detector_name == "pilatus":
+        logger.info("Pilatus Acquire STOP")
+        caput(pv.pilat_acquire, 0)
+    elif parameters.detector_name == "eiger":
+        logger.info("Eiger Acquire STOP")
+        caput(pv.eiger_acquire, 0)
+        caput(pv.eiger_ODcapture, "Done")
+
+    sleep(0.5)
     logger.debug("Collection completed without errors.")
 
 
@@ -423,16 +432,6 @@ def tidy_up_at_collection_end_plan(
     """
     yield from reset_zebra_when_collection_done_plan(zebra)
 
-    if parameters.detector_name == "pilatus":
-        logger.info("Pilatus Acquire STOP")
-        caput(pv.pilat_acquire, 0)
-    elif parameters.detector_name == "eiger":
-        logger.info("Eiger Acquire STOP")
-        caput(pv.eiger_acquire, 0)
-        caput(pv.eiger_ODcapture, "Done")
-
-    sleep(0.5)
-
     # Clean Up
     if parameters.detector_name == "pilatus":
         sup.pilatus("return-to-normal")
@@ -447,7 +446,7 @@ def tidy_up_at_collection_end_plan(
 
 
 @log.log_on_entry
-def collection_complete_plan(collection_directory: Path, dcid: DCID):
+def collection_complete_plan(collection_directory: Path, dcid: DCID) -> MsgGenerator:
     end_time = datetime.now()
     dcid.collection_complete(end_time, aborted=False)
     logger.info("End Time = %s" % end_time.ctime())

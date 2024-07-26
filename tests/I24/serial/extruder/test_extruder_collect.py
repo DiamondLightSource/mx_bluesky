@@ -256,9 +256,6 @@ def test_tidy_up_at_collection_end_plan_with_eiger(
     assert fake_dcid.notify_end.call_count == 1
     assert fake_caget.call_count == 1
 
-    call_list = [call(ANY, 0), call(ANY, "Done")]
-    fake_caput.assert_has_calls(call_list)
-
     fake_sup.eiger.assert_called_once_with("return-to-normal")
 
 
