@@ -4,7 +4,6 @@ Fixed target data collection
 
 import logging
 import shutil
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -64,11 +63,6 @@ def setup_logging():
     # Log should now change name daily.
     logfile = time.strftime("i24fixedtarget_%d%B%y.log").lower()
     log.config(logfile)
-
-
-def flush_print(text):
-    sys.stdout.write(str(text))
-    sys.stdout.flush()
 
 
 def copy_files_to_data_location(
@@ -562,27 +556,22 @@ def finish_i24(
     logger.info("Closing shutter")
     yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
 
-    end_time = time.ctime()
-    logger.debug("Collection end time %s" % end_time)
-
     # Write a record of what was collected to the processing directory
     write_userlog(parameters, complete_filename, transmission, wavelength)
-    sleep(0.5)
-
-    return end_time
 
 
-def run_aborted_plan(pmac: PMAC):
+def run_aborted_plan(pmac: PMAC, dcid: DCID):
     """Plan to send pmac_strings to tell the PMAC when a collection has been aborted, \
         either by pressing the Abort button or because of a timeout, and to reset the \
         P variable.
     """
-    global ABORTED
-    ABORTED = True
     logger.warning("Data Collection Aborted")
     yield from bps.abs_set(pmac.pmac_string, "A", wait=True)
     yield from bps.sleep(1.0)
     yield from bps.abs_set(pmac.pmac_string, "P2401=0", wait=True)
+
+    end_time = datetime.now()
+    dcid.collection_complete(end_time, aborted=True)
 
 
 @log.log_on_entry
@@ -657,11 +646,21 @@ def main_fixed_target_plan(
     # Need to calculate it. pumpprobecalc might come in handy there
     logger.info(f"Run PMAC with program number {prog_num}")
     yield from bps.abs_set(pmac.run_program, prog_num, timeout_time, wait=True)
-    logger.info("Data Collection running")
 
     logger.debug("Collection completed without errors.")
-    global ABORTED
-    ABORTED = False
+
+
+@log.log_on_entry
+def collection_complete_plan(
+    dcid: DCID, collection_directory: Path, map_type: MappingType
+) -> MsgGenerator:
+    end_time = datetime.now()
+    logger.debug("Collection end time %s" % end_time)
+    dcid.collection_complete(end_time, aborted=False)
+
+    # Copy parameter file and eventual chip map to collection directory
+    copy_files_to_data_location(collection_directory, map_type=map_type)
+    yield from bps.null()
 
 
 @log.log_on_entry
@@ -680,19 +679,18 @@ def tidy_up_after_collection_plan(
     yield from close_fast_shutter(zebra)
     sleep(2.0)
 
+    # This probably should go in main then
     if parameters.detector_name == "pilatus":
         logger.debug("Pilatus Acquire STOP")
-        sleep(0.5)
         caput(pv.pilat_acquire, 0)
     elif parameters.detector_name == "eiger":
         logger.debug("Eiger Acquire STOP")
-        sleep(0.5)
         caput(pv.eiger_acquire, 0)
         caput(pv.eiger_ODcapture, "Done")
+    sleep(0.5)
 
-    end_time = yield from finish_i24(zebra, pmac, shutter, dcm, parameters)
+    yield from finish_i24(zebra, pmac, shutter, dcm, parameters)
 
-    dcid.collection_complete(end_time, aborted=ABORTED)
     logger.debug("Notify DCID of end of collection.")
     dcid.notify_end()
 
@@ -753,16 +751,11 @@ def run_fixed_target_plan(
             parameters,
             dcid,
         ),
-        except_plan=lambda e: (yield from run_aborted_plan(pmac)),
+        except_plan=lambda e: (yield from run_aborted_plan(pmac, dcid)),
         final_plan=lambda: (
             yield from tidy_up_after_collection_plan(
                 zebra, pmac, shutter, dcm, parameters, dcid
             )
         ),
         auto_raise=False,
-    )
-
-    # Copy parameter file and eventual chip map to collection directory
-    copy_files_to_data_location(
-        parameters.collection_directory, map_type=parameters.map_type
     )

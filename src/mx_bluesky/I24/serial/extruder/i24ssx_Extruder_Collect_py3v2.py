@@ -388,15 +388,6 @@ def main_extruder_plan(
             )
             raise TimeoutError("Data collection timed out.")
 
-    if parameters.detector_name == "pilatus":
-        logger.info("Pilatus Acquire STOP")
-        caput(pv.pilat_acquire, 0)
-    elif parameters.detector_name == "eiger":
-        logger.info("Eiger Acquire STOP")
-        caput(pv.eiger_acquire, 0)
-        caput(pv.eiger_ODcapture, "Done")
-
-    sleep(0.5)
     logger.debug("Collection completed without errors.")
 
 
@@ -446,7 +437,19 @@ def tidy_up_at_collection_end_plan(
 
 
 @log.log_on_entry
-def collection_complete_plan(collection_directory: Path, dcid: DCID) -> MsgGenerator:
+def collection_complete_plan(
+    collection_directory: Path, detector_name: str, dcid: DCID
+) -> MsgGenerator:
+    if detector_name == "pilatus":
+        logger.info("Pilatus Acquire STOP")
+        caput(pv.pilat_acquire, 0)
+    elif detector_name == "eiger":
+        logger.info("Eiger Acquire STOP")
+        caput(pv.eiger_acquire, 0)
+        caput(pv.eiger_ODcapture, "Done")
+
+    sleep(0.5)
+
     end_time = datetime.now()
     dcid.collection_complete(end_time, aborted=False)
     logger.info("End Time = %s" % end_time.ctime())
@@ -456,6 +459,7 @@ def collection_complete_plan(collection_directory: Path, dcid: DCID) -> MsgGener
         PARAM_FILE_PATH / PARAM_FILE_NAME,
         collection_directory / PARAM_FILE_NAME,
     )
+    yield from bps.null()
 
 
 def run_extruder_plan(

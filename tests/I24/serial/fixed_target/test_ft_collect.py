@@ -200,8 +200,9 @@ def test_finish_i24(
     fake_userlog.assert_called_once_with(dummy_params_without_pp, "chip_01", 0.0, 0.6)
 
 
-def test_run_aborted_plan(pmac: PMAC, RE):
-    RE(run_aborted_plan(pmac))
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.DCID")
+def test_run_aborted_plan(fake_dcid: MagicMock, pmac: PMAC, RE):
+    RE(run_aborted_plan(pmac, fake_dcid))
 
     mock_pmac_string = get_mock_put(pmac.pmac_string)
     pmac_string_calls = [
@@ -209,6 +210,7 @@ def test_run_aborted_plan(pmac: PMAC, RE):
         call("P2401=0", wait=True, timeout=ANY),
     ]
     mock_pmac_string.assert_has_calls(pmac_string_calls)
+    fake_dcid.collection_complete.assert_called_once_with(ANY, aborted=True)
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.finish_i24")
@@ -227,7 +229,6 @@ async def test_tidy_up_after_collection_plan(
     RE,
     dummy_params_without_pp,
 ):
-    mock_finish.return_value = MagicMock()
     RE(
         tidy_up_after_collection_plan(
             zebra, pmac, shutter, dcm, dummy_params_without_pp, fake_dcid
@@ -235,7 +236,6 @@ async def test_tidy_up_after_collection_plan(
     )
     assert await zebra.inputs.soft_in_2.get_value() == "No"
 
-    fake_dcid.collection_complete.assert_called_once()
     fake_dcid.notify_end.assert_called_once()
 
     fake_caput.assert_has_calls([call(ANY, 0), call(ANY, "Done")])

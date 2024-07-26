@@ -9,6 +9,7 @@ from mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2 import (
     TTL_EIGER,
     TTL_PILATUS,
     collection_aborted_plan,
+    collection_complete_plan,
     enter_hutch,
     initialise_extruder,
     laser_check,
@@ -271,3 +272,22 @@ def test_aborted_plan_with_pilatus(
     mock_disarm.assert_called_once()
     fake_caput.assert_has_calls([call(ANY, 0)])
     fake_dcid.collection_complete.assert_called_once_with(ANY, aborted=True)
+
+
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.shutil")
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.DCID")
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.sleep")
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.caput")
+def test_collection_complete_plan_with_eiger(
+    fake_caput, fake_sleep, fake_dcid, fake_shutil, dummy_params, RE
+):
+    RE(
+        collection_complete_plan(
+            dummy_params.collection_directory, dummy_params.detector_name, fake_dcid
+        )
+    )
+
+    call_list = [call(ANY, 0), call(ANY, "Done")]
+    fake_caput.assert_has_calls(call_list)
+
+    fake_dcid.collection_complete.assert_called_once_with(ANY, aborted=False)
