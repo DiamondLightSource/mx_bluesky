@@ -65,6 +65,45 @@ def setup_logging():
     log.config(logfile)
 
 
+def calculate_collection_timeout(parameters: FixedTargetParameters) -> float:
+    """Give an estimation of the time the plan should wait for the data collection \
+        to be finished.
+
+    For non-pump probe collections and collection with short delays, it should be \
+    enough to use the collection time plus a genereous 30s buffer.
+    For EAVA (Excite and visit again) collections instead, the laser dwell and laser \
+    delay times should be included in the calculation. For long dalays between pump \
+    and probe, the shutter opening time will also need to be taken into account.
+    For more details on the dynamics see
+    https://confluence.diamond.ac.uk/display/MXTech/Dynamics+and+fixed+targets.
+
+    Args:
+        parameters (FixedTargerParameters): The collection paramelters
+    """
+    buffer = 30
+    pump_setting = parameters.pump_repeat
+    collection_time = parameters.total_num_images * parameters.exposure_time_s
+    if pump_setting in [
+        PumpProbeSetting.NoPP,
+        PumpProbeSetting.Short1,
+        PumpProbeSetting.Short2,
+    ]:
+        timeout = collection_time + buffer
+    else:
+        # EAVA: Excite and visit again
+        num_windows = parameters.total_num_images / parameters.num_exposures
+        timeout = (
+            collection_time
+            + parameters.laser_dwell_s * num_windows  # type: ignore
+            + parameters.laser_delay_s
+            + buffer
+        )
+        if pump_setting == PumpProbeSetting.Medium1:
+            # Long delay between pump and probe, with fast shutter opening and closing.
+            timeout = timeout + SHUTTER_OPEN_TIME
+    return timeout
+
+
 def copy_files_to_data_location(
     dest_dir: Path | str,
     param_path: Path = PARAM_FILE_PATH_FT,
@@ -640,10 +679,7 @@ def main_fixed_target_plan(
             wavelength,
         )
 
-    timeout_time = parameters.total_num_images * parameters.exposure_time_s + 60
-    # TODO FIXME this is ok for multiple exposure and pump repeat shorts but
-    # it may not work with various pump repeats depending on timings.
-    # See https://github.com/DiamondLightSource/mx_bluesky/issues/133
+    timeout_time = calculate_collection_timeout(parameters)
     logger.info(f"Run PMAC with program number {prog_num}")
     yield from bps.abs_set(pmac.run_program, prog_num, timeout_time, wait=True)
 
