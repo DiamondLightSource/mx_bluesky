@@ -3,9 +3,7 @@ Fixed target data collection
 """
 
 import logging
-import os
 import shutil
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -13,6 +11,7 @@ from time import sleep
 from typing import Dict, List
 
 import bluesky.plan_stubs as bps
+import bluesky.preprocessors as bpp
 import numpy as np
 from blueapi.core import MsgGenerator
 from dodal.common import inject
@@ -55,9 +54,9 @@ from mx_bluesky.I24.serial.setup_beamline.setup_zebra_plans import (
 )
 from mx_bluesky.I24.serial.write_nexus import call_nexgen
 
-logger = logging.getLogger("I24ssx.fixed_target")
+ABORTED = False
 
-usage = "%(prog)s [options]"
+logger = logging.getLogger("I24ssx.fixed_target")
 
 
 def setup_logging():
@@ -66,9 +65,43 @@ def setup_logging():
     log.config(logfile)
 
 
-def flush_print(text):
-    sys.stdout.write(str(text))
-    sys.stdout.flush()
+def calculate_collection_timeout(parameters: FixedTargetParameters) -> float:
+    """Give an estimation of the time the plan should wait for the data collection \
+        to be finished.
+
+    For non-pump probe collections and collection with short delays, it should be \
+    enough to use the collection time plus a genereous 30s buffer.
+    For EAVA (Excite and visit again) collections instead, the laser dwell and laser \
+    delay times should be included in the calculation. For long dalays between pump \
+    and probe, the shutter opening time will also need to be taken into account.
+    For more details on the dynamics see
+    https://confluence.diamond.ac.uk/display/MXTech/Dynamics+and+fixed+targets.
+
+    Args:
+        parameters (FixedTargerParameters): The collection paramelters
+    """
+    buffer = 30
+    pump_setting = parameters.pump_repeat
+    collection_time = parameters.total_num_images * parameters.exposure_time_s
+    if pump_setting in [
+        PumpProbeSetting.NoPP,
+        PumpProbeSetting.Short1,
+        PumpProbeSetting.Short2,
+    ]:
+        timeout = collection_time + buffer
+    else:
+        # EAVA: Excite and visit again
+        num_windows = parameters.total_num_images / parameters.num_exposures
+        timeout = (
+            collection_time
+            + parameters.laser_dwell_s * num_windows  # type: ignore
+            + parameters.laser_delay_s
+            + buffer
+        )
+        if pump_setting == PumpProbeSetting.Medium1:
+            # Long delay between pump and probe, with fast shutter opening and closing.
+            timeout = timeout + SHUTTER_OPEN_TIME
+    return timeout
 
 
 def copy_files_to_data_location(
@@ -82,6 +115,38 @@ def copy_files_to_data_location(
     shutil.copy2(param_path / "parameters.txt", dest_dir / "parameters.txt")
     if map_type == MappingType.Lite:
         shutil.copy2(map_file / "currentchip.map", dest_dir / "currentchip.map")
+
+
+def write_userlog(
+    parameters: FixedTargetParameters,
+    filename: str,
+    transmission: float,
+    wavelength: float,
+):
+    # Write a record of what was collected to the processing directory
+    userlog_path = Path(parameters.visit) / f"processing/{parameters.directory}"
+    userlog_fid = f"{filename}_parameters.txt"
+    logger.debug("Write a user log in %s" % userlog_path)
+
+    userlog_path.mkdir(parents=True, exist_ok=True)
+
+    text = f"""
+        Fixed Target Data Collection Parameters\n
+        Data directory \t{parameters.collection_directory.as_posix()}\n
+        Filename \t{filename}\n
+        Shots per pos \t{parameters.num_exposures}\n
+        Total N images \t{parameters.total_num_images}\n
+        Exposure time \t{parameters.exposure_time_s}\n
+        Det distance \t{parameters.detector_distance_mm}\n
+        Transmission \t{transmission}\n
+        Wavelength \t{wavelength}\n
+        Detector type \t{parameters.detector_name}\n
+        Pump status \t{parameters.pump_repeat}\n
+        Pump exp time \t{parameters.laser_dwell_s}\n
+        Pump delay \t{parameters.laser_delay_s}\n
+    """
+    with open(userlog_path / userlog_fid, "w") as f:
+        f.write(text)
 
 
 @log.log_on_entry
@@ -210,7 +275,7 @@ def load_motion_program_data(
 @log.log_on_entry
 def get_prog_num(
     chip_type: ChipType, map_type: MappingType, pump_repeat: PumpProbeSetting
-):
+) -> int:
     logger.info("Get Program Number")
     if pump_repeat == PumpProbeSetting.NoPP:
         if chip_type in [ChipType.Oxford, ChipType.OxfordInner]:
@@ -325,8 +390,12 @@ def start_i24(
     detector_stage: DetectorMotion,
     shutter: HutchShutter,
     parameters: FixedTargetParameters,
+    dcid: DCID,
 ):
-    """Returns a tuple of (start_time, dcid)"""
+    """Set up for I24 fixed target data collection, trigger the detector and open \
+    the hutch shutter.
+    Returns the start_time.
+    """
 
     logger.info("Start I24 data collection.")
     start_time = datetime.now()
@@ -377,15 +446,12 @@ def start_i24(
 
         # DCID process depends on detector PVs being set up already
         logger.debug("Start DCID process")
-        dcid = DCID(
-            emit_errors=False,
-            ssx_type=SSXType.FIXED,
-            visit=Path(parameters.visit).name,
+        dcid.generate_dcid(
+            visit=parameters.visit.name,
             image_dir=filepath,
             start_time=start_time,
             num_images=parameters.total_num_images,
             exposure_time=parameters.exposure_time_s,
-            detector=parameters.detector_name,
             shots_per_position=parameters.num_exposures,
             pump_exposure_time=parameters.laser_dwell_s,
             pump_delay=parameters.laser_delay_s,
@@ -455,15 +521,16 @@ def start_i24(
 
         # DCID process depends on detector PVs being set up already
         logger.debug("Start DCID process")
-        dcid = DCID(
-            emit_errors=False,
-            ssx_type=SSXType.FIXED,
-            visit=Path(parameters.visit).name,
+        dcid.generate_dcid(
+            visit=parameters.visit.name,
             image_dir=filepath,
             start_time=start_time,
             num_images=parameters.total_num_images,
             exposure_time=parameters.exposure_time_s,
-            detector=parameters.detector_name,
+            shots_per_position=parameters.num_exposures,
+            pump_exposure_time=parameters.laser_dwell_s,
+            pump_delay=parameters.laser_delay_s,
+            pump_status=parameters.pump_repeat.value,
         )
 
         logger.debug("Arm Zebra.")
@@ -493,7 +560,7 @@ def start_i24(
     # Open the hutch shutter
     yield from bps.abs_set(shutter, ShutterDemand.OPEN, wait=True)
 
-    return start_time, dcid
+    return start_time
 
 
 @log.log_on_entry
@@ -506,14 +573,13 @@ def finish_i24(
 ):
     logger.info(f"Finish I24 data collection with {parameters.detector_name} detector.")
 
-    filepath = parameters.collection_directory
-    filename = parameters.filename
-    transmission = (float(caget(pv.pilat_filtertrasm)),)
+    complete_filename: str
+    transmission = float(caget(pv.pilat_filtertrasm))
     wavelength = yield from bps.rd(dcm.wavelength_in_a)
 
     if parameters.detector_name == "pilatus":
         logger.debug("Finish I24 Pilatus")
-        filename = filename + "_" + caget(pv.pilat_filenum)
+        complete_filename = f"{parameters.filename}_{caget(pv.pilat_filenum)}"
         yield from reset_zebra_when_collection_done_plan(zebra)
         sup.pilatus("return-to-normal")
         sleep(0.2)
@@ -521,7 +587,7 @@ def finish_i24(
         logger.debug("Finish I24 Eiger")
         yield from reset_zebra_when_collection_done_plan(zebra)
         sup.eiger("return-to-normal")
-        filename = cagetstring(pv.eiger_ODfilenameRBV)
+        complete_filename = cagetstring(pv.eiger_ODfilenameRBV)  # type: ignore
 
     # Detector independent moves
     logger.info("Move chip back to home position by setting PMAC_STRING pv.")
@@ -529,84 +595,39 @@ def finish_i24(
     logger.info("Closing shutter")
     yield from bps.abs_set(shutter, ShutterDemand.CLOSE, wait=True)
 
-    end_time = time.ctime()
-    logger.debug("Collection end time %s" % end_time)
-
-    # Copy parameter file and eventual chip map to collection directory
-    copy_files_to_data_location(filepath, map_type=parameters.map_type)
-
     # Write a record of what was collected to the processing directory
-    userlog_path = Path(parameters.visit) / f"processing/{parameters.directory}"
-    userlog_fid = f"{filename}_parameters.txt"
-    logger.debug("Write a user log in %s" % userlog_path)
-
-    os.makedirs(userlog_path, exist_ok=True)
-
-    with open(userlog_path / userlog_fid, "w") as f:
-        f.write("Fixed Target Data Collection Parameters\n")
-        f.write(f"Data directory \t{filepath.as_posix()}\n")
-        f.write(f"Filename \t{filename}\n")
-        f.write(f"Shots per pos \t{parameters.num_exposures}\n")
-        f.write(f"Total N images \t{parameters.total_num_images}\n")
-        f.write(f"Exposure time \t{parameters.exposure_time_s}\n")
-        f.write(f"Det distance \t{parameters.detector_distance_mm}\n")
-        f.write(f"Transmission \t{transmission}\n")
-        f.write(f"Wavelength \t{wavelength}\n")
-        f.write(f"Detector type \t{parameters.detector_name}\n")
-        f.write(f"Pump status \t{parameters.pump_repeat}\n")
-        f.write(f"Pump exp time \t{parameters.laser_dwell_s}\n")
-        f.write(f"Pump delay \t{parameters.laser_delay_s}\n")
-
-    sleep(0.5)
-
-    return end_time
+    write_userlog(parameters, complete_filename, transmission, wavelength)
 
 
-def run_aborted_plan(pmac: PMAC):
+def run_aborted_plan(pmac: PMAC, dcid: DCID):
     """Plan to send pmac_strings to tell the PMAC when a collection has been aborted, \
         either by pressing the Abort button or because of a timeout, and to reset the \
         P variable.
     """
+    logger.warning("Data Collection Aborted")
     yield from bps.abs_set(pmac.pmac_string, "A", wait=True)
     yield from bps.sleep(1.0)
     yield from bps.abs_set(pmac.pmac_string, "P2401=0", wait=True)
 
+    end_time = datetime.now()
+    dcid.collection_complete(end_time, aborted=True)
 
-def run_fixed_target_plan(
-    zebra: Zebra = inject("zebra"),
-    pmac: PMAC = inject("pmac"),
-    aperture: Aperture = inject("aperture"),
-    backlight: DualBacklight = inject("backlight"),
-    beamstop: Beamstop = inject("beamstop"),
-    detector_stage: DetectorMotion = inject("detector_motion"),
-    shutter: HutchShutter = inject("shutter"),
-    dcm: DCM = inject("dcm"),
+
+@log.log_on_entry
+def main_fixed_target_plan(
+    zebra: Zebra,
+    pmac: PMAC,
+    aperture: Aperture,
+    backlight: DualBacklight,
+    beamstop: Beamstop,
+    detector_stage: DetectorMotion,
+    shutter: HutchShutter,
+    dcm: DCM,
+    parameters: FixedTargetParameters,
+    dcid: DCID,
 ) -> MsgGenerator:
-    setup_logging()
-    # ABORT BUTTON
     logger.info("Running a chip collection on I24")
-    caput(pv.me14e_gp9, 0)
 
-    logger.info("Getting parameters from file.")
-    parameters = FixedTargetParameters.from_file(PARAM_FILE_PATH_FT / PARAM_FILE_NAME)
-
-    log_msg = f"""
-            Parameters for I24 serial collection: \n
-                Chip name is {parameters.filename}
-                visit = {parameters.visit}
-                sub_dir = {parameters.directory}
-                n_exposures = {parameters.num_exposures}
-                chip_type = {str(parameters.chip.chip_type)}
-                map_type = {str(parameters.map_type)}
-                dcdetdist = {parameters.detector_distance_mm}
-                exptime = {parameters.exposure_time_s}
-                det_type = {parameters.detector_name}
-                pump_repeat = {str(parameters.pump_repeat)}
-                pumpexptime = {parameters.laser_dwell_s}
-                pumpdelay = {parameters.laser_delay_s}
-                prepumpexptime = {parameters.pre_pump_exposure_s}
-        """
-    logger.info(log_msg)
     logger.info("Getting Program Dictionary")
 
     # If alignment type is Oxford inner it is still an Oxford type chip
@@ -628,8 +649,8 @@ def run_fixed_target_plan(
         parameters.num_exposures, parameters.chip, parameters.map_type
     )
 
-    start_time, dcid = yield from start_i24(
-        zebra, aperture, backlight, beamstop, detector_stage, shutter, parameters
+    start_time = yield from start_i24(
+        zebra, aperture, backlight, beamstop, detector_stage, shutter, parameters, dcid
     )
 
     logger.info("Moving to Start")
@@ -643,10 +664,6 @@ def run_fixed_target_plan(
     # Now ready for data collection. Open fast shutter (zebra gate)
     logger.info("Opening fast shutter.")
     yield from open_fast_shutter(zebra)
-
-    logger.info(f"Run PMAC with program number {prog_num}")
-    yield from bps.abs_set(pmac.pmac_string, f"&2b{prog_num}r", wait=True)
-    sleep(1.0)
 
     # Kick off the StartOfCollect script
     logger.debug("Notify DCID of the start of the collection.")
@@ -662,70 +679,119 @@ def run_fixed_target_plan(
             wavelength,
         )
 
-    logger.info("Data Collection running")
+    timeout_time = calculate_collection_timeout(parameters)
+    logger.info(f"Run PMAC with program number {prog_num}")
+    yield from bps.abs_set(pmac.run_program, prog_num, timeout_time, wait=True)
 
-    aborted = False
-    timeout_time = (
-        time.time() + parameters.total_num_images * parameters.exposure_time_s + 60
-    )
+    logger.debug("Collection completed without errors.")
 
-    # TODO me14e_gp9 is the ABORT button
-    # See https://github.com/DiamondLightSource/mx_bluesky/issues/117
-    if int(caget(pv.me14e_gp9)) == 0:
-        i = 0
-        text_list = ["|", "/", "-", "\\"]
-        while True:
-            line_of_text = "\r\t\t\t Waiting   " + 30 * ("%s" % text_list[i % 4])
-            flush_print(line_of_text)
-            sleep(0.5)
-            i += 1
-            status = yield from bps.rd(pmac.scanstatus)
-            if int(caget(pv.me14e_gp9)) != 0:
-                aborted = True
-                logger.warning("Data Collection Aborted")
-                yield from run_aborted_plan(pmac)
-                break
-            elif int(status) == 0:
-                # As soon as the PVAR P2401 is set to 0, exit.
-                # Epics checks the geobrick and updates this PV every 1s or so.
-                # Once the collection is done, it will be set to 0.
-                print(status)
-                logger.warning("Data Collection Finished")
-                break
-            elif time.time() >= timeout_time:
-                aborted = True
-                logger.warning(
-                    """
-                    Something went wrong and data collection timed out. Aborting.
-                    """
-                )
-                yield from run_aborted_plan(pmac)
-                break
-    else:
-        aborted = True
-        logger.warning("Data Collection ended due to GP 9 not equalling 0")
 
+@log.log_on_entry
+def collection_complete_plan(
+    dcid: DCID, collection_directory: Path, map_type: MappingType
+) -> MsgGenerator:
+    end_time = datetime.now()
+    logger.debug("Collection end time %s" % end_time)
+    dcid.collection_complete(end_time, aborted=False)
+
+    # Copy parameter file and eventual chip map to collection directory
+    copy_files_to_data_location(collection_directory, map_type=map_type)
+    yield from bps.null()
+
+
+@log.log_on_entry
+def tidy_up_after_collection_plan(
+    zebra: Zebra,
+    pmac: PMAC,
+    shutter: HutchShutter,
+    dcm: DCM,
+    parameters: FixedTargetParameters,
+    dcid: DCID,
+) -> MsgGenerator:
+    """A plan to be run to tidy things up at the end af a fixed target collection, \
+    both successful or aborted.
+    """
     logger.info("Closing fast shutter")
     yield from close_fast_shutter(zebra)
     sleep(2.0)
 
+    # This probably should go in main then
     if parameters.detector_name == "pilatus":
         logger.debug("Pilatus Acquire STOP")
-        sleep(0.5)
         caput(pv.pilat_acquire, 0)
     elif parameters.detector_name == "eiger":
         logger.debug("Eiger Acquire STOP")
-        sleep(0.5)
         caput(pv.eiger_acquire, 0)
         caput(pv.eiger_ODcapture, "Done")
+    sleep(0.5)
 
-    end_time = yield from finish_i24(zebra, pmac, shutter, dcm, parameters)
+    yield from finish_i24(zebra, pmac, shutter, dcm, parameters)
 
-    dcid.collection_complete(end_time, aborted=aborted)
     logger.debug("Notify DCID of end of collection.")
     dcid.notify_end()
 
     logger.debug("Quick summary of settings")
     logger.debug(f"Chip name = {parameters.filename} sub_dir = {parameters.directory}")
-    logger.debug(f"Start Time = {start_time.ctime()}")
-    logger.debug(f"End Time = {end_time}")
+
+
+def run_fixed_target_plan(
+    zebra: Zebra = inject("zebra"),
+    pmac: PMAC = inject("pmac"),
+    aperture: Aperture = inject("aperture"),
+    backlight: DualBacklight = inject("backlight"),
+    beamstop: Beamstop = inject("beamstop"),
+    detector_stage: DetectorMotion = inject("detector_motion"),
+    shutter: HutchShutter = inject("shutter"),
+    dcm: DCM = inject("dcm"),
+) -> MsgGenerator:
+    setup_logging()
+
+    logger.info("Getting parameters from file.")
+    parameters = FixedTargetParameters.from_file(PARAM_FILE_PATH_FT / PARAM_FILE_NAME)
+
+    log_msg = f"""
+            Parameters for I24 serial collection: \n
+                Chip name is {parameters.filename}
+                visit = {parameters.visit}
+                sub_dir = {parameters.directory}
+                n_exposures = {parameters.num_exposures}
+                chip_type = {str(parameters.chip.chip_type)}
+                map_type = {str(parameters.map_type)}
+                dcdetdist = {parameters.detector_distance_mm}
+                exptime = {parameters.exposure_time_s}
+                det_type = {parameters.detector_name}
+                pump_repeat = {str(parameters.pump_repeat)}
+                pumpexptime = {parameters.laser_dwell_s}
+                pumpdelay = {parameters.laser_delay_s}
+                prepumpexptime = {parameters.pre_pump_exposure_s}
+        """
+    logger.info(log_msg)
+
+    # DCID instance - do not create yet
+    dcid = DCID(
+        emit_errors=False,
+        ssx_type=SSXType.FIXED,
+        detector=parameters.detector_name,
+    )
+
+    yield from bpp.contingency_wrapper(
+        main_fixed_target_plan(
+            zebra,
+            pmac,
+            aperture,
+            backlight,
+            beamstop,
+            detector_stage,
+            shutter,
+            dcm,
+            parameters,
+            dcid,
+        ),
+        except_plan=lambda e: (yield from run_aborted_plan(pmac, dcid)),
+        final_plan=lambda: (
+            yield from tidy_up_after_collection_plan(
+                zebra, pmac, shutter, dcm, parameters, dcid
+            )
+        ),
+        auto_raise=False,
+    )

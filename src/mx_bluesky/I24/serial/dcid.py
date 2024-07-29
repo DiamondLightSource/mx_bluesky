@@ -63,9 +63,7 @@ class DCID:
             stop collection if you can't get a DCID
         timeout: Length of time to wait for the DB server before giving up
         ssx_type: The type of SSX experiment this is for
-        visit: The name of the visit e.g. "mx12345-4"
-        image_dir: The location the images will be written
-
+        detector: The detector in use for current collection.
 
 
     Attributes:
@@ -76,28 +74,20 @@ class DCID:
     def __init__(
         self,
         *,
-        server: str = None,
+        server: str | None = None,
         emit_errors: bool = True,
         timeout: float = 10,
         ssx_type: SSXType = SSXType.FIXED,
-        visit: str,
-        image_dir: str,
-        start_time: datetime.datetime,
-        num_images: int,
-        exposure_time: float,
-        shots_per_position: int = 1,
         detector: Detector | Literal["eiger", "pilatus"] | None = None,
-        pump_exposure_time: float | None = None,
-        pump_delay: float | None = None,
-        pump_status: int = 0,
     ):
+        self.detector: Detector
         # Handle case of string literal
         if detector == "eiger":
-            detector = Eiger()
+            self.detector = Eiger()
         elif detector == "pilatus":
-            detector = Pilatus()
+            self.detector = Pilatus()
         elif detector is None:
-            detector = Pilatus()
+            self.detector = Pilatus()
             warnings.warn(
                 "Please pass detector= to DCID. Pilatus assumed, this will be removed in the future.",
                 UserWarning,
@@ -109,6 +99,25 @@ class DCID:
         self.timeout = timeout
         self.ssx_type = SSXType(ssx_type)
         self.dcid = None
+
+    def generate_dcid(
+        self,
+        visit: str,
+        image_dir: str,
+        num_images: int,
+        exposure_time: float,
+        start_time: datetime.datetime | None = None,
+        shots_per_position: int = 1,
+        pump_exposure_time: float | None = None,
+        pump_delay: float | None = None,
+        pump_status: int = 0,
+    ):
+        """Generate an ispyb DCID.
+
+        Args:
+            visit: The name of the visit e.g. "mx12345-4"
+            image_dir: The location the images will be written
+        """
         try:
             if not start_time:
                 start_time = datetime.datetime.now().astimezone()
@@ -116,24 +125,24 @@ class DCID:
                 start_time = start_time.astimezone()
 
             # Gather data from the beamline
-            detector_distance = float(caget(detector.pv.detector_distance))
-            wavelength = float(caget(detector.pv.wavelength))
-            resolution = get_resolution(detector, detector_distance, wavelength)
+            detector_distance = float(caget(self.detector.pv.detector_distance))
+            wavelength = float(caget(self.detector.pv.wavelength))
+            resolution = get_resolution(self.detector, detector_distance, wavelength)
             beamsize_x, beamsize_y = get_beamsize()
-            transmission = float(caget(detector.pv.transmission)) * 100
-            xbeam, ybeam = get_beam_center(detector)
+            transmission = float(caget(self.detector.pv.transmission)) * 100
+            xbeam, ybeam = get_beam_center(self.detector)
 
-            if isinstance(detector, Pilatus):
+            if isinstance(self.detector, Pilatus):
                 # Mirror the construction that the PPU does
                 fileTemplate = get_pilatus_filename_template_from_pvs()
                 startImageNumber = 0
-            elif isinstance(detector, Eiger):
+            elif isinstance(self.detector, Eiger):
                 # Eiger base filename is directly written to the PV
                 # Nexgen then uses this to write the .nxs file
-                fileTemplate = cagetstring(detector.pv.file_name) + ".nxs"
+                fileTemplate = cagetstring(self.detector.pv.file_name) + ".nxs"
                 startImageNumber = 1
             else:
-                raise ValueError("Unknown detector:", detector)
+                raise ValueError("Unknown detector:", self.detector)
 
             events = [
                 {
@@ -152,7 +161,8 @@ class DCID:
                 # pump_status = 1: pump then probe
                 # pump_status = 2: pump within probe
                 # pump_status = 3-7: different EAVA modes (i.e. also pump then probe)
-                if pump_status != 2:
+                if pump_status != 2 and self.ssx_type is SSXType.FIXED:
+                    # Pump status could be 1 for extruder but not have this.
                     # pump then probe - pump_delay corresponds to time *before* first image
                     pump_delay = -pump_delay
                 events.append(
@@ -168,7 +178,7 @@ class DCID:
 
             data = {
                 "detectorDistance": float(detector_distance),
-                "detectorId": detector.id,
+                "detectorId": self.detector.id,
                 "exposureTime": float(exposure_time),
                 "fileTemplate": fileTemplate,
                 "imageDirectory": str(image_dir),

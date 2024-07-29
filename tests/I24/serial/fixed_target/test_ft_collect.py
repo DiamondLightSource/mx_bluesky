@@ -1,5 +1,6 @@
-from unittest.mock import call, mock_open, patch
+from unittest.mock import ANY, MagicMock, call, mock_open, patch
 
+import bluesky.plan_stubs as bps
 import pytest
 from dodal.devices.hutch_shutter import HutchShutter
 from dodal.devices.i24.pmac import PMAC
@@ -9,16 +10,24 @@ from ophyd_async.core import get_mock_put
 from mx_bluesky.I24.serial.fixed_target.ft_utils import MappingType
 from mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1 import (
     datasetsizei24,
+    finish_i24,
     get_chip_prog_values,
     get_prog_num,
     load_motion_program_data,
+    run_aborted_plan,
     start_i24,
+    tidy_up_after_collection_plan,
 )
 
 chipmap_str = """01status    P3011       1
 02status    P3021       0
 03status    P3031       0
 04status    P3041       0"""
+
+
+def fake_generator(value):
+    yield from bps.null()
+    return value
 
 
 @patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caput")
@@ -131,6 +140,7 @@ def test_start_i24_with_eiger(
             detector_stage,
             shutter,
             dummy_params_without_pp,
+            fake_dcid,
         )
     )
     assert fake_sup.eiger.call_count == 1
@@ -138,7 +148,7 @@ def test_start_i24_with_eiger(
     assert fake_sup.move_detector_stage_to_position_plan.call_count == 1
     # Pilatus gets called for hack to create directory
     assert fake_sup.pilatus.call_count == 2
-    assert fake_dcid.call_count == 1
+    assert fake_dcid.generate_dcid.call_count == 1
 
     shutter_call_list = [
         call("Reset", wait=True, timeout=10.0),
@@ -146,3 +156,88 @@ def test_start_i24_with_eiger(
     ]
     mock_shutter = get_mock_put(shutter.control)
     mock_shutter.assert_has_calls(shutter_call_list)
+
+
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.write_userlog")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sleep")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.cagetstring")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caget")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sup")
+@patch(
+    "mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.reset_zebra_when_collection_done_plan"
+)
+@patch("mx_bluesky.I24.serial.extruder.i24ssx_Extruder_Collect_py3v2.bps.rd")
+def test_finish_i24(
+    fake_read,
+    fake_reset_zebra,
+    fake_sup,
+    fake_caget,
+    fake_cagetstring,
+    fake_sleep,
+    fake_userlog,
+    zebra,
+    pmac,
+    shutter,
+    dcm,
+    dummy_params_without_pp,
+    RE,
+):
+    fake_read.side_effect = [fake_generator(0.6)]
+    fake_caget.return_value = 0.0
+    fake_cagetstring.return_value = "chip_01"
+    RE(finish_i24(zebra, pmac, shutter, dcm, dummy_params_without_pp))
+
+    fake_reset_zebra.assert_called_once()
+
+    fake_sup.eiger.assert_called_once_with("return-to-normal")
+
+    mock_pmac_string = get_mock_put(pmac.pmac_string)
+    mock_pmac_string.assert_has_calls([call("!x0y0z0", wait=True, timeout=ANY)])
+
+    mock_shutter = get_mock_put(shutter.control)
+    mock_shutter.assert_has_calls([call("Close", wait=True, timeout=ANY)])
+
+    fake_userlog.assert_called_once_with(dummy_params_without_pp, "chip_01", 0.0, 0.6)
+
+
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.DCID")
+def test_run_aborted_plan(fake_dcid: MagicMock, pmac: PMAC, RE):
+    RE(run_aborted_plan(pmac, fake_dcid))
+
+    mock_pmac_string = get_mock_put(pmac.pmac_string)
+    pmac_string_calls = [
+        call("A", wait=True, timeout=ANY),
+        call("P2401=0", wait=True, timeout=ANY),
+    ]
+    mock_pmac_string.assert_has_calls(pmac_string_calls)
+    fake_dcid.collection_complete.assert_called_once_with(ANY, aborted=True)
+
+
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.finish_i24")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.sleep")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.DCID")
+@patch("mx_bluesky.I24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.caput")
+async def test_tidy_up_after_collection_plan(
+    fake_caput,
+    fake_dcid,
+    fake_sleep,
+    mock_finish,
+    zebra,
+    pmac,
+    shutter,
+    dcm,
+    RE,
+    dummy_params_without_pp,
+):
+    RE(
+        tidy_up_after_collection_plan(
+            zebra, pmac, shutter, dcm, dummy_params_without_pp, fake_dcid
+        )
+    )
+    assert await zebra.inputs.soft_in_2.get_value() == "No"
+
+    fake_dcid.notify_end.assert_called_once()
+
+    fake_caput.assert_has_calls([call(ANY, 0), call(ANY, "Done")])
+
+    mock_finish.assert_called_once()
