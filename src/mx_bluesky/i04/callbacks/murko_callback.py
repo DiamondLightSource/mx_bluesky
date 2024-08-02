@@ -1,22 +1,20 @@
 import copy
 import json
-import pickle
-from typing import Dict, Optional
+from typing import Optional
 
-import numpy as np
-import redis
 from bluesky.callbacks import CallbackBase
 from dodal.log import LOGGER
-from event_model.documents import Event, EventDescriptor, RunStart
+from event_model.documents import Event, RunStart
+from redis import StrictRedis
 
 
 class MurkoCallback(CallbackBase):
-    def __init__(self):
-        self.descriptors: Dict[str, EventDescriptor] = {}
-        self.redis_client = redis.StrictRedis(host="i04-control.diamond.ac.uk", password="", db=7)
+    def __init__(self, redis_host: str, redis_password: str, redis_db: int):
+        self.redis_client = StrictRedis(
+            host=redis_host, password=redis_password, db=redis_db
+        )
 
     def start(self, doc: RunStart) -> Optional[RunStart]:
-        self.uuid = doc.get("uid")
         self.murko_metadata = {
             "zoom_percentage": doc.get("zoom_percentage"),
             "microns_per_x_pixel": doc.get("microns_per_x_pixel"),
@@ -31,7 +29,7 @@ class MurkoCallback(CallbackBase):
         if latest_omega := doc["data"].get("smargon-omega"):
             if self.last_uuid is not None:
                 self.call_murko(self.last_uuid, latest_omega)
-        elif (uuid := doc["data"].get("ophyd_async_oav-uuid")) is not None:
+        elif (uuid := doc["data"].get("oav_to_redis_forwarder-uuid")) is not None:
             self.last_uuid = uuid
         return doc
 
@@ -40,7 +38,7 @@ class MurkoCallback(CallbackBase):
         metadata["omega_angle"] = omega
         metadata["uuid"] = uuid
 
-        # Send metadata and image to REDIS
+        # Send metadata to REDIS and trigger murko
         self.redis_client.hset("test-metadata", uuid, json.dumps(metadata))
         self.redis_client.publish("murko", json.dumps(metadata))
         LOGGER.info("Metadata sent to redis")
