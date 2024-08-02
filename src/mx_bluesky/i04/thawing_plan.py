@@ -3,7 +3,7 @@ import bluesky.preprocessors as bpp
 from bluesky.preprocessors import subs_decorator
 from dls_bluesky_core.core import MsgGenerator
 from dodal.common import inject
-from dodal.devices.oav.ophyd_async_oav import OAV
+from dodal.devices.oav.ophyd_async_oav import OAV, ZoomLevel
 from dodal.devices.robot import BartRobot
 from dodal.devices.smargon import Smargon
 from dodal.devices.thawer import Thawer, ThawerStates
@@ -29,6 +29,8 @@ def thaw_and_center(
 
     @subs_decorator(MurkoCallback())
     def _thaw_and_center():
+        yield from bps.abs_set(oav.zoom_controller.level, ZoomLevel.ONE, wait=True)
+
         yield from bps.open_run(
             {
                 "microns_per_x_pixel": oav.parameters.micronsPerXPixel,
@@ -40,9 +42,11 @@ def thaw_and_center(
                 "sample_id": sample_id,
             }
         )
-        yield from bps.monitor(oav.array_data, name="oav")
+        yield from bps.kickoff(oav, wait=True)
         yield from bps.monitor(smargon.omega.user_readback, name="smargon")
+        yield from bps.monitor(oav.uuid, name="oav")
         yield from thaw(time_to_thaw, rotation, thawer, smargon)
+        yield from bps.complete(oav)
         yield from bps.close_run()
 
     yield from _thaw_and_center()
