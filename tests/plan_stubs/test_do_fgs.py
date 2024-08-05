@@ -10,7 +10,7 @@ from dodal.devices.fast_grid_scan import ZebraFastGridScan
 from dodal.devices.synchrotron import Synchrotron, SynchrotronMode
 from ophyd_async.core import DeviceCollector, set_mock_value
 
-from mx_bluesky.plans.level_1.do_fgs import do_fgs
+from mx_bluesky.plan_stubs.do_fgs import do_fgs
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def test_pre_and_post_plans_called_optionally(
     fgs_device = fgs_devices["grid_scan_device"]
     post_plan = MagicMock(side_effect=null_plan)
     pre_plan = MagicMock(side_effect=null_plan)
-    with patch("mx_bluesky.plans.level_1.do_fgs.check_topup_and_wait_if_necessary"):
+    with patch("mx_bluesky.plan_stubs.do_fgs.check_topup_and_wait_if_necessary"):
         msgs = sim_run_engine.simulate_plan(
             do_fgs(
                 fgs_device,
@@ -52,7 +52,7 @@ def test_pre_and_post_plans_called_optionally(
         )
         null_messages = [msg for msg in msgs if msg.command == "null"]
         assert len(null_messages) == 2
-    with patch("mx_bluesky.plans.level_1.do_fgs.check_topup_and_wait_if_necessary"):
+    with patch("mx_bluesky.plan_stubs.do_fgs.check_topup_and_wait_if_necessary"):
         msgs = sim_run_engine.simulate_plan(
             do_fgs(
                 fgs_device,
@@ -77,5 +77,5 @@ def test_do_fgs_with_run_engine(RE: RunEngine, fgs_devices):
 
     set_mock_value(fgs_device.status, 1)
 
-    with patch("mx_bluesky.plans.level_1.do_fgs.bps.complete"):
+    with patch("mx_bluesky.plan_stubs.do_fgs.bps.complete"):
         RE(do_fgs_plan_in_run())
