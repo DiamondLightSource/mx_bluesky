@@ -17,7 +17,7 @@ def do_fgs(
     post_plans: Optional[Callable] = None,
 ):
     """Triggers a grid scan motion program and waits for completion, accounting for synchrotron topup.
-        Optionally run other plans before and after completion. A bluesky run MUST be open before this plan is
+        Optionally run other plans kickoff and between kickoff and completion. A bluesky run MUST be open before this plan is
         called
 
     Args:
