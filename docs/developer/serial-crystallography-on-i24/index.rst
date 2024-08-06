@@ -5,16 +5,6 @@ Documentation is split into four categories, and each is also accessible from li
 
 .. grid:: 2
     :gutter: 2
-
-    .. grid-item-card:: :material-regular:`directions_run;3em`
-
-        .. toctree::
-            :caption: Tutorials
-            :maxdepth: 1
-
-        +++
-
-        Tutorials for getting up and running as a developer.    
         
     .. grid-item-card:: :material-regular:`map;3em`
 
@@ -33,6 +23,10 @@ Documentation is split into four categories, and each is also accessible from li
         .. toctree::
             :caption: How-to Guides
             :maxdepth: 1
+
+            how-to/environment-setup
+            how-to/run-a-collection
+            how-to/stage-pmac-moves
 
         +++
 
@@ -56,8 +50,16 @@ Documentation is split into four categories, and each is also accessible from li
             :caption: Reference
             :maxdepth: 1
 
-            reference/serial-crystallography-on-i24
-
         +++
 
         Technical reference material on standards in use.
+
+    .. grid-item-card:: :material-regular:`directions_run;3em`
+
+        .. toctree::
+            :caption: Tutorials
+            :maxdepth: 1
+
+        +++
+
+        Tutorials for getting up and running as a developer.    
