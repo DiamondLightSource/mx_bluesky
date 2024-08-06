@@ -17,8 +17,6 @@ to motors. The axes allocations defined for the chip stages set up are:
    #3->Z
 
 When an X-axis move is executed, the #1 motor will make the move.
-https://github.com/DiamondLightSource/mx_bluesky/wiki/Serial-Crystallography-on-I24#cs_reset-custom-chips
-### Use in code
 
 When running chip collections, the stage motors are moved via the `PMAC
 device <https://github.com/DiamondLightSource/dodal/blob/main/src/dodal/devices/i24/pmac.py>`__
