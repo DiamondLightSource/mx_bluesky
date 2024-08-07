@@ -5,7 +5,7 @@ import bluesky.plan_stubs as bps
 from dodal.devices.i24.aperture import Aperture, AperturePositions
 from dodal.devices.i24.beamstop import Beamstop, BeamstopPositions
 from dodal.devices.i24.dual_backlight import BacklightPositions, DualBacklight
-from dodal.devices.i24.I24_detector_motion import DetectorMotion
+from dodal.devices.i24.i24_detector_motion import DetectorMotion
 
 from mx_bluesky.i24.serial.setup_beamline import pv
 from mx_bluesky.i24.serial.setup_beamline.ca import caget, caput

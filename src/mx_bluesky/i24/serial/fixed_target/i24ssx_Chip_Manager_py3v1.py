@@ -21,7 +21,7 @@ from dodal.beamlines import i24
 from dodal.common import inject
 from dodal.devices.i24.beamstop import Beamstop, BeamstopPositions
 from dodal.devices.i24.dual_backlight import BacklightPositions, DualBacklight
-from dodal.devices.i24.I24_detector_motion import DetectorMotion
+from dodal.devices.i24.i24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC, EncReset, LaserSettings
 
 from mx_bluesky.i24.serial import log

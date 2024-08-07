@@ -11,7 +11,7 @@ import bluesky.plan_stubs as bps
 from blueapi.core import MsgGenerator
 from bluesky.utils import Msg
 from dodal.common import inject
-from dodal.devices.i24.I24_detector_motion import DetectorMotion
+from dodal.devices.i24.i24_detector_motion import DetectorMotion
 
 from mx_bluesky.i24.serial import log
 from mx_bluesky.i24.serial.parameters import SSXType

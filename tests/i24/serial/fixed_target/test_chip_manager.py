@@ -5,7 +5,7 @@ from unittest.mock import ANY, MagicMock, call, mock_open, patch
 import pytest
 from dodal.devices.i24.beamstop import Beamstop
 from dodal.devices.i24.dual_backlight import DualBacklight
-from dodal.devices.i24.I24_detector_motion import DetectorMotion
+from dodal.devices.i24.i24_detector_motion import DetectorMotion
 from dodal.devices.i24.pmac import PMAC
 from ophyd_async.core import get_mock_put
 

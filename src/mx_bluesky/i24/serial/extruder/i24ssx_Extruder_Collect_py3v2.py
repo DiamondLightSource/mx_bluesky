@@ -24,7 +24,7 @@ from dodal.devices.i24.aperture import Aperture
 from dodal.devices.i24.beamstop import Beamstop
 from dodal.devices.i24.dcm import DCM
 from dodal.devices.i24.dual_backlight import DualBacklight
-from dodal.devices.i24.I24_detector_motion import DetectorMotion
+from dodal.devices.i24.i24_detector_motion import DetectorMotion
 from dodal.devices.zebra import DISCONNECT, SOFT_IN3, Zebra
 
 from mx_bluesky.i24.serial import log
