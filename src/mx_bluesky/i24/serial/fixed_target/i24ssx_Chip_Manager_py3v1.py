@@ -772,7 +772,7 @@ def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
     Values for scalex, scaley, scalez, and skew, as well as the sign of
     Sx, Sy, Sz are stored in a .json file and should be modified there.
-    Location of file: src/mx_bluesky/I24/serial/parameters/cs_maker.json
+    Location of file: src/mx_bluesky/i24/serial/parameters/cs_maker.json
 
     Theory
     Rx: rotation about X-axis, pitch

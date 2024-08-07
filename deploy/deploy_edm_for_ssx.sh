@@ -24,7 +24,7 @@ mkdir $ex_edm
 mkdir $ft_edm
 
 scripts_placeholder="SCRIPTS_LOCATION"
-scripts_loc="$base/src/mx_bluesky/I24/serial"
+scripts_loc="$base/src/mx_bluesky/i24/serial"
 
 # Add blueapi configuration file to get stomp
 # See https://github.com/DiamondLightSource/blueapi/issues/485
