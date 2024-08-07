@@ -53,14 +53,14 @@ def test_when_oav_data_arrives_then_murko_not_called(
     murko_with_mock_call: MurkoCallback,
 ):
     murko_with_mock_call.event(test_oav_event)
-    murko_with_mock_call.call_murko.assert_not_called()
+    murko_with_mock_call.call_murko.assert_not_called()  # type: ignore
 
 
 def test_when_smargon_data_arrives_then_murko_not_called(
     murko_with_mock_call: MurkoCallback,
 ):
     murko_with_mock_call.event(test_smargon_event)
-    murko_with_mock_call.call_murko.assert_not_called()
+    murko_with_mock_call.call_murko.assert_not_called()  # type: ignore
 
 
 def test_when_smargon_data_arrives_before_oav_data_then_murko_not_called(
@@ -68,7 +68,7 @@ def test_when_smargon_data_arrives_before_oav_data_then_murko_not_called(
 ):
     murko_with_mock_call.event(test_smargon_event)
     murko_with_mock_call.event(test_oav_event)
-    murko_with_mock_call.call_murko.assert_not_called()
+    murko_with_mock_call.call_murko.assert_not_called()  # type: ignore
 
 
 def test_when_smargon_data_arrives_before_oav_data_then_murko_called_with_smargon_data(
@@ -76,7 +76,7 @@ def test_when_smargon_data_arrives_before_oav_data_then_murko_called_with_smargo
 ):
     murko_with_mock_call.event(test_oav_event)
     murko_with_mock_call.event(test_smargon_event)
-    murko_with_mock_call.call_murko.assert_called_once_with(
+    murko_with_mock_call.call_murko.assert_called_once_with(  # type: ignore
         test_oav_uuid, test_smargon_data
     )
 
@@ -99,9 +99,9 @@ def test_when_murko_called_with_event_data_then_meta_data_put_in_redis(
         "uuid": test_oav_uuid,
     }
 
-    murko_callback.redis_client.hset.assert_called_once_with(
+    murko_callback.redis_client.hset.assert_called_once_with(  # type: ignore
         "test-metadata", test_oav_uuid, json.dumps(expected_metadata)
     )
-    murko_callback.redis_client.publish.assert_called_once_with(
+    murko_callback.redis_client.publish.assert_called_once_with(  # type: ignore
         "murko", json.dumps(expected_metadata)
     )
