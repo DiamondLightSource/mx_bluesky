@@ -25,6 +25,7 @@ class MurkoCallback(CallbackBase):
             "sample_id": doc.get("sample_id"),
         }
         self.last_uuid = None
+        return doc
 
     def event(self, doc: Event) -> Event:
         if latest_omega := doc["data"].get("smargon-omega"):
