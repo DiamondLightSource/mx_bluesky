@@ -51,8 +51,8 @@ dev = [
 
 [project.scripts]
 mx_bluesky = "mx_bluesky.__main__:main"
-run_extruder = "mx_bluesky.I24.serial.run_serial:run_extruder"
-run_fixed_target = "mx_bluesky.I24.serial.run_serial:run_fixed_target"
+run_extruder = "mx_bluesky.i24.serial.run_serial:run_extruder"
+run_fixed_target = "mx_bluesky.i24.serial.run_serial:run_fixed_target"
 
 [project.urls]
 GitHub = "https://github.com/DiamondLightSource/mx_bluesky"
