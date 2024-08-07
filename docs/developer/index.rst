@@ -1,62 +1,32 @@
 Developer Guide
 ===============
 
-Documentation is split into four categories, also accessible from links in the
-side-bar.
+Documentation is split general and topic-specific sections. Each section is split into four categories, and each is also accessible from links in the side-bar.
 
 .. grid:: 2
     :gutter: 4
 
-    .. grid-item-card:: :material-regular:`directions_run;3em`
+    .. grid-item-card:: :material-regular:`code;3em`
 
         .. toctree::
-            :caption: Tutorials
+            :caption: General
             :maxdepth: 1
 
-            tutorials/dev-install
+            general/index
 
         +++
 
-        Tutorials for getting up and running as a developer.
+        General information for working on mx_bluesky
 
-    .. grid-item-card:: :material-regular:`task;3em`
+    .. grid-item-card:: :material-regular:`apps;3em`
 
         .. toctree::
-            :caption: How-to Guides
+            :caption: Serial Crystallography on I24
             :maxdepth: 1
 
-            how-to/contribute
-            how-to/build-docs
-            how-to/run-tests
-            how-to/static-analysis
-            how-to/lint
-            how-to/update-tools
-            how-to/make-release
+            serial-crystallography-on-i24/index
 
         +++
 
-        Practical step-by-step guides for day-to-day dev tasks.
+        Documentation relating to serial crystallography on I24
 
-    .. grid-item-card:: :material-regular:`apartment;3em`
-
-        .. toctree::
-            :caption: Explanations
-            :maxdepth: 1
-
-            explanations/decisions
-
-        +++
-
-        Explanations of how and why the architecture is why it is.
-
-    .. grid-item-card:: :material-regular:`description;3em`
-
-        .. toctree::
-            :caption: Reference
-            :maxdepth: 1
-
-            reference/standards
-
-        +++
-
-        Technical reference material on standards in use.

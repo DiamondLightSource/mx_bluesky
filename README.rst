@@ -15,7 +15,7 @@ Releases       https://github.com/DiamondLightSource/mx_bluesky/releases
 Getting Started
 ===============
 
-To get started with developing this repo at DLS run ```dls_dev_setup.sh``.
+To get started with developing this repo at DLS run ``dls_dev_setup.sh``.
 
 If you want to develop interactively at the beamline we recommend using jupyter notebooks. You can get started with this by running::
 
@@ -23,9 +23,8 @@ If you want to develop interactively at the beamline we recommend using jupyter 
 
 If you're doing more in-depth development we recommend developing with VSCode. You can do this at DLS by running::
 
-
     $ module load vscode
-    $ code .
+    $ code .vscode/mx-bluesky.code-workspace
 
 .. |code_ci| image:: https://github.com/DiamondLightSource/mx_bluesky/actions/workflows/code.yml/badge.svg?branch=main
     :target: https://github.com/DiamondLightSource/mx_bluesky/actions/workflows/code.yml
