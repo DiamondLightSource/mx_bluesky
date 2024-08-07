@@ -30,3 +30,14 @@ Documentation is split general and topic-specific sections. Each section is spli
 
         Documentation relating to serial crystallography on I24
 
+    .. grid-item-card:: :material-regular:`apps;3em`
+
+        .. toctree::
+            :caption: Murko Integration
+            :maxdepth: 1
+
+            murko-integration/index
+
+        +++
+
+        Documentation relating to integrating the murko image recognition system
