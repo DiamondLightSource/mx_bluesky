@@ -9,10 +9,11 @@ from redis import StrictRedis
 
 
 class MurkoCallback(CallbackBase):
-    def __init__(self, redis_host: str, redis_password: str, redis_db: int):
+    def __init__(self, redis_host: str, redis_password: str, redis_db: int = 0):
         self.redis_client = StrictRedis(
             host=redis_host, password=redis_password, db=redis_db
         )
+        self.last_uuid = None
 
     def start(self, doc: RunStart) -> Optional[RunStart]:
         self.murko_metadata = {

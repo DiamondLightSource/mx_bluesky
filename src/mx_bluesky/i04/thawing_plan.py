@@ -2,7 +2,7 @@ import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
 from bluesky.preprocessors import run_decorator, subs_decorator
 from dls_bluesky_core.core import MsgGenerator
-from dodal.beamlines.i04 import MURKO_REDIS_DB, REDIS_HOST
+from dodal.beamlines.i04 import MURKO_REDIS_DB, REDIS_HOST, REDIS_PASSWORD
 from dodal.common import inject
 from dodal.devices.oav.oav_detector import OAV
 from dodal.devices.oav.oav_to_redis_forwarder import OAVToRedisForwarder
@@ -27,6 +27,7 @@ def thaw_and_center(
 
     yield from bps.abs_set(oav.zoom_controller.level, "1.0x", wait=True)
 
+    @subs_decorator(MurkoCallback(REDIS_HOST, REDIS_PASSWORD, MURKO_REDIS_DB))
     @run_decorator(
         md={
             "microns_per_x_pixel": oav.parameters.micronsPerXPixel,
@@ -37,7 +38,6 @@ def thaw_and_center(
             "sample_id": sample_id,
         }
     )
-    @subs_decorator(MurkoCallback(REDIS_HOST, MURKO_REDIS_DB))
     def _thaw_and_center():
         yield from bps.kickoff(oav_to_redis_forwarder, wait=True)
         yield from bps.monitor(smargon.omega.user_readback, name="smargon")

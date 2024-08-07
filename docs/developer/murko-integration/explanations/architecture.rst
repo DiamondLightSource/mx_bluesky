@@ -8,7 +8,7 @@ When GDA reaches a point where it will thaw the pin (usually just after robot lo
 
 The thawing plan will first create a ``MurkoCallback`` callback, this will stream metadata into a key in a redis database running on i04-control (this should be moved in `#145 <https://github.com/DiamondLightSource/mx_bluesky/issues/145>`_).
 
-It will then trigger the ``OAVToRedisForwarder`` device in ``dodal`` that will stream image data to redis. Each image is given a uuid by this device, which is used to correlate the images with the other metadata, which could be streamed with a different frequency.
+It will then trigger the ``OAVToRedisForwarder`` device in ``dodal`` that will stream image data to redis in the form of pickled RGB numpy arrays. Each image is given a uuid by this device, which is used to correlate the images with the other metadata, which could be streamed with a different frequency.
 
 The image streaming must be done with an ophyd device as there is too much data for it all to be emitted in bluesky documents.
 
