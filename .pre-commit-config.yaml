@@ -31,5 +31,5 @@ repos:
     hooks:
       - id: mypy
         files: 'src/.*\.py$'
-        additional_dependencies: [types-requests]
+        additional_dependencies: [types-requests, types-redis]
         args: ["--ignore-missing-imports", "--no-strict-optional"]

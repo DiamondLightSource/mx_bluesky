@@ -1,3 +1,6 @@
+Murko Architecture
+------------------
+
 The architecture of how Murko is integrated is still in flux but as of 07/08 the following has been tried on the beamline.
 
 .. image:: ../images/murko_setup.drawio.png
