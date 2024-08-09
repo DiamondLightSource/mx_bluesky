@@ -3,7 +3,7 @@ Murko Integration
 
 The `Murko system <https://github.com/MartinSavko/murko>`_ uses ML to analyse images of sample from optical cameras and determine where the sample is.
 
-It's integration at DLS, using Bluesky, is still a work in progress but this documentation aims to give an overview of how it works.
+Its integration at DLS, using Bluesky, is still a work in progress but this documentation aims to give an overview of how it works.
 
 
 .. grid:: 2
