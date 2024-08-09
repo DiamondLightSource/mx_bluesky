@@ -21,7 +21,7 @@ dependencies = [
     "requests",
     "opencv-python",
     "pydantic",
-    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@7c30150dd7ad1199786d8153e449262d3ed68a4f",
+    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@e19bf47849433ae0efa575bd06410e05ee064f8b",
     "fastapi[all]<0.99",
     "blueapi @ git+https://github.com/DiamondLightSource/blueapi.git@main",
 ]
@@ -51,8 +51,8 @@ dev = [
 
 [project.scripts]
 mx_bluesky = "mx_bluesky.__main__:main"
-run_extruder = "mx_bluesky.I24.serial.run_serial:run_extruder"
-run_fixed_target = "mx_bluesky.I24.serial.run_serial:run_fixed_target"
+run_extruder = "mx_bluesky.i24.serial.run_serial:run_extruder"
+run_fixed_target = "mx_bluesky.i24.serial.run_serial:run_fixed_target"
 
 [project.urls]
 GitHub = "https://github.com/DiamondLightSource/mx_bluesky"
