@@ -1,1 +1,4 @@
-.. include:: ../../../../.github/CONTRIBUTING.rst
+Contributing
+------------
+
+.. include:: ../../../../.github/CONTRIBUTING.md
