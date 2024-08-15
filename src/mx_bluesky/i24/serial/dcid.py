@@ -110,7 +110,7 @@ class DCID:
         start_time: datetime.datetime | None = None,
         shots_per_position: int = 1,
         pump_exposure_time: float | None = None,
-        pump_delay: float | None = None,
+        pump_delay: float = 0,
         pump_status: int = 0,
     ):
         """Generate an ispyb DCID.
@@ -140,7 +140,7 @@ class DCID:
             elif isinstance(self.detector, Eiger):
                 # Eiger base filename is directly written to the PV
                 # Nexgen then uses this to write the .nxs file
-                fileTemplate = cagetstring(self.detector.pv.file_name) + ".nxs"
+                fileTemplate = str(cagetstring(self.detector.pv.file_name)) + ".nxs"
                 startImageNumber = 1
             else:
                 raise ValueError("Unknown detector:", self.detector)
@@ -320,8 +320,8 @@ class DCID:
             response.raise_for_status()
             logger.info("Successfully updated end time for DCID %d", self.dcid)
         except Exception as e:
+            resp_obj = getattr(e, "response", None)
             try:
-                resp_obj = getattr(e, "response", None)
                 if resp_obj is not None:
                     resp_str = resp_obj.text
                 # resp_str = repr(getattr(e, "Iresponse", "<no attribute>"))
@@ -347,17 +347,20 @@ def get_pilatus_filename_template_from_pvs() -> str:
     filename_template = cagetstring(pv.pilat_filetemplate)
     file_number = int(caget(pv.pilat_filenumber))
     # Exploit fact that passing negative numbers will put the - before the 0's
-    expected_filename = filename_template % (filename, f"{file_number:05d}_", -9)
+    expected_filename = str(filename_template % (filename, f"{file_number:05d}_", -9))
     # Now, find the -09 part of this
     numberpart = re.search(r"(-0+9)", expected_filename)
     # Make sure this was the only one
-    assert re.search(r"(-0+9)", expected_filename[numberpart.end() :]) is None
-    template_fill = "#" * len(numberpart.group(0))
-    return (
-        expected_filename[: numberpart.start()]
-        + template_fill
-        + expected_filename[numberpart.end() :]
-    )
+    if numberpart is not None:
+        assert re.search(r"(-0+9)", expected_filename[numberpart.end() :]) is None
+        template_fill = "#" * len(numberpart.group(0))
+        return (
+            expected_filename[: numberpart.start()]
+            + template_fill
+            + expected_filename[numberpart.end() :]
+        )
+    else:
+        raise ValueError(f"{filename=} did not contain the numbers for templating")
 
 
 def get_beamsize() -> tuple[float | None, float | None]:

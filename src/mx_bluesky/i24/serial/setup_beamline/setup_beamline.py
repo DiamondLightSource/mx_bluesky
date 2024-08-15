@@ -126,7 +126,7 @@ def modechange(action):
         sleep(1)
         caput(pv.aptr1_mp_select, "Manual Mounting")
         caput(pv.bs_mp_select, "Tray Mount")
-        while caget(pv.ttab_x + ".RBV") > 3:
+        while float(caget(pv.ttab_x + ".RBV")) > 3:
             sleep(1)
         logger.debug("Tray Hand Mount Done")
 
@@ -191,7 +191,7 @@ def modechange(action):
         caput(pv.vgon_pinxs, 0)
         caput(pv.vgon_pinyh, 0)
         caput(pv.vgon_pinzs, 0)
-        while caget(pv.ttab_x + ".RBV") > 1:
+        while float(caget(pv.ttab_x + ".RBV")) > 1:
             logger.debug(f"moving ttab_x {caget(pv.ttab_x)}")
             sleep(0.1)
         while caget(pv.fluo_out_limit) == "OFF":
@@ -202,7 +202,7 @@ def modechange(action):
             sleep(0.1)
         caput(pv.bs_mp_select, "Robot")
         caput(pv.bs_roty, 0)
-        while caget(pv.ptab_y + ".RBV") > -89.0:
+        while float(caget(pv.ptab_y + ".RBV")) > -89.0:
             sleep(1)
         logger.debug("Switch To Tray Done")
 
@@ -212,10 +212,10 @@ def modechange(action):
         # Supposed to absorb pin laser
         caput(pv.hgon_trayys, 0.0)
         caput(pv.hgon_trayzs, 0.0)
-        while caget(pv.ttab_x + ".RBV") > 1.0:
+        while float(caget(pv.ttab_x + ".RBV")) > 1.0:
             sleep(1)
         caput(pv.ptab_y, 0)
-        while caget(pv.ptab_y + ".RBV") < -1.0:
+        while float(caget(pv.ptab_y + ".RBV")) < -1.0:
             sleep(1)
         modechange("Pin_data_collection")
         logger.debug("Switch To Pin Done")
@@ -224,7 +224,7 @@ def modechange(action):
     return 1
 
 
-def pilatus(action, args_list=None):
+def pilatus(action, args_list):
     logger.debug("***** Entering Pilatus")
     logger.info(f"Setup pilatus - {action}")
     if args_list:
@@ -324,7 +324,7 @@ def pilatus(action, args_list=None):
     return 0
 
 
-def eiger(action, args_list=None):
+def eiger(action, args_list):
     logger.debug("***** Entering Eiger")
     logger.info(f"Setup eiger - {action}")
     if args_list:
@@ -445,7 +445,7 @@ def eiger(action, args_list=None):
     return 0
 
 
-def xspress3(action, args_list=None):
+def xspress3(action, args_list):
     logger.debug("***** Entering xspress3")
     logger.info(f"xspress3 - {action}")
     if args_list:

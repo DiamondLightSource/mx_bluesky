@@ -281,7 +281,7 @@ def main_extruder_plan(
         sleep(0.5)
         caput(pv.pilat_acquire, "1")  # Arm pilatus
         logger.debug("Pilatus data collection DONE")
-        sup.pilatus("return to normal")
+        sup.pilatus("return to normal", None)
         logger.info("Pilatus back to normal. Single image pilatus data collection DONE")
 
         caput(pv.eiger_seqID, int(caget(pv.eiger_seqID)) + 1)
@@ -342,7 +342,7 @@ def main_extruder_plan(
         num_images=parameters.num_images,
         exposure_time=parameters.exposure_time_s,
         pump_exposure_time=parameters.laser_dwell_s,
-        pump_delay=parameters.laser_delay_s,
+        pump_delay=parameters.laser_delay_s or 0,
         pump_status=int(parameters.pump_status),
     )
 
@@ -425,9 +425,9 @@ def tidy_up_at_collection_end_plan(
 
     # Clean Up
     if parameters.detector_name == "pilatus":
-        sup.pilatus("return-to-normal")
+        sup.pilatus("return-to-normal", None)
     elif parameters.detector_name == "eiger":
-        sup.eiger("return-to-normal")
+        sup.eiger("return-to-normal", None)
         logger.debug(f"{parameters.filename}_{caget(pv.eiger_seqID)}")
     logger.debug("End of Run")
     logger.debug("Close hutch shutter")
@@ -487,22 +487,24 @@ def run_extruder_plan(
 
     yield from bpp.contingency_wrapper(
         main_extruder_plan(
-            zebra,
-            aperture,
-            backlight,
-            beamstop,
-            detector_stage,
-            shutter,
-            parameters,
-            dcm,
-            dcid,
-            start_time,
+            zebra=zebra,
+            aperture=aperture,
+            backlight=backlight,
+            beamstop=beamstop,
+            detector_stage=detector_stage,
+            shutter=shutter,
+            dcm=dcm,
+            parameters=parameters,
+            dcid=dcid,
+            start_time=start_time,
         ),
         except_plan=lambda e: (
             yield from collection_aborted_plan(zebra, parameters.detector_name, dcid)
         ),
         else_plan=lambda: (
-            yield from collection_complete_plan(parameters.collection_directory, dcid)
+            yield from collection_complete_plan(
+                parameters.collection_directory, parameters.detector_name, dcid
+            )
         ),
         final_plan=lambda: (
             yield from tidy_up_at_collection_end_plan(zebra, shutter, parameters, dcid)

@@ -25,23 +25,23 @@ def call_nexgen(
     det_type = parameters.detector_name
     print(f"det_type: {det_type}")
 
+    current_chip_map = None
     if expt_type == "fixed-target" and isinstance(parameters, FixedTargetParameters):
-        if (
+        if not (
             parameters.map_type == MappingType.NoMap
             or parameters.chip.chip_type == ChipType.Custom
         ):
             # NOTE Nexgen server is still on nexgen v0.7.2 (fully working for ssx)
             # Will need to be updated, for correctness sake map needs to be None.
-            currentchipmap = None
-        else:
-            currentchipmap = "/dls_sw/i24/scripts/fastchips/litemaps/currentchip.map"
+            current_chip_map = "/dls_sw/i24/scripts/fastchips/litemaps/currentchip.map"
         pump_status = bool(parameters.pump_repeat)
         total_numb_imgs = parameters.total_num_images
     elif expt_type == "extruder" and isinstance(parameters, ExtruderParameters):
         # chip_prog_dict should be None for extruder (passed as input for now)
         total_numb_imgs = parameters.num_images
-        currentchipmap = None
         pump_status = parameters.pump_status
+    else:
+        raise ValueError(f"{expt_type=} not recognised")
 
     filename_prefix = cagetstring(Eiger.pv.filenameRBV)
     meta_h5 = (
@@ -78,7 +78,7 @@ def call_nexgen(
         payload = {
             "beamline": "i24",
             "beam_center": [caget(Eiger.pv.beamx), caget(Eiger.pv.beamy)],
-            "chipmap": currentchipmap,
+            "chipmap": current_chip_map,
             "chip_info": chip_prog_dict,
             "det_dist": parameters.detector_distance_mm,
             "exp_time": parameters.exposure_time_s,

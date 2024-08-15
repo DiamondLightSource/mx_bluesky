@@ -171,7 +171,7 @@ def get_chip_prog_values(
     elif parameters.pump_repeat == PumpProbeSetting.Repeat10:
         pump_repeat_pvar = 10
     else:
-        logger.warning(f"Unknown pump_repeat, pump_repeat = {parameters.pump_repeat}")
+        raise ValueError(f"Unknown pump_repeat, pump_repeat = {parameters.pump_repeat}")
 
     logger.info(
         f"Pump repeat is {str(parameters.pump_repeat)}, PVAR set to {pump_repeat_pvar}"
@@ -453,7 +453,7 @@ def start_i24(
             exposure_time=parameters.exposure_time_s,
             shots_per_position=parameters.num_exposures,
             pump_exposure_time=parameters.laser_dwell_s,
-            pump_delay=parameters.laser_delay_s,
+            pump_delay=parameters.laser_delay_s or 0,
             pump_status=parameters.pump_repeat.value,
         )
 
@@ -496,7 +496,7 @@ def start_i24(
         sleep(0.5)
         caput(pv.pilat_acquire, "1")  # Arm pilatus
         logger.debug("Pilatus data collection DONE")
-        sup.pilatus("return to normal")
+        sup.pilatus("return to normal", None)
         logger.info("Pilatus back to normal. Single image pilatus data collection DONE")
 
         logger.info(f"Triggered Eiger setup: filepath {filepath}")
@@ -528,7 +528,7 @@ def start_i24(
             exposure_time=parameters.exposure_time_s,
             shots_per_position=parameters.num_exposures,
             pump_exposure_time=parameters.laser_dwell_s,
-            pump_delay=parameters.laser_delay_s,
+            pump_delay=parameters.laser_delay_s or 0,
             pump_status=parameters.pump_repeat.value,
         )
 
@@ -580,13 +580,15 @@ def finish_i24(
         logger.debug("Finish I24 Pilatus")
         complete_filename = f"{parameters.filename}_{caget(pv.pilat_filenum)}"
         yield from reset_zebra_when_collection_done_plan(zebra)
-        sup.pilatus("return-to-normal")
+        sup.pilatus("return-to-normal", None)
         sleep(0.2)
     elif parameters.detector_name == "eiger":
         logger.debug("Finish I24 Eiger")
         yield from reset_zebra_when_collection_done_plan(zebra)
-        sup.eiger("return-to-normal")
+        sup.eiger("return-to-normal", None)
         complete_filename = cagetstring(pv.eiger_ODfilenameRBV)  # type: ignore
+    else:
+        raise ValueError(f"{parameters.detector_name=} unrecognised")
 
     # Detector independent moves
     logger.info("Move chip back to home position by setting PMAC_STRING pv.")

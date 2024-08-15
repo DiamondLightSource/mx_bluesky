@@ -79,7 +79,7 @@ def plot_file(fid, chip_type):
     ax1.set_xlim(-1, 26)
     ax1.set_ylim(-1, 26)
     ax1.invert_yaxis()
-    check_files([f"{chip_type}.png"])
+    check_files("i24", [f"{chip_type}.png"])
     plt.savefig(f"{fid[:-5]}.png", dpi=200, bbox_inches="tight", pad_inches=0.05)
     return 1
 
@@ -88,7 +88,7 @@ def plot_file(fid, chip_type):
 def convert_chip_to_hex(fid, chip_type):
     chip_dict = read_file_make_dict(fid, chip_type, True)
     chip_format = get_chip_format(ChipType(chip_type))
-    check_files([f"{chip_type}.full"])
+    check_files("i24", [f"{chip_type}.full"])
     with open(f"{fid[:-5]}.full", "w") as g:
         # Normal
         if chip_type in [ChipType.Oxford, ChipType.OxfordInner]:
@@ -106,9 +106,9 @@ def convert_chip_to_hex(fid, chip_type):
                 sorted_pres_list.append(chip_dict[addr])
 
             windows_per_block = chip_format.x_num_steps
-            number_of_lines = len(sorted_pres_list) / windows_per_block
+            number_of_lines = int(len(sorted_pres_list) / windows_per_block)
             hex_length = windows_per_block / 4
-            pad = 7 - hex_length
+            pad = int(7 - hex_length)
             for i in range(number_of_lines):
                 sublist = sorted_pres_list[
                     i * windows_per_block : (i * windows_per_block) + windows_per_block
@@ -120,7 +120,7 @@ def convert_chip_to_hex(fid, chip_type):
                 hex_string = (f"{{0:0>{hex_length}X}}").format(
                     int("".join(str(x) for x in right_list), 2)
                 )
-                hex_string = hex_string + pad * "0"
+                hex_string = hex_string + (pad * "0")
                 pvar = 5001 + i
                 line = f"P{pvar}=${hex_string}"
                 g.write(line + "\n")
@@ -144,7 +144,7 @@ def main():
     setup_logging()
     params = read_parameter_file()
 
-    check_files([".spec"])
+    check_files("i24", [".spec"])
     write_file(suffix=".spec", order="shot")
 
     logger.info(f"PARAMETER PATH = {PARAM_FILE_PATH_FT}")

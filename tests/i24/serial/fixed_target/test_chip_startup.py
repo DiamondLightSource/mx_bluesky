@@ -10,8 +10,9 @@ from mx_bluesky.i24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1 import (
 
 
 def test_fiducials():
-    assert len(fiducials(0)) == 0
-    assert len(fiducials(1)) == 0
+    assert fiducials(0) == []
+    assert fiducials(1) == []
+    assert fiducials(2) is None
 
 
 @patch("mx_bluesky.i24.serial.fixed_target.i24ssx_Chip_StartUp_py3v1.os")

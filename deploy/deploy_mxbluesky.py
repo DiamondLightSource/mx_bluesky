@@ -36,7 +36,7 @@ class repo:
         print(f"Found {self.name}_versions:\n{os.linesep.join(self.versions)}")
         self.latest_version_str = self.versions[0]
 
-    def deploy(self, url, beamline: str = None):
+    def deploy(self, url, beamline: str | None = None):
         print(f"Cloning latest version {self.name} into {self.deploy_location}")
 
         deploy_repo = Repo.init(self.deploy_location)
@@ -65,7 +65,7 @@ class repo:
 
 
 # Get permission groups depending on beamline/dev install
-def get_permission_groups(beamline: str = None) -> list:
+def get_permission_groups(beamline: str | None = None) -> list:
     beamline_groups = ["gda2", "dls_dasc"]
     if beamline:
         beamline_groups.append(f"{beamline}_staff")
@@ -73,7 +73,7 @@ def get_permission_groups(beamline: str = None) -> list:
 
 
 # Get the release directory based off the beamline and the latest mx_bluesky version
-def get_beamline_and_release_dir_from_args(repo: repo) -> tuple[str, str]:
+def get_beamline_and_release_dir_from_args(repo: repo) -> tuple[str | None, str]:
     if repo.name != "mx_bluesky":
         raise ValueError("This function should only be used with the mx_bluesky repo")
 

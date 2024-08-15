@@ -248,14 +248,16 @@ def save_screen_map() -> MsgGenerator:
 
 @log.log_on_entry
 def upload_parameters(
-    chipid: str = "oxford",
-    pmac: PMAC = inject("pmac"),
+    chipid: str = "oxford", pmac: PMAC = inject("pmac"), width: int | None = None
 ) -> MsgGenerator:
     setup_logging()
     logger.info("Uploading Parameters to the GeoBrick")
     if chipid == "oxford":
         caput(CHIPTYPE_PV, 0)
         width = 8
+    else:
+        if width is None:
+            raise Exception("Supply a width if chipid is not oxford")
 
     map_file: Path = LITEMAP_PATH / "currentchip.map"
     if not map_file.exists():
@@ -263,7 +265,7 @@ def upload_parameters(
 
     with open(map_file) as f:
         logger.info(f"Chipid {chipid}")
-        logger.info("width %d" % width)
+        logger.info(f"width {width}")
         x = 1
         for line in f.readlines()[: width**2]:
             cols = line.split()
@@ -290,7 +292,7 @@ def upload_parameters(
 
 
 @log.log_on_entry
-def upload_full(pmac: PMAC = None) -> MsgGenerator:
+def upload_full(pmac: PMAC | None = None) -> MsgGenerator:
     setup_logging()
     if not pmac:
         pmac = i24.pmac()
@@ -562,6 +564,8 @@ def load_lite_map() -> MsgGenerator:
                 label = "%02.d" % (lab_num + 1)
                 btn_names[button_name] = label
         block_dict = btn_names
+    else:
+        raise ValueError(f"{chip_type=} unrecognised")
 
     litemap_fid = f"{caget(MAP_FILEPATH_PV)}.lite"
     logger.info("Please wait, loading LITE map")

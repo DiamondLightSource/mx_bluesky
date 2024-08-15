@@ -96,7 +96,10 @@ def set_shutter_mode(zebra: Zebra, mode: str):
 
 
 def setup_pc_sources(
-    zebra: Zebra, gate_source: int, pulse_source: int, group: str = "pc_sources"
+    zebra: Zebra,
+    gate_source: TrigSource,
+    pulse_source: TrigSource,
+    group: str = "pc_sources",
 ):
     yield from bps.abs_set(zebra.pc.gate_source, gate_source, group=group)
     yield from bps.abs_set(zebra.pc.pulse_source, pulse_source, group=group)
@@ -163,8 +166,8 @@ def setup_zebra_for_extruder_with_pump_probe_plan(
     det_type: str,
     exp_time: float,
     num_images: int,
-    pump_exp: float,
-    pump_delay: float,
+    pump_exp: float | None,
+    pump_delay: float | None,
     pulse1_delay: float = 0.0,
     group: str = "setup_zebra_for_extruder_pp",
     wait: bool = True,
@@ -219,6 +222,7 @@ def setup_zebra_for_extruder_with_pump_probe_plan(
 
     yield from bps.abs_set(zebra.pc.gate_input, SOFT_IN2, group=group)
 
+    assert pump_exp and pump_delay, "Must supply pump_exp and pump_delay!"
     gate_width, gate_step = get_zebra_settings_for_extruder(
         exp_time, pump_exp, pump_delay
     )

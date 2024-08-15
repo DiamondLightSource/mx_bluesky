@@ -32,7 +32,7 @@ async def test_move_detector_stage_to_position_plan(detector_stage: DetectorMoti
 @patch("mx_bluesky.i24.serial.setup_beamline.setup_beamline.caget")
 def test_pilatus_raises_error_if_fastchip_and_no_args_list(fake_caget, fake_caput):
     with pytest.raises(TypeError):
-        setup_beamline.pilatus("fastchip")
+        setup_beamline.pilatus("fastchip", None)
 
 
 @patch("mx_bluesky.i24.serial.setup_beamline.setup_beamline.caput")
@@ -47,7 +47,7 @@ def test_pilatus_quickshot(fake_caget, fake_caput):
 @patch("mx_bluesky.i24.serial.setup_beamline.setup_beamline.caget")
 def test_eiger_raises_error_if_quickshot_and_no_args_list(fake_caget, fake_caput):
     with pytest.raises(TypeError):
-        setup_beamline.eiger("quickshot")
+        setup_beamline.eiger("quickshot", None)
 
 
 @patch("mx_bluesky.i24.serial.setup_beamline.setup_beamline.caput")

@@ -40,10 +40,11 @@ def read_parameter_file(
 
 @log.log_on_entry
 def fiducials(chip_type: int):
+    fiducial_list = None
     if chip_type in [ChipType.Oxford, ChipType.OxfordInner, ChipType.Minichip]:
-        fiducial_list: list = []
-        # No fiducial for custom
+        fiducial_list = []
     elif chip_type == ChipType.Custom:
+        # No fiducial for custom
         logger.warning("No fiducials for custom chip")
     else:
         logger.warning(f"Unknown chip_type, {chip_type}, in fiducials")
@@ -209,11 +210,13 @@ def write_file(
     chip_file_path = save_path / f"chips/{params.directory}/{params.filename}{suffix}"
 
     fiducial_list = fiducials(params.chip.chip_type.value)
+
     if order == "alphanumeric":
         addr_list = get_alphanumeric(params.chip.chip_type)
-
     elif order == "shot":
         addr_list = get_shot_order(params.chip.chip_type)
+    else:
+        raise ValueError(f"{order=} unrecognised")
 
     with open(chip_file_path, "a") as g:
         for addr in addr_list:
