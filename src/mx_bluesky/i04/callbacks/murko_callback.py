@@ -1,6 +1,5 @@
 import copy
 import json
-from typing import Optional
 
 from bluesky.callbacks import CallbackBase
 from dodal.log import LOGGER
@@ -15,7 +14,7 @@ class MurkoCallback(CallbackBase):
         )
         self.last_uuid = None
 
-    def start(self, doc: RunStart) -> Optional[RunStart]:
+    def start(self, doc: RunStart) -> RunStart | None:
         self.murko_metadata = {
             "zoom_percentage": doc.get("zoom_percentage"),
             "microns_per_x_pixel": doc.get("microns_per_x_pixel"),

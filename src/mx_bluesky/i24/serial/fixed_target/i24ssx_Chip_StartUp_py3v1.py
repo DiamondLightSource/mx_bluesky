@@ -40,7 +40,7 @@ def read_parameter_file(
 
 @log.log_on_entry
 def fiducials(chip_type: int):
-    fiducial_list = None
+    fiducial_list: list | None = None
     if chip_type in [ChipType.Oxford, ChipType.OxfordInner, ChipType.Minichip]:
         fiducial_list = []
     elif chip_type == ChipType.Custom:
