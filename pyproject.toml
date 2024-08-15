@@ -23,7 +23,7 @@ dependencies = [
     "opencv-python",
     "pydantic",
     "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@7e01eeaf18046eadf4d513c79b06e0a11d616776",
-    "fastapi[all]<0.99",
+    "fastapi[all]",
     "blueapi @ git+https://github.com/DiamondLightSource/blueapi.git@main",
 ]
 dynamic = ["version"]
