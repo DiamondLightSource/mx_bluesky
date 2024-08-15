@@ -1,19 +1,43 @@
 from collections.abc import AsyncGenerator
-from unittest.mock import ANY, MagicMock, call
+from typing import Literal
+from unittest.mock import ANY, MagicMock, call, patch
 
 import pytest
+from _pytest.python_api import ApproxBase
+from bluesky.run_engine import RunEngine
 from dodal.beamlines import i04
+from dodal.devices.oav.oav_detector import OAV
+from dodal.devices.oav.oav_to_redis_forwarder import OAVToRedisForwarder
 from dodal.devices.smargon import Smargon
 from dodal.devices.thawer import Thawer, ThawerStates
-from ophyd.sim import NullStatus
-from ophyd_async.core import callback_on_mock_put, get_mock_put, set_mock_value
+from ophyd.sim import NullStatus, instantiate_fake_device
+from ophyd_async.core import (
+    DeviceCollector,
+    callback_on_mock_put,
+    get_mock_put,
+    set_mock_value,
+)
 from ophyd_async.epics.motion import Motor
 
-from mx_bluesky.i04.thawing_plan import thaw
+from mx_bluesky.i04.thawing_plan import thaw, thaw_and_center
+
+DISPLAY_CONFIGURATION = "tests/devices/unit_tests/test_display.configuration"
+ZOOM_LEVELS_XML = "tests/devices/unit_tests/test_jCameraManZoomLevels.xml"
 
 
 class MyException(Exception):
     pass
+
+
+@pytest.fixture
+def oav() -> OAV:
+    oav: OAV = instantiate_fake_device(OAV, params=MagicMock())
+
+    oav.zoom_controller.zrst.set("1.0x")
+
+    oav.wait_for_connection()
+
+    return oav
 
 
 def patch_motor(motor: Motor, initial_position: float = 0):
@@ -29,7 +53,7 @@ def patch_motor(motor: Motor, initial_position: float = 0):
 
 
 @pytest.fixture
-async def smargon(RE) -> AsyncGenerator[Smargon, None]:
+async def smargon(RE: RunEngine) -> AsyncGenerator[Smargon, None]:
     smargon = Smargon(name="smargon")
     await smargon.connect(mock=True)
 
@@ -40,8 +64,17 @@ async def smargon(RE) -> AsyncGenerator[Smargon, None]:
 
 
 @pytest.fixture
-async def thawer(RE) -> Thawer:
+async def thawer(RE: RunEngine) -> Thawer:
     return i04.thawer(fake_with_ophyd_sim=True)
+
+
+@pytest.fixture
+async def oav_forwarder(RE: RunEngine) -> OAVToRedisForwarder:
+    with DeviceCollector(mock=True):
+        oav_forwarder = OAVToRedisForwarder(
+            "prefix", "host", "password", name="oav_to_redis_forwarder"
+        )
+    return oav_forwarder
 
 
 def _do_thaw_and_confirm_cleanup(
@@ -49,6 +82,7 @@ def _do_thaw_and_confirm_cleanup(
 ):
     smargon.omega.set = move_mock
     set_mock_value(smargon.omega.velocity, initial_velocity := 10)
+    smargon.omega.set = move_mock
     do_thaw_func()
     last_thawer_call = get_mock_put(thawer.control).call_args_list[-1]
     assert last_thawer_call == call(ThawerStates.OFF, wait=ANY, timeout=ANY)
@@ -57,7 +91,7 @@ def _do_thaw_and_confirm_cleanup(
 
 
 def test_given_thaw_succeeds_then_velocity_restored_and_thawer_turned_off(
-    smargon: Smargon, thawer: Thawer, RE
+    smargon: Smargon, thawer: Thawer, RE: RunEngine
 ):
     def do_thaw_func():
         RE(thaw(10, thawer=thawer, smargon=smargon))
@@ -68,7 +102,7 @@ def test_given_thaw_succeeds_then_velocity_restored_and_thawer_turned_off(
 
 
 def test_given_moving_smargon_gives_error_then_velocity_restored_and_thawer_turned_off(
-    smargon: Smargon, thawer: Thawer, RE
+    smargon: Smargon, thawer: Thawer, RE: RunEngine
 ):
     def do_thaw_func():
         with pytest.raises(MyException):
@@ -88,7 +122,12 @@ def test_given_moving_smargon_gives_error_then_velocity_restored_and_thawer_turn
     ],
 )
 def test_given_different_rotations_and_times_then_velocity_correct(
-    smargon: Smargon, thawer: Thawer, time, rotation, expected_speed, RE
+    smargon: Smargon,
+    thawer: Thawer,
+    time: float | Literal[10] | Literal[50],
+    rotation: Literal[360] | Literal[100] | Literal[-100],
+    expected_speed: ApproxBase | Literal[72] | Literal[4],
+    RE: RunEngine,
 ):
     RE(thaw(time, rotation, thawer=thawer, smargon=smargon))
     first_velocity_call = get_mock_put(smargon.omega.velocity).call_args_list[0]
@@ -104,7 +143,12 @@ def test_given_different_rotations_and_times_then_velocity_correct(
     ],
 )
 def test_given_different_rotations_then_motor_moved_relative(
-    smargon: Smargon, thawer: Thawer, start_pos, rotation, expected_end, RE
+    smargon: Smargon,
+    thawer: Thawer,
+    start_pos: Literal[0] | Literal[78],
+    rotation: Literal[360] | Literal[100] | Literal[-100],
+    expected_end: Literal[360] | Literal[178] | Literal[-100],
+    RE: RunEngine,
 ):
     set_mock_value(smargon.omega.user_readback, start_pos)
     RE(thaw(10, rotation, thawer=thawer, smargon=smargon))
@@ -112,3 +156,61 @@ def test_given_different_rotations_then_motor_moved_relative(
         call(expected_end, wait=ANY, timeout=ANY),
         call(start_pos, wait=ANY, timeout=ANY),
     ]
+
+
+@patch("mx_bluesky.i04.thawing_plan.MurkoCallback")
+def test_thaw_and_centre_adds_murko_callback_and_produces_expected_messages(
+    patch_murko_callback: MagicMock,
+    smargon: Smargon,
+    thawer: Thawer,
+    oav_forwarder: OAVToRedisForwarder,
+    oav: OAV,
+    RE: RunEngine,
+):
+    patch_murko_instance = patch_murko_callback.return_value
+    RE(
+        thaw_and_center(
+            10,
+            360,
+            thawer=thawer,
+            smargon=smargon,
+            oav=oav,
+            robot=MagicMock(),
+            oav_to_redis_forwarder=oav_forwarder,
+        )
+    )
+
+    docs = patch_murko_instance.call_args_list
+    start_params = [c.args[1] for c in docs if c.args[0] == "start"]
+    event_params = [c.args[1] for c in docs if c.args[0] == "event"]
+    assert len(start_params) == 1
+    assert len(event_params) == 4
+    oav_updates = [
+        e for e in event_params if "oav_to_redis_forwarder-uuid" in e["data"].keys()
+    ]
+    smargon_updates = [e for e in event_params if "smargon-omega" in e["data"].keys()]
+    assert len(oav_updates) > 0
+    assert len(smargon_updates) > 0
+
+
+@patch("mx_bluesky.i04.thawing_plan.MurkoCallback.call_murko")
+def test_thaw_and_centre_will_produce_events_that_call_murko(
+    patch_murko_call: MagicMock,
+    smargon: Smargon,
+    thawer: Thawer,
+    oav_forwarder: OAVToRedisForwarder,
+    oav: OAV,
+    RE: RunEngine,
+):
+    RE(
+        thaw_and_center(
+            10,
+            360,
+            thawer=thawer,
+            smargon=smargon,
+            oav=oav,
+            robot=MagicMock(),
+            oav_to_redis_forwarder=oav_forwarder,
+        )
+    )
+    patch_murko_call.assert_called()

@@ -1,16 +1,58 @@
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
+from bluesky.preprocessors import run_decorator, subs_decorator
 from dls_bluesky_core.core import MsgGenerator
+from dodal.beamlines.i04 import MURKO_REDIS_DB, REDIS_HOST, REDIS_PASSWORD
 from dodal.common import inject
+from dodal.devices.oav.oav_detector import OAV
+from dodal.devices.oav.oav_to_redis_forwarder import OAVToRedisForwarder
+from dodal.devices.robot import BartRobot
 from dodal.devices.smargon import Smargon
 from dodal.devices.thawer import Thawer, ThawerStates
+
+from mx_bluesky.i04.callbacks.murko_callback import MurkoCallback
+
+
+def thaw_and_center(
+    time_to_thaw: float,
+    rotation: float = 360,
+    robot: BartRobot = inject("robot"),
+    thawer: Thawer = inject("thawer"),
+    smargon: Smargon = inject("smargon"),
+    oav: OAV = inject("oav"),
+    oav_to_redis_forwarder: OAVToRedisForwarder = inject("oav_to_redis_forwarder"),
+) -> MsgGenerator:
+    zoom_percentage = yield from bps.rd(oav.zoom_controller.percentage)
+    sample_id = yield from bps.rd(robot.sample_id)
+
+    yield from bps.abs_set(oav.zoom_controller.level, "1.0x", wait=True)
+
+    @subs_decorator(MurkoCallback(REDIS_HOST, REDIS_PASSWORD, MURKO_REDIS_DB))
+    @run_decorator(
+        md={
+            "microns_per_x_pixel": oav.parameters.micronsPerXPixel,
+            "microns_per_y_pixel": oav.parameters.micronsPerYPixel,
+            "beam_centre_i": oav.parameters.beam_centre_i,
+            "beam_centre_j": oav.parameters.beam_centre_j,
+            "zoom_percentage": zoom_percentage,
+            "sample_id": sample_id,
+        }
+    )
+    def _thaw_and_center():
+        yield from bps.kickoff(oav_to_redis_forwarder, wait=True)
+        yield from bps.monitor(smargon.omega.user_readback, name="smargon")
+        yield from bps.monitor(oav_to_redis_forwarder.uuid, name="oav")
+        yield from thaw(time_to_thaw, rotation, thawer, smargon)
+        yield from bps.complete(oav_to_redis_forwarder)
+
+    yield from _thaw_and_center()
 
 
 def thaw(
     time_to_thaw: float,
     rotation: float = 360,
-    thawer: Thawer = inject("thawer"),  # type: ignore
-    smargon: Smargon = inject("smargon"),  # type: ignore
+    thawer: Thawer = inject("thawer"),
+    smargon: Smargon = inject("smargon"),
 ) -> MsgGenerator:
     """Rotates the sample and thaws it at the same time.
 

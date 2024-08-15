@@ -22,3 +22,12 @@ repos:
         entry: ruff format --force-exclude
         types: [python]
         require_serial: true
+
+  # Type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.4.1
+    hooks:
+      - id: mypy
+        files: 'src/.*\.py$'
+        additional_dependencies: [types-requests, types-redis]
+        args: ["--ignore-missing-imports", "--no-strict-optional"]
