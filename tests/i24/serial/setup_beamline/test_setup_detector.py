@@ -1,6 +1,8 @@
 from unittest.mock import patch
 
 import pytest
+from bluesky.run_engine import RunEngine
+from dodal.devices.i24.i24_detector_motion import DetectorMotion
 from ophyd_async.core import set_mock_value
 
 from mx_bluesky.i24.serial.parameters.constants import SSXType
@@ -13,15 +15,15 @@ from mx_bluesky.i24.serial.setup_beamline.setup_detector import (
 )
 
 
-def test_get_detector_type(detector_stage):
-    set_mock_value(detector_stage.y, -22)
-    det_type = yield from get_detector_type(detector_stage)
+def test_get_detector_type(RE, detector_stage: DetectorMotion):
+    set_mock_value(detector_stage.y.user_readback, -22)
+    det_type = RE(get_detector_type(detector_stage)).plan_result
     assert det_type.name == "eiger"
 
 
-def test_get_detector_type_finds_pilatus(detector_stage):
-    set_mock_value(detector_stage.y, 566)
-    det_type = yield from get_detector_type(detector_stage)
+def test_get_detector_type_finds_pilatus(RE, detector_stage: DetectorMotion):
+    set_mock_value(detector_stage.y.user_readback, 566)
+    det_type = RE(get_detector_type(detector_stage)).plan_result
     assert det_type.name == "pilatus"
 
 
@@ -43,7 +45,9 @@ def test_get_requested_detector_raises_error_for_invalid_value(fake_caget):
 
 @patch("mx_bluesky.i24.serial.setup_beamline.setup_detector.setup_logging")
 @patch("mx_bluesky.i24.serial.setup_beamline.setup_detector.caget")
-async def test_setup_detector_stage(fake_caget, fake_log, detector_stage, RE):
+async def test_setup_detector_stage(
+    fake_caget, fake_log, detector_stage: DetectorMotion, RE: RunEngine
+):
     fake_caget.return_value = DetRequest.eiger.value
     RE(setup_detector_stage(SSXType.FIXED, detector_stage))
     assert await detector_stage.y.user_readback.get_value() == Eiger.det_y_target

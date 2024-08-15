@@ -44,6 +44,7 @@ dev = [
     "pyright",
     "pytest-asyncio",
     "pytest-cov",
+    "pytest-random-order",
     "pytest",
     "ruff",
     "sphinx-autobuild",
@@ -75,11 +76,16 @@ reportMissingImports = false # Ignore missing stubs in imported modules
 
 [tool.pytest.ini_options]
 # Run pytest with all our checkers, and don't spam us with massive tracebacks on error
+asyncio_mode = "auto"
 addopts = """
     --tb=native -vv --doctest-modules --doctest-glob="*.rst"
     """
 # https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
-filterwarnings = "error"
+filterwarnings = [
+    "error",
+    # Ignore deprecation warning from zocalo
+    "ignore:((.|\n)*)was never iterated.*:RuntimeWarning",
+]
 # Doctest python code in docs, python code in src docstrings, test functions in tests
 testpaths = "docs src tests"
 
