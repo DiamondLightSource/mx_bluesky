@@ -3,7 +3,7 @@ _commit: 2.2.0
 _src_path: gh:DiamondLightSource/python-copier-template
 author_email: dominic.oram@diamond.ac.uk
 author_name: Dominic Oram
-component_owner: MX DAQ
+component_owner: group:data-acquisition
 description: Bluesky tools for MX Beamlines at DLS
 distribution_name: mx_bluesky
 docker: true
