@@ -18,7 +18,7 @@ class Pilatus:
     image_size_pixels = (2463, 2527)
     pixel_size_mm = (0.172, 0.172)
     image_size_mm = tuple(
-        round(a * b, 3) for a, b in zip(image_size_pixels, pixel_size_mm)
+        round(a * b, 3) for a, b in zip(image_size_pixels, pixel_size_mm, strict=False)
     )
 
     det_y_threshold = 560.0
@@ -47,7 +47,7 @@ class Eiger:
     image_size_pixels = (3108, 3262)
 
     image_size_mm = tuple(
-        round(a * b, 3) for a, b in zip(image_size_pixels, pixel_size_mm)
+        round(a * b, 3) for a, b in zip(image_size_pixels, pixel_size_mm, strict=False)
     )
 
     det_y_threshold = -10.0

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, validator
 
@@ -35,9 +35,9 @@ class SerialExperiment(BaseModel):
 class LaserExperiment(BaseModel):
     """Laser settings for pump probe serial collections."""
 
-    laser_dwell_s: Optional[float] = None  # pump exposure time
-    laser_delay_s: Optional[float] = None  # pump delay
-    pre_pump_exposure_s: Optional[float] = None  # Pre illumination, just for chip
+    laser_dwell_s: float | None = None  # pump exposure time
+    laser_delay_s: float | None = None  # pump delay
+    pre_pump_exposure_s: float | None = None  # Pre illumination, just for chip
 
 
 class ExtruderParameters(SerialExperiment, LaserExperiment):
@@ -48,7 +48,7 @@ class ExtruderParameters(SerialExperiment, LaserExperiment):
 
     @classmethod
     def from_file(cls, filename: str | Path):
-        with open(filename, "r") as fh:
+        with open(filename) as fh:
             raw_params = json.load(fh)
         return cls(**raw_params)
 
@@ -119,6 +119,6 @@ class FixedTargetParameters(SerialExperiment, LaserExperiment):
 
     @classmethod
     def from_file(cls, filename: str | Path):
-        with open(filename, "r") as fh:
+        with open(filename) as fh:
             raw_params = json.load(fh)
         return cls(**raw_params)

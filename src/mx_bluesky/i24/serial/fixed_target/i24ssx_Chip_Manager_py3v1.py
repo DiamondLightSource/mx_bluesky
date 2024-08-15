@@ -12,7 +12,6 @@ import time
 from pathlib import Path
 from pprint import pformat
 from time import sleep
-from typing import Tuple
 
 import bluesky.plan_stubs as bps
 import numpy as np
@@ -181,7 +180,7 @@ def write_parameter_file(
 def scrape_pvar_file(fid: str, pvar_dir: Path = PVAR_FILE_PATH):
     block_start_list = []
 
-    with open(pvar_dir / fid, "r") as f:
+    with open(pvar_dir / fid) as f:
         lines = f.readlines()
     for line in lines:
         line = line.rstrip()
@@ -220,7 +219,7 @@ def define_current_chip(
     if chipid == "oxford":
         caput(CHIPTYPE_PV, 0)
 
-    with open(PVAR_FILE_PATH / f"{chipid}.pvar", "r") as f:
+    with open(PVAR_FILE_PATH / f"{chipid}.pvar") as f:
         logger.info("Opening %s.pvar" % chipid)
         for line in f.readlines():
             if line.startswith("#"):
@@ -264,7 +263,7 @@ def upload_parameters(
     if not map_file.exists():
         raise FileNotFoundError(f"The file {map_file} has not yet been created")
 
-    with open(map_file, "r") as f:
+    with open(map_file) as f:
         logger.info("Chipid %s" % chipid)
         logger.info("width %d" % width)
         x = 1
@@ -301,7 +300,7 @@ def upload_full(pmac: PMAC = None) -> MsgGenerator:
     map_file: Path = FULLMAP_PATH / "currentchip.full"
     if not map_file.exists():
         raise FileNotFoundError(f"The file {map_file} has not yet been created")
-    with open(map_file, "r") as fh:
+    with open(map_file) as fh:
         f = fh.readlines()
 
     for i in range(len(f) // 2):
@@ -570,7 +569,7 @@ def load_lite_map() -> MsgGenerator:
     logger.info("Please wait, loading LITE map")
     logger.debug("Loading Lite Map")
     logger.info("Opening %s" % (LITEMAP_PATH / litemap_fid))
-    with open(LITEMAP_PATH / litemap_fid, "r") as fh:
+    with open(LITEMAP_PATH / litemap_fid) as fh:
         f = fh.readlines()
     for line in f:
         entry = line.split()
@@ -710,7 +709,7 @@ def laser_control(laser_setting: str, pmac: PMAC = inject("pmac")) -> MsgGenerat
 
 @log.log_on_entry
 def scrape_mtr_directions(motor_file_path: Path = CS_FILES_PATH):
-    with open(motor_file_path / "motor_direction.txt", "r") as f:
+    with open(motor_file_path / "motor_direction.txt") as f:
         lines = f.readlines()
     mtr1_dir, mtr2_dir, mtr3_dir = 1.0, 1.0, 1.0
     for line in lines:
@@ -756,8 +755,8 @@ def fiducial(point: int = 1, pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
 def scrape_mtr_fiducials(
     point: int, param_path: Path = PARAM_FILE_PATH_FT
-) -> Tuple[float, float, float]:
-    with open(param_path / f"fiducial_{point}.txt", "r") as f:
+) -> tuple[float, float, float]:
+    with open(param_path / f"fiducial_{point}.txt") as f:
         f_lines = f.readlines()[1:]
     f_x = float(f_lines[0].rsplit()[1])
     f_y = float(f_lines[1].rsplit()[1])
@@ -814,7 +813,7 @@ def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
 
     # Scale parameters saved in json file
     try:
-        with open(CS_FILES_PATH / "cs_maker.json", "r") as fh:
+        with open(CS_FILES_PATH / "cs_maker.json") as fh:
             cs_info = json.load(fh)
     except json.JSONDecodeError:
         logger.error("Invalid JSON file.")
@@ -849,20 +848,20 @@ def cs_maker(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     Sz1 = -1 * f1_y / fiducial_dict[chip_type][0]
     Sz2 = f2_x / fiducial_dict[chip_type][1]
     Sz = Sz_dir * ((Sz1 + Sz2) / 2)
-    Cz = np.sqrt((1 - Sz**2))
+    Cz = np.sqrt(1 - Sz**2)
     logger.info("Sz1 , %1.4f, %1.4f" % (Sz1, np.degrees(np.arcsin(Sz1))))
     logger.info("Sz2 , %1.4f, %1.4f" % (Sz2, np.degrees(np.arcsin(Sz2))))
     logger.info("Sz , %1.4f, %1.4f" % (Sz, np.degrees(np.arcsin(Sz))))
     logger.info("Cz , %1.4f, %1.4f" % (Cz, np.degrees(np.arcsin(Cz))))
     # Rotation Around Y
     Sy = Sy_dir * f1_z / fiducial_dict[chip_type][0]
-    Cy = np.sqrt((1 - Sy**2))
+    Cy = np.sqrt(1 - Sy**2)
     logger.info("Sy , %1.4f, %1.4f" % (Sy, np.degrees(np.arcsin(Sy))))
     logger.info("Cy , %1.4f, %1.4f" % (Cy, np.degrees(np.arcsin(Cy))))
     # Rotation Around X
     # If stages upsidedown (I24) change sign of Sx
     Sx = Sx_dir * f2_z / fiducial_dict[chip_type][1]
-    Cx = np.sqrt((1 - Sx**2))
+    Cx = np.sqrt(1 - Sx**2)
     logger.info("Sx , %1.4f, %1.4f" % (Sx, np.degrees(np.arcsin(Sx))))
     logger.info("Cx , %1.4f, %1.4f" % (Cx, np.degrees(np.arcsin(Cx))))
 

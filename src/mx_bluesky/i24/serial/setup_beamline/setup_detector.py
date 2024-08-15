@@ -4,8 +4,8 @@ Utilities for defining the detector in use, and moving the stage.
 
 import logging
 import time
+from collections.abc import Generator
 from enum import IntEnum
-from typing import Generator
 
 import bluesky.plan_stubs as bps
 from blueapi.core import MsgGenerator

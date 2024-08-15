@@ -7,7 +7,6 @@ import os
 import string
 import time
 from pathlib import Path
-from typing import List
 
 import numpy as np
 
@@ -125,7 +124,7 @@ def zippum(list_1_args, list_2_args):
     A_path = pathli(list_1, type_1, reverse_1)
     B_path = pathli(list_2, type_2, reverse_2)
     zipped_list = []
-    for a, b in zip(A_path, B_path):
+    for a, b in zip(A_path, B_path, strict=False):
         zipped_list.append(a + b)
     return zipped_list
 
@@ -234,7 +233,7 @@ def write_file(
 @log.log_on_entry
 def check_files(
     location: str,
-    suffix_list: List[str],
+    suffix_list: list[str],
     param_file_path: Path | str = PARAM_FILE_PATH_FT,
     save_path: Path = HEADER_FILES_PATH,
 ):
@@ -266,7 +265,7 @@ def check_files(
 @log.log_on_entry
 def write_headers(
     location: str,
-    suffix_list: List[str],
+    suffix_list: list[str],
     param_file_path: Path = PARAM_FILE_PATH_FT,
     save_path: Path = HEADER_FILES_PATH,
 ):

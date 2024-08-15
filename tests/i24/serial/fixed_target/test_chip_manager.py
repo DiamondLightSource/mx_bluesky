@@ -1,5 +1,4 @@
 import json
-from typing import List
 from unittest.mock import ANY, MagicMock, call, mock_open, patch
 
 import pytest
@@ -130,7 +129,7 @@ async def test_moveto_preset_with_pmac_move(
     fake_log: MagicMock,
     pos_request: str,
     expected_num_caput: int,
-    expected_pmac_move: List,
+    expected_pmac_move: list,
     other_devices: bool,
     pmac: PMAC,
     beamstop: Beamstop,

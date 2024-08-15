@@ -35,7 +35,7 @@ def setup_logging():
 def read_file_make_dict(fid, chip_type, switch=False):
     a_dict = {}
     b_dict = {}
-    with open(fid, "r") as f:
+    with open(fid) as f:
         for line in f.readlines():
             if line.startswith("#"):
                 continue

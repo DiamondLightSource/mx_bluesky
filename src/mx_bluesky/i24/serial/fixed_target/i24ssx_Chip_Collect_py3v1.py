@@ -8,7 +8,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 from time import sleep
-from typing import Dict, List
 
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
@@ -185,7 +184,7 @@ def get_chip_prog_values(
 
     logger.info(f"pump_in_probe set to {pump_in_probe}")
 
-    chip_dict: Dict[str, list] = {
+    chip_dict: dict[str, list] = {
         "X_NUM_STEPS": [11, parameters.chip.x_num_steps],
         "Y_NUM_STEPS": [12, parameters.chip.y_num_steps],
         "X_STEP_SIZE": [13, parameters.chip.x_step_size],
@@ -224,7 +223,7 @@ def get_chip_prog_values(
 @log.log_on_entry
 def load_motion_program_data(
     pmac: PMAC,
-    motion_program_dict: Dict[str, List],
+    motion_program_dict: dict[str, list],
     map_type: int,
     pump_repeat: int,
     checker_pattern: bool,
@@ -353,7 +352,7 @@ def datasetsizei24(
         logger.info(f"Using Mapping Lite on chip type {chip_params.chip_type}")
         chip_format = chip_params.chip_format[2:4]
         block_count = 0
-        with open(LITEMAP_PATH / "currentchip.map", "r") as f:
+        with open(LITEMAP_PATH / "currentchip.map") as f:
             for line in f.readlines():
                 entry = line.split()
                 if entry[2] == "1":

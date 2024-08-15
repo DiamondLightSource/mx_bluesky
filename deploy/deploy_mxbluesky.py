@@ -5,7 +5,6 @@ Deploy latest release of mx_bluesky either on a beamline or in dev mode.
 import argparse
 import os
 from subprocess import PIPE, CalledProcessError, Popen
-from typing import List, Tuple
 
 from git import Repo
 from packaging.version import Version
@@ -66,7 +65,7 @@ class repo:
 
 
 # Get permission groups depending on beamline/dev install
-def get_permission_groups(beamline: str = None) -> List:
+def get_permission_groups(beamline: str = None) -> list:
     beamline_groups = ["gda2", "dls_dasc"]
     if beamline:
         beamline_groups.append(f"{beamline}_staff")
@@ -74,7 +73,7 @@ def get_permission_groups(beamline: str = None) -> List:
 
 
 # Get the release directory based off the beamline and the latest mx_bluesky version
-def get_beamline_and_release_dir_from_args(repo: repo) -> Tuple[str, str]:
+def get_beamline_and_release_dir_from_args(repo: repo) -> tuple[str, str]:
     if repo.name != "mx_bluesky":
         raise ValueError("This function should only be used with the mx_bluesky repo")
 
@@ -152,7 +151,7 @@ if __name__ == "__main__":
     mx_repo.deploy(mx_repo.origin.url, beamline)
 
     # Get version of dodal that latest mx_bluesky version uses
-    with open(f"{release_area_version}/mx_bluesky/pyproject.toml", "r") as setup_file:
+    with open(f"{release_area_version}/mx_bluesky/pyproject.toml") as setup_file:
         dodal_url = [
             line
             for line in setup_file

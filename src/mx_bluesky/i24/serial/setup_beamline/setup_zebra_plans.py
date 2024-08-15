@@ -10,7 +10,6 @@ schematics corresponds to soft_in_2 in the code.
 """
 
 import logging
-from typing import Tuple
 
 import bluesky.plan_stubs as bps
 from dodal.devices.zebra import (
@@ -56,7 +55,7 @@ def get_zebra_settings_for_extruder(
     exp_time: float,
     pump_exp: float,
     pump_delay: float,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """Calculates and returns gate width and step for extruder collections with pump \
     probe.
 

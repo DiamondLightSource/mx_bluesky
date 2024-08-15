@@ -19,7 +19,7 @@ def __show__(name):
 def __which__():
     """Return script directory, used for finding which pv.py you are running"""
     pathname, scriptname = os.path.split(sys.argv[0])
-    print(("Current dir: " + os.path.abspath(pathname)))
+    print("Current dir: " + os.path.abspath(pathname))
     print("path to pv.py: ")
 
 

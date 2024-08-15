@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from mx_bluesky.i24.serial.fixed_target.ft_utils import ChipType
 from mx_bluesky.i24.serial.parameters.experiment_parameters import ChipDescription
@@ -7,7 +7,7 @@ from mx_bluesky.i24.serial.setup_beamline import caget, pv
 
 def get_chip_format(chip_type: ChipType) -> ChipDescription:
     """Default parameter values."""
-    defaults: Dict[str, int | float] = {}
+    defaults: dict[str, int | float] = {}
     match chip_type:
         case ChipType.Oxford:
             defaults["x_num_steps"] = defaults["y_num_steps"] = 20
@@ -36,5 +36,5 @@ def get_chip_format(chip_type: ChipType) -> ChipDescription:
             defaults["x_step_size"] = defaults["y_step_size"] = 0.1193
             defaults["x_blocks"] = defaults["y_blocks"] = 1
             defaults["b2b_horz"] = defaults["b2b_vert"] = 0.0
-    chip_params: Dict[str, Any] = {"chip_type": chip_type, **defaults}
+    chip_params: dict[str, Any] = {"chip_type": chip_type, **defaults}
     return ChipDescription(**chip_params)

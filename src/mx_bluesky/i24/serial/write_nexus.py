@@ -4,7 +4,7 @@ import pathlib
 import pprint
 import time
 from datetime import datetime
-from typing import Dict, Literal
+from typing import Literal
 
 import requests
 
@@ -16,7 +16,7 @@ logger = logging.getLogger("I24ssx.nexus_writer")
 
 
 def call_nexgen(
-    chip_prog_dict: Dict | None,
+    chip_prog_dict: dict | None,
     start_time: datetime,
     parameters: ExtruderParameters | FixedTargetParameters,
     wavelength: float,

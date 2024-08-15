@@ -1,7 +1,6 @@
 from enum import Enum
 from os import environ
 from pathlib import Path
-from typing import Optional
 
 from mx_bluesky.i24.serial.log import _read_visit_directory_from_file
 
@@ -24,7 +23,7 @@ INTERNAL_FILES_PATH = Path(__file__).absolute().parent
 
 
 def _params_file_location() -> Path:
-    beamline: Optional[str] = environ.get("BEAMLINE")
+    beamline: str | None = environ.get("BEAMLINE")
     filepath: Path
 
     if beamline:

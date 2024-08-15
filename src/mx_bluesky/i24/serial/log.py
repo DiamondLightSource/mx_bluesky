@@ -3,7 +3,6 @@ import logging
 import logging.config
 from os import environ
 from pathlib import Path
-from typing import Optional
 
 from bluesky.log import logger as bluesky_logger
 from dodal.log import (
@@ -64,7 +63,7 @@ logging.config.dictConfig(logging_config)
 
 
 def _read_visit_directory_from_file() -> Path:
-    with open(VISIT_PATH, "r") as f:
+    with open(VISIT_PATH) as f:
         visit = f.readline().rstrip()
     return Path(visit)
 
@@ -77,7 +76,7 @@ def _get_logging_file_path() -> Path:
     Returns:
         logging_path (Path): Path to the log file for the file handler to write to.
     """
-    beamline: Optional[str] = environ.get("BEAMLINE")
+    beamline: str | None = environ.get("BEAMLINE")
     logging_path: Path
 
     if beamline:
