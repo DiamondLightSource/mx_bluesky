@@ -4092,4 +4092,3 @@ command {
   0 "blueapi -c CONFIG_LOCATION controller abort"
 }
 endObjectProperties
-

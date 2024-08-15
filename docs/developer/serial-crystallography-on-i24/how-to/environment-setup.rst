@@ -47,4 +47,3 @@ the command line.
 .. code:: bash
 
    ./path/to/mx_bluesky/src/mx_bluesky/i24/serial/set_visit_directory.sh extruder
-

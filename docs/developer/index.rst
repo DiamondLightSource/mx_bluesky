@@ -29,4 +29,3 @@ Documentation is split general and topic-specific sections. Each section is spli
         +++
 
         Documentation relating to serial crystallography on I24
-
