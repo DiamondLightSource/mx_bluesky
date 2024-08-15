@@ -257,7 +257,7 @@ def test_tidy_up_at_collection_end_plan_with_eiger(
     assert fake_dcid.notify_end.call_count == 1
     assert fake_caget.call_count == 1
 
-    fake_sup.eiger.assert_called_once_with("return-to-normal")
+    fake_sup.eiger.assert_called_once_with("return-to-normal", None)
 
 
 @patch("mx_bluesky.i24.serial.extruder.i24ssx_Extruder_Collect_py3v2.sleep")
