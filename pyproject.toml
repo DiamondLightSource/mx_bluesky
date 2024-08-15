@@ -13,8 +13,6 @@ classifiers = [
 ]
 description = "Bluesky tools for MX Beamlines at DLS"
 dependencies = [
-    "p4p>=4.2.0a1;python_version>='3.12'",                                  # Remove these pins once dodal#679
-    "p4p<4.2.0a1;python_version<'3.12'",                                    # And/or p4p#145 are done
     "bluesky",
     "ophyd",
     "pyepics",
