@@ -5,8 +5,6 @@ Takes the PV tables from I24's setup_beamline and wraps a slightly more
 abstract wrapper around them.
 """
 
-from typing import Union
-
 from mx_bluesky.i24.serial.setup_beamline import pv
 
 
@@ -70,4 +68,4 @@ class Eiger:
         return self.name
 
 
-Detector = Union[Pilatus, Eiger]
+Detector = Pilatus | Eiger

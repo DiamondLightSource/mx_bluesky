@@ -91,6 +91,7 @@ class DCID:
             warnings.warn(
                 "Please pass detector= to DCID. Pilatus assumed, this will be removed in the future.",
                 UserWarning,
+                stacklevel=5,
             )
 
         self.server = server or DEFAULT_ISPYB_SERVER
