@@ -9,6 +9,10 @@
     "python.defaultInterpreterPath": ".venv/bin/python",
 
     "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "files.insertFinalNewline": true,
     "[python]": {
         "editor.rulers": [
             88
