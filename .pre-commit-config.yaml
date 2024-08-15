@@ -1,35 +1,23 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v4.4.0
     hooks:
       - id: check-added-large-files
       - id: check-yaml
       - id: check-merge-conflict
 
-  # Automatic source code formatting
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-      - id: black
-        args: [--safe, --quiet]
-        files: \.pyi?
-        types: [file]
-
-  # Linter
   - repo: local
     hooks:
+      - id: black
+        name: Run black
+        stages: [commit]
+        language: system
+        entry: black --check --diff
+        types: [python]
+
       - id: ruff
         name: Run ruff
         stages: [commit]
         language: system
-        entry: ruff check --force-exclude
+        entry: ruff
         types: [python]
-
-  # Type checking
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.4.1
-    hooks:
-      - id: mypy
-        files: 'src/.*\.py$'
-        additional_dependencies: [types-requests]
-        args: ["--ignore-missing-imports", "--no-strict-optional"]

@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier
+_commit: 1.0.0
+_src_path: gh:DiamondLightSource/python-copier-template
+author_email: david.perl@diamond.ac.uk
+author_name: David Perl
+component_owner: MX DAQ
+description: Bluesky tools for MX Beamlines at DLS
+distribution_name: mx_bluesky
+docker: true
+docs_type: sphinx
+git_platform: github.com
+github_org: DiamondLightSource
+package_name: mx_bluesky
+repo_name: mx_bluesky
