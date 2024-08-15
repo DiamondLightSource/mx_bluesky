@@ -125,7 +125,7 @@ def write_userlog(
     # Write a record of what was collected to the processing directory
     userlog_path = Path(parameters.visit) / f"processing/{parameters.directory}"
     userlog_fid = f"{filename}_parameters.txt"
-    logger.debug("Write a user log in %s" % userlog_path)
+    logger.debug(f"Write a user log in {userlog_path}")
 
     userlog_path.mkdir(parents=True, exist_ok=True)
 
@@ -265,7 +265,7 @@ def load_motion_program_data(
         pvar = pvar_base + v[0]
         value = str(v[1])
         s = f"P{pvar}={value}"
-        logger.info("%s \t %s" % (key, s))
+        logger.info(f"{key} \t {s}")
         yield from bps.abs_set(pmac.pmac_string, s, wait=True)
         yield from bps.sleep(0.02)
     yield from bps.sleep(0.2)
@@ -398,7 +398,7 @@ def start_i24(
 
     logger.info("Start I24 data collection.")
     start_time = datetime.now()
-    logger.info("Collection start time %s" % start_time.ctime())
+    logger.info(f"Collection start time {start_time.ctime()}")
 
     logger.debug("Set up beamline")
     yield from sup.setup_beamline_for_collection_plan(
@@ -690,7 +690,7 @@ def collection_complete_plan(
     dcid: DCID, collection_directory: Path, map_type: MappingType
 ) -> MsgGenerator:
     end_time = datetime.now()
-    logger.debug("Collection end time %s" % end_time)
+    logger.debug(f"Collection end time {end_time}")
     dcid.collection_complete(end_time, aborted=False)
 
     # Copy parameter file and eventual chip map to collection directory

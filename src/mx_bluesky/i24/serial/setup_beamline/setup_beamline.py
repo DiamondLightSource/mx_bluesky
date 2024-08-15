@@ -192,7 +192,7 @@ def modechange(action):
         caput(pv.vgon_pinyh, 0)
         caput(pv.vgon_pinzs, 0)
         while caget(pv.ttab_x + ".RBV") > 1:
-            logger.debug("moving ttab_x %s" % caget(pv.ttab_x))
+            logger.debug(f"moving ttab_x {caget(pv.ttab_x)}")
             sleep(0.1)
         while caget(pv.fluo_out_limit) == "OFF":
             logger.debug("waiting on fluorescence detector")
@@ -220,16 +220,16 @@ def modechange(action):
         modechange("Pin_data_collection")
         logger.debug("Switch To Pin Done")
     else:
-        logger.debug("Unknown action: %s" % action)
+        logger.debug(f"Unknown action: {action}")
     return 1
 
 
 def pilatus(action, args_list=None):
     logger.debug("***** Entering Pilatus")
-    logger.info("Setup pilatus - %s" % action)
+    logger.info(f"Setup pilatus - {action}")
     if args_list:
         for arg in args_list:
-            logger.debug("Argument: %s" % arg)
+            logger.debug(f"Argument: {arg}")
 
     # caput(pv.pilat_wavelength, caget(pv.dcm_lambda))
     caput(pv.pilat_detdist, caget(pv.det_z))
@@ -245,12 +245,12 @@ def pilatus(action, args_list=None):
         [filepath, filename, total_numb_imgs, exptime] = args_list
         rampath = filepath.replace("dls/i24/data", "ramdisk")
         acqtime = float(exptime) - 0.001
-        logger.debug("Filepath was set as %s" % filepath)
-        logger.debug("Rampath set as %s" % rampath)
-        logger.debug("Filename set as %s" % filename)
-        logger.debug("total_numb_imgs %s" % total_numb_imgs)
-        logger.debug("Exposure time set as %s s" % exptime)
-        logger.debug("Acquire time set as %s s" % acqtime)
+        logger.debug(f"Filepath was set as {filepath}")
+        logger.debug(f"Rampath set as {rampath}")
+        logger.debug(f"Filename set as {filename}")
+        logger.debug(f"total_numb_imgs {total_numb_imgs}")
+        logger.debug(f"Exposure time set as {exptime} s")
+        logger.debug(f"Acquire time set as {acqtime} s")
         caput(pv.pilat_startangle, 0.0)
         caput(pv.pilat_angleincr, 0.0)
         caput(pv.pilat_omegaincr, 0.0)
@@ -275,12 +275,12 @@ def pilatus(action, args_list=None):
         acqtime = float(exptime) - 0.001
         caput(pv.pilat_acquiretime, str(acqtime))
         caput(pv.pilat_acquireperiod, str(exptime))
-        logger.debug("Filepath was set as %s" % filepath)
-        logger.debug("Rampath set as %s" % rampath)
-        logger.debug("Filename set as %s" % filename)
-        logger.debug("num_imgs %s" % num_imgs)
-        logger.debug("Exposure time set as %s s" % exptime)
-        logger.debug("Acquire time set as %s s" % acqtime)
+        logger.debug(f"Filepath was set as {filepath}")
+        logger.debug(f"Rampath set as {rampath}")
+        logger.debug(f"Filename set as {filename}")
+        logger.debug(f"num_imgs {num_imgs}")
+        logger.debug(f"Exposure time set as {exptime} s")
+        logger.debug(f"Acquire time set as {acqtime} s")
         logger.debug("Pilatus takes time apprx 2sec")
         sleep(2)
         caput(pv.pilat_delaytime, 0.00)
@@ -300,12 +300,12 @@ def pilatus(action, args_list=None):
         acqtime = float(exptime) - 0.001
         caput(pv.pilat_acquiretime, str(acqtime))
         caput(pv.pilat_acquireperiod, str(exptime))
-        logger.debug("Filepath was set as %s" % filepath)
-        logger.debug("Rampath set as %s" % rampath)
-        logger.debug("Filename set as %s" % filename)
-        logger.debug("num_imgs %s" % num_imgs)
-        logger.debug("Exposure time set as %s s" % exptime)
-        logger.debug("Acquire time set as %s s" % acqtime)
+        logger.debug(f"Filepath was set as {filepath}")
+        logger.debug(f"Rampath set as {rampath}")
+        logger.debug(f"Filename set as {filename}")
+        logger.debug(f"num_imgs {num_imgs}")
+        logger.debug(f"Exposure time set as {exptime} s")
+        logger.debug(f"Acquire time set as {acqtime} s")
         logger.debug("Pilatus takes time apprx 2sec")
         sleep(2)
         caput(pv.pilat_delaytime, 0.00)
@@ -326,10 +326,10 @@ def pilatus(action, args_list=None):
 
 def eiger(action, args_list=None):
     logger.debug("***** Entering Eiger")
-    logger.info("Setup eiger - %s" % action)
+    logger.info(f"Setup eiger - {action}")
     if args_list:
         for arg in args_list:
-            logger.debug("Argument: %s" % arg)
+            logger.debug(f"Argument: {arg}")
     # caput(pv.eiger_wavelength, caget(pv.dcm_lambda))
     caput(pv.eiger_detdist, str(float(caget(pv.det_z)) / 1000))
     logger.warning("WARNING: Have you set header info?")
@@ -363,11 +363,11 @@ def eiger(action, args_list=None):
         sleep(0.1)
         acqtime = float(exptime) - 0.0000001
         caput(pv.eiger_acquiretime, str(acqtime))
-        logger.debug("Filepath was set as %s" % filepath)
-        logger.debug("Filename set as %s" % filename)
-        logger.debug("num_imgs %s" % num_imgs)
-        logger.debug("Exposure time set as %s s" % exptime)
-        logger.debug("Acquire time set as %s s" % acqtime)
+        logger.debug(f"Filepath was set as {filepath}")
+        logger.debug(f"Filename set as {filename}")
+        logger.debug(f"num_imgs {num_imgs}")
+        logger.debug(f"Exposure time set as {exptime} s")
+        logger.debug(f"Acquire time set as {acqtime} s")
         caput(pv.eiger_acquireperiod, str(exptime))
         caput(pv.eiger_numimages, str(num_imgs))
         caput(pv.eiger_imagemode, "Continuous")
@@ -405,11 +405,11 @@ def eiger(action, args_list=None):
         sleep(0.1)
         acqtime = float(exptime) - 0.0000001
         caput(pv.eiger_acquiretime, str(acqtime))
-        logger.debug("Filepath was set as %s" % filepath)
-        logger.debug("Filename set as %s" % filename)
-        logger.debug("num_imgs %s" % num_imgs)
-        logger.debug("Exposure time set as %s s" % exptime)
-        logger.debug("Acquire time set as %s s" % acqtime)
+        logger.debug(f"Filepath was set as {filepath}")
+        logger.debug(f"Filename set as {filename}")
+        logger.debug(f"num_imgs {num_imgs}")
+        logger.debug(f"Exposure time set as {exptime} s")
+        logger.debug(f"Acquire time set as {acqtime} s")
         caput(pv.eiger_acquireperiod, str(exptime))
         caput(pv.eiger_numimages, 1)
         caput(pv.eiger_imagemode, "Continuous")
@@ -447,10 +447,10 @@ def eiger(action, args_list=None):
 
 def xspress3(action, args_list=None):
     logger.debug("***** Entering xspress3")
-    logger.info("xspress3 - %s" % action)
+    logger.info(f"xspress3 - {action}")
     if args_list:
         for arg in args_list:
-            logger.debug("Argument: %s" % arg)
+            logger.debug(f"Argument: {arg}")
 
     if action == "stop-and-start":
         [exp_time, lo, hi] = args_list

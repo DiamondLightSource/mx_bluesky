@@ -38,10 +38,10 @@ def onMouse(event, x, y, flags, param):
         pmac = param[0]
         oav = param[1]
         beamX, beamY = _get_beam_centre(oav)
-        logger.info("Clicked X and Y %s %s" % (x, y))
+        logger.info(f"Clicked X and Y {x} {y}")
         xmove = -1 * (beamX - x) * zoomcalibrator
         ymove = -1 * (beamY - y) * zoomcalibrator
-        logger.info("Moving X and Y %s %s" % (xmove, ymove))
+        logger.info(f"Moving X and Y {xmove} {ymove}")
         xmovepmacstring = "#1J:" + str(xmove)
         ymovepmacstring = "#2J:" + str(ymove)
         yield from bps.abs_set(pmac.pmac_string, xmovepmacstring, wait=True)

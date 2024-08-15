@@ -150,7 +150,7 @@ def log_on_entry(func):
     @functools.wraps(func)
     def decorator(*args, **kwargs):
         name = func.__name__
-        logger.debug("Running %s " % name)
+        logger.debug(f"Running {name} ")
         return func(*args, **kwargs)
 
     return decorator
