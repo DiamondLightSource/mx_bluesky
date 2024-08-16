@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-from typing import Literal
 from unittest.mock import ANY, MagicMock, call, patch
 
 import pytest
@@ -124,9 +123,9 @@ def test_given_moving_smargon_gives_error_then_velocity_restored_and_thawer_turn
 def test_given_different_rotations_and_times_then_velocity_correct(
     smargon: Smargon,
     thawer: Thawer,
-    time: float | Literal[10] | Literal[50],
-    rotation: Literal[360] | Literal[100] | Literal[-100],
-    expected_speed: ApproxBase | Literal[72] | Literal[4],
+    time: float,
+    rotation: float,
+    expected_speed: ApproxBase | float,
     RE: RunEngine,
 ):
     RE(thaw(time, rotation, thawer=thawer, smargon=smargon))
@@ -145,9 +144,9 @@ def test_given_different_rotations_and_times_then_velocity_correct(
 def test_given_different_rotations_then_motor_moved_relative(
     smargon: Smargon,
     thawer: Thawer,
-    start_pos: Literal[0] | Literal[78],
-    rotation: Literal[360] | Literal[100] | Literal[-100],
-    expected_end: Literal[360] | Literal[178] | Literal[-100],
+    start_pos: float,
+    rotation: float,
+    expected_end: float,
     RE: RunEngine,
 ):
     set_mock_value(smargon.omega.user_readback, start_pos)

@@ -29,7 +29,7 @@ from mx_bluesky.i24.serial.setup_beamline.setup_zebra_plans import (
 
 
 async def test_arm_and_disarm_zebra(zebra: Zebra, RE):
-    zebra.pc.arm.TIMEOUT = 1  # type: ignore
+    zebra.pc.arm.TIMEOUT = 1
 
     RE(arm_zebra(zebra))
     assert await zebra.pc.is_armed()
