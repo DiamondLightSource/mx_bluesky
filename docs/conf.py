@@ -15,7 +15,7 @@ import mx_bluesky
 # -- General configuration ------------------------------------------------
 
 # General information about the project.
-project = "mx_bluesky"
+project = "mx-bluesky"
 
 # The full version, including alpha/beta/rc tags.
 release = mx_bluesky.__version__
@@ -83,7 +83,7 @@ graphviz_output_format = "svg"
 default_role = "any"
 
 # The suffix of source filenames.
-source_suffix = ".rst"
+source_suffix = [".rst", ".md"]
 
 # The master toctree document.
 master_doc = "index"

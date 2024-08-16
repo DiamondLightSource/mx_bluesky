@@ -1,8 +1,8 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: mx_bluesky
-  title: mx_bluesky
+  name: mx-bluesky
+  title: mx-bluesky
   description: Bluesky tools for MX Beamlines at DLS
   annotations:
     backstage.io/techdocs-ref: dir:.
