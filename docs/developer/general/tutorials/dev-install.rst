@@ -10,7 +10,7 @@ Clone the repository
 First clone the repository locally using `Git
 <https://git-scm.com/downloads>`_::
 
-    $ git clone git://github.com/DiamondLightSource/mx_bluesky.git
+    $ git clone git://github.com/DiamondLightSource/mx-bluesky.git
 
 Install dependencies
 --------------------
@@ -25,7 +25,7 @@ requires python 3.9 or later) or to run in a container under `VSCode
 
         .. code::
 
-            $ cd mx_bluesky
+            $ cd mx-bluesky
             $ python3 -m venv venv
             $ source venv/bin/activate
             $ pip install -e .[dev]
@@ -34,7 +34,7 @@ requires python 3.9 or later) or to run in a container under `VSCode
 
         .. code::
 
-            $ vscode mx_bluesky
+            $ vscode mx-bluesky
             # Click on 'Reopen in Container' when prompted
             # Open a new terminal
 

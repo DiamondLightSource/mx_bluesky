@@ -1,14 +1,14 @@
 API
 ===
 
-.. automodule:: mx_bluesky
+.. automodule:: mx-bluesky
 
-    ``mx_bluesky``
+    ``mx-bluesky``
     -----------------------------------
 
-This is the internal API reference for mx_bluesky
+This is the internal API reference for mx-bluesky
 
-.. data:: mx_bluesky.__version__
+.. data:: mx-bluesky.__version__
     :type: str
 
     Version number as calculated by https://github.com/pypa/setuptools_scm

@@ -25,14 +25,14 @@ Installing the library
 
 You can now use ``pip`` to install the library and its dependencies::
 
-    $ python3 -m pip install mx_bluesky
+    $ python3 -m pip install mx-bluesky
 
 If you require a feature that is not currently released you can also install
 from github::
 
-    $ python3 -m pip install git+https://github.com/DiamondLightSource/mx_bluesky.git
+    $ python3 -m pip install git+https://github.com/DiamondLightSource/mx-bluesky.git
 
 The library should now be installed and the commandline interface on your path.
 You can check the version that has been installed by typing::
 
-    $ mx_bluesky --version
+    $ mx-bluesky --version

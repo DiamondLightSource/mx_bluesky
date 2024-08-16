@@ -6,7 +6,7 @@ board <https://github.com/orgs/DiamondLightSource/projects/10/views/2>`__
 
 Ongoing list of things needed:
 
-1. Solution for enabling users to run mx_bluesky instead of old scripts:
+1. Solution for enabling users to run mx-bluesky instead of old scripts:
    blocked by permission issues. Preferred solution would be run on
    beamline kubernetes cluster - in the meantime also loooking into
    procserv as a possibility. (Fixing this should also allow us to stop
@@ -59,7 +59,7 @@ Ongoing list of things needed:
 +---------------------------------------+----------------+---------------------------------+
 | Permissions issues - run as a service | Dec. 23        | :material-regular:`check;2em`   |
 +---------------------------------------+----------------+---------------------------------+
-| Deploy a first version of MX_BLUESKY  | Nov. 23        |                                 |
+| Deploy a first version of mx-bluesky  | Nov. 23        |                                 |
 | with the current iteration - tested   |                | :material-regular:`check;2em`   |
 | on the beamline - of the serial       |                |                                 |
 | tools. Set up a ``module load`` that  |                |                                 |

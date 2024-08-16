@@ -1,4 +1,4 @@
-mx_bluesky
+mx-bluesky
 ===========================
 
 |code_ci| |docs_ci| |coverage| |pypi_version| |license|
@@ -6,10 +6,10 @@ mx_bluesky
 Contains code for working with Bluesky on MX beamlines at Diamond
 
 ============== ==============================================================
-PyPI           ``pip install mx_bluesky``
-Source code    https://github.com/DiamondLightSource/mx_bluesky
-Documentation  https://DiamondLightSource.github.io/mx_bluesky
-Releases       https://github.com/DiamondLightSource/mx_bluesky/releases
+PyPI           ``pip install mx-bluesky``
+Source code    https://github.com/DiamondLightSource/mx-bluesky
+Documentation  https://DiamondLightSource.github.io/mx-bluesky
+Releases       https://github.com/DiamondLightSource/mx-bluesky/releases
 ============== ==============================================================
 
 Getting Started
@@ -26,20 +26,20 @@ If you're doing more in-depth development we recommend developing with VSCode. Y
     $ module load vscode
     $ code .vscode/mx-bluesky.code-workspace
 
-.. |code_ci| image:: https://github.com/DiamondLightSource/mx_bluesky/actions/workflows/code.yml/badge.svg?branch=main
-    :target: https://github.com/DiamondLightSource/mx_bluesky/actions/workflows/code.yml
+.. |code_ci| image:: https://github.com/DiamondLightSource/mx-bluesky/actions/workflows/code.yml/badge.svg?branch=main
+    :target: https://github.com/DiamondLightSource/mx-bluesky/actions/workflows/code.yml
     :alt: Code CI
 
-.. |docs_ci| image:: https://github.com/DiamondLightSource/mx_bluesky/actions/workflows/docs.yml/badge.svg?branch=main
-    :target: https://github.com/DiamondLightSource/mx_bluesky/actions/workflows/docs.yml
+.. |docs_ci| image:: https://github.com/DiamondLightSource/mx-bluesky/actions/workflows/docs.yml/badge.svg?branch=main
+    :target: https://github.com/DiamondLightSource/mx-bluesky/actions/workflows/docs.yml
     :alt: Docs CI
 
-.. |coverage| image:: https://codecov.io/gh/DiamondLightSource/mx_bluesky/branch/main/graph/badge.svg
-    :target: https://codecov.io/gh/DiamondLightSource/mx_bluesky
+.. |coverage| image:: https://codecov.io/gh/DiamondLightSource/mx-bluesky/branch/main/graph/badge.svg
+    :target: https://codecov.io/gh/DiamondLightSource/mx-bluesky
     :alt: Test Coverage
 
-.. |pypi_version| image:: https://img.shields.io/pypi/v/mx_bluesky.svg
-    :target: https://pypi.org/project/mx_bluesky
+.. |pypi_version| image:: https://img.shields.io/pypi/v/mx-bluesky.svg
+    :target: https://pypi.org/project/mx-bluesky
     :alt: Latest PyPI version
 
 .. |license| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
@@ -50,4 +50,4 @@ If you're doing more in-depth development we recommend developing with VSCode. Y
     Anything below this line is used when viewing README.rst and will be replaced
     when included in index.rst
 
-See https://DiamondLightSource.github.io/mx_bluesky for more detailed documentation.
+See https://DiamondLightSource.github.io/mx-bluesky for more detailed documentation.

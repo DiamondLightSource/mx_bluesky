@@ -6,7 +6,7 @@ metadata:
   description: Bluesky tools for MX Beamlines at DLS
   annotations:
     backstage.io/techdocs-ref: dir:.
-    github.com/project-slug: DiamondLightSource/mx_bluesky
+    github.com/project-slug: DiamondLightSource/mx-bluesky
   tags:
     - python
     - bluesky

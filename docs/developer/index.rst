@@ -16,7 +16,7 @@ Documentation is split general and topic-specific sections. Each section is spli
 
         +++
 
-        General information for working on mx_bluesky
+        General information for working on mx-bluesky
 
     .. grid-item-card:: :material-regular:`apps;3em`
 

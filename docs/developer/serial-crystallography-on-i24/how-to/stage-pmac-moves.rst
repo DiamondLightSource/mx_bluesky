@@ -47,7 +47,7 @@ in a couple of different ways.
 
    .. code:: python
 
-      yield from bps.mv(pmac.x, 0, pmac.y, 1)https://github.com/DiamondLightSource/mx_bluesky/wiki/Serial-Crystallography-on-I24#cs_reset-custom-chips
+      yield from bps.mv(pmac.x, 0, pmac.y, 1)https://github.com/DiamondLightSource/mx-bluesky/wiki/Serial-Crystallography-on-I24#cs_reset-custom-chips
 
 Notes on the coordinate system for a fixed-target collection
 ============================================================
@@ -81,8 +81,8 @@ Theory for this computation
 
 The plan needs information stored in a few files:
 
-* The motor directions are stored in ``src/mx_bluesky/i24/serial/parameters/fixed_target/cs/motor_directions.txt.`` The motor number multiplied by the motor direction should give the positive chip direction. 
-* The scale values for x,y,z, the skew value and the sign of Sx, Sy, Sz are all stored in ``src/mx_bluesky/i24/serial/parameters/fixed_target/cs/cs_maker.json``
+* The motor directions are stored in ``src/mx-bluesky/i24/serial/parameters/fixed_target/cs/motor_directions.txt.`` The motor number multiplied by the motor direction should give the positive chip direction. 
+* The scale values for x,y,z, the skew value and the sign of Sx, Sy, Sz are all stored in ``src/mx-bluesky/i24/serial/parameters/fixed_target/cs/cs_maker.json``
 * The fiducials 1 and 2 positions are written to file when selecting the fiducials (Setting fiducial 0 instead sends a homing command directly to the pmac_string PV)
 
 NOTE. The ``motor_direction.txt`` and ``cs_maker.json`` files should

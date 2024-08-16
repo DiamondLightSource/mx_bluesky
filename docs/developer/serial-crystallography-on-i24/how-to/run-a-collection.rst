@@ -12,7 +12,7 @@ A couple of entry points have been set up so that:
 
 Before opening the experiment specific edm, each of these entry points
 will start a ``BlueAPI`` server. The configuration used by ``BlueAPI``
-is saved in ``src/mx_bluesky/i24/serial/blueapi_config.yaml``.
+is saved in ``src/mx-bluesky/i24/serial/blueapi_config.yaml``.
 
 Detector choice
 ===============
@@ -75,7 +75,7 @@ set up the coordinate system.
 
 Before this step remember to reset the scale and skew factors as well as
 the motor directions as needed. Current values are saved in
-``src/mx_bluesky/i24/serial/parameters/fixed_target`` in the
+``src/mx-bluesky/i24/serial/parameters/fixed_target`` in the
 ``cs_maker.json`` and ``motor_direction.txt`` files.
 
 1. From the main edm screen open the ``viewer`` and ``moveonclick``.
