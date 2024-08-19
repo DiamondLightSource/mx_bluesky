@@ -129,7 +129,8 @@ def write_parameter_file(
     filename = caget(pv.me14e_chip_name)
     det_type = yield from get_detector_type(detector_stage)
     chip_params = get_chip_format(ChipType(int(caget(CHIPTYPE_PV))))
-    map_type = caget(MAPTYPE_PV)
+    map_type = int(caget(MAPTYPE_PV))
+    pump_repeat = int(caget(PUMP_REPEAT_PV))
 
     # If file name ends in a digit this causes processing/pilatus pain.
     # Append an underscore
@@ -151,14 +152,16 @@ def write_parameter_file(
         "exposure_time_s": caget(pv.me14e_exptime),
         "detector_distance_mm": caget(pv.me14e_dcdetdist),
         "detector_name": str(det_type),
-        "num_exposures": caget(NUM_EXPOSURES_PV),
+        "num_exposures": int(caget(NUM_EXPOSURES_PV)),
         "chip": chip_params.dict(),
         "map_type": map_type,
-        "pump_repeat": caget(PUMP_REPEAT_PV),
+        "pump_repeat": pump_repeat,
         "checker_pattern": bool(caget(pv.me14e_gp111)),
-        "laser_dwell_s": caget(pv.me14e_gp103),
-        "laser_delay_s": caget(pv.me14e_gp110),
-        "pre_pump_exposure_s": caget(pv.me14e_gp109),
+        "laser_dwell_s": float(caget(pv.me14e_gp103)) if pump_repeat != 0 else None,
+        "laser_delay_s": float(caget(pv.me14e_gp110)) if pump_repeat != 0 else None,
+        "pre_pump_exposure_s": float(caget(pv.me14e_gp109))
+        if pump_repeat != 0
+        else None,
     }
 
     with open(param_path / PARAM_FILE_NAME, "w") as f:
