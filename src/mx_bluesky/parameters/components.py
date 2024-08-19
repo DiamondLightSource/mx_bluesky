@@ -106,12 +106,12 @@ class WithSnapshot(BaseModel):
 class DiffractionExperiment(WithSnapshot):
     """For all experiments which use beam"""
 
-    visit: str = Field(min_length=1)
-    file_name: str = Field(pattern=r"[\w]{2}[\d]+-[\d]+")
+    visit: str = Field(min_length=5, regex=r"[\w]{2}[\d]+-[\d]+")
+    file_name: str
     exposure_time_s: float = Field(gt=0)
     comment: str = Field(default="")
-    beamline: str = Field(pattern=r"BL\d{2}[BIJS]")
-    insertion_prefix: str = Field(pattern=r"SR\d{2}[BIJS]")
+    beamline: str = Field(regex=r"BL\d{2}[BIJS]")
+    insertion_prefix: str = Field(regex=r"SR\d{2}[BIJS]")
     det_dist_to_beam_converter_path: str
     zocalo_environment: str
     trigger_mode: TriggerMode = Field(default=TriggerMode.FREE_RUN)
