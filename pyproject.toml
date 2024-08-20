@@ -24,7 +24,7 @@ dependencies = [
     "pydantic",
     "semver",
     "fastapi[all]",
-    "dls-dodal==1.30.0",
+    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git",
     "blueapi==0.4.4",
 ]
 dynamic = ["version"]
