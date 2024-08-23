@@ -11,10 +11,10 @@ from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
 
 from mx_bluesky.i24.jungfrau_commissioning.utils.log import LOGGER
-from mx_bluesky.i24.jungfrau_commissioning.utils.params import RotationScanParameters
+from mx_bluesky.i24.jungfrau_commissioning.utils.params import RotationScan
 
 
-def create_detector_parameters(params: RotationScanParameters) -> Detector:
+def create_detector_parameters(params: RotationScan) -> Detector:
     """Returns the detector information in a format that nexgen wants.
 
     Args:
@@ -51,7 +51,7 @@ def create_detector_parameters(params: RotationScanParameters) -> Detector:
 
 
 def create_I24_VGonio_axes(
-    params: RotationScanParameters,
+    params: RotationScan,
     scan_points: dict,
 ):
     gonio_axes = [
@@ -61,21 +61,21 @@ def create_I24_VGonio_axes(
             depends="omega",
             transformation_type="translation",
             vector=(0.0, 0.0, 1.0),
-            start_pos=params.z,
+            start_pos=0,
         ),
         Axis(
             name="sam_y",
             depends="sam_z",
             transformation_type="translation",
             vector=(0.0, 1.0, 0.0),
-            start_pos=params.y,
+            start_pos=0,
         ),
         Axis(
             name="sam_x",
             depends="sam_y",
             transformation_type="translation",
             vector=(1.0, 0.0, 0.0),
-            start_pos=params.x,
+            start_pos=0,
         ),
     ]
     return Goniometer(gonio_axes, scan_points)
@@ -84,7 +84,7 @@ def create_I24_VGonio_axes(
 class JFRotationNexusWriter(NexusWriter):
     def __init__(
         self,
-        parameters: RotationScanParameters,
+        parameters: RotationScan,
         wavelength: float,
         flux: float,
         transmission: float,
@@ -98,7 +98,7 @@ class JFRotationNexusWriter(NexusWriter):
         self.directory = Path(parameters.storage_directory)
         self.filename = parameters.nexus_filename
         self.start_index = 0
-        self.full_num_of_images = parameters.get_num_images()
+        self.full_num_of_images = parameters.num_images
         self.nexus_file = self.directory / f"{parameters.nexus_filename}.nxs"
         self.master_file = self.directory / f"{parameters.nexus_filename}_master.h5"
 
@@ -106,14 +106,14 @@ class JFRotationNexusWriter(NexusWriter):
             axis="omega",
             start=parameters.omega_start_deg,
             stop=(parameters.scan_width_deg + parameters.omega_start_deg),
-            num=parameters.get_num_images(),
+            num=parameters.num_images,
         )
         scan_path = ScanPath(scan_spec.calculate())
         self.scan_points: dict = scan_path.consume().midpoints
         self.goniometer = create_I24_VGonio_axes(parameters, self.scan_points)
 
     def _get_data_shape_for_vds(self) -> tuple[int, ...]:
-        nexus_detector_params: JungfrauDetector = self.detector.detector_params
+        nexus_detector_params: JungfrauDetector = self.detector.detector_params  # type: ignore
         return (self.full_num_of_images, *nexus_detector_params.image_size)
 
 

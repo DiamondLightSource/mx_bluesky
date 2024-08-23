@@ -1,27 +1,22 @@
 import json
 from typing import Any
 
-from dodal.devices.motors import XYZLimitBundle
 from dodal.devices.zebra import RotationDirection
 from pydantic import BaseModel, validator
 
+DIRECTION = RotationDirection.NEGATIVE
+SHUTTER_OPENING_TIME = 0.5
+ACCELERATION_MARGIN = 0.1
 
-class RotationScanParameters(BaseModel):
-    """
-    Holder class for the parameters of a rotation data collection.
-    """
 
-    rotation_axis: str = "omega"
+class RotationScan(BaseModel):
+    rotation_direction: RotationDirection = DIRECTION
+    shutter_opening_time_s: float = SHUTTER_OPENING_TIME
     scan_width_deg: float = 360.0
-    image_width_deg: float = 0.1
-    omega_start_deg: float = 0.0
-    exposure_time_s: float = 0.01
+    rotation_increment_deg: float = 0.1
+    exposure_time_s: float = 0.001
     acquire_time_s: float = 10.0
-    x: float | None = None
-    y: float | None = None
-    z: float | None = None
-    rotation_direction: RotationDirection = RotationDirection.NEGATIVE
-    shutter_opening_time_s: float = 0.6
+    omega_start_deg: float = 0
     storage_directory: str = "/tmp/jungfrau_data/"
     nexus_filename: str = "scan"
 
@@ -52,21 +47,6 @@ class RotationScanParameters(BaseModel):
     def print(self):
         print(self.json(indent=2))
 
-    def xyz_are_valid(self, limits: XYZLimitBundle) -> bool:
-        """
-        Validates scan location in x, y, and z
-
-        :param limits: The motor limits against which to validate
-                       the parameters
-        :return: True if the scan is valid
-        """
-        if not limits.x.is_within(self.x):
-            return False
-        if not limits.y.is_within(self.y):
-            return False
-        if not limits.z.is_within(self.z):
-            return False
-        return True
-
-    def get_num_images(self):
-        return int(self.scan_width_deg / self.image_width_deg)
+    @property
+    def num_images(self):
+        return int(self.scan_width_deg / self.rotation_increment_deg)
