@@ -32,7 +32,9 @@ done
 PROJECTDIR=`dirname $0`/..
 VERSION=$1
 if [ -z $VERSION ]; then
-  python -m setuptools_scm --force-write-version-files
+  if [ ! -f src/mx_bluesky/_version.py ]; then
+    python -m setuptools_scm --force-write-version-files
+  fi
   VERSION=`hyperion --version | sed -e 's/[^a-zA-Z0-9._-]/_/g'`
 fi
 PROJECT=hyperion
@@ -40,8 +42,8 @@ TAG=$PROJECT:$VERSION
 LATEST_TAG=$PROJECT:latest
 
 if [[ $BUILD == 1 ]]; then
-  echo "podman build -f Dockerfile.release --tag $TAG --tag $LATEST_TAG $PROJECTDIR"
-  TMPDIR=/tmp podman build -f Dockerfile.release --tag $TAG --tag $LATEST_TAG $PROJECTDIR
+  echo "podman build --tag $TAG --tag $LATEST_TAG $PROJECTDIR"
+  TMPDIR=/tmp podman build --tag $TAG --tag $LATEST_TAG $PROJECTDIR
 fi
 
 if [[ $PUSH == 1 ]]; then
