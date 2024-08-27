@@ -25,7 +25,7 @@ dependencies = [
     "semver",
     "fastapi[all]",
     "dls-dodal==1.30.0",
-    "blueapi==0.4.4",
+    "blueapi==0.4.5-a1",
 ]
 dynamic = ["version"]
 license.file = "LICENSE"
