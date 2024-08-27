@@ -2,7 +2,7 @@ import argparse
 
 from pydantic.dataclasses import dataclass
 
-from hyperion._version import version
+from mx_bluesky._version import version
 
 
 @dataclass
@@ -57,7 +57,7 @@ def parse_cli_args() -> HyperionArgs:
         "--version",
         help="Print hyperion version string",
         action="version",
-        version=version
+        version=version,
     )
     args = parser.parse_args()
     return HyperionArgs(

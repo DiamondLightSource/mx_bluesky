@@ -116,6 +116,7 @@ markers = [
     "s03: marks tests as requiring the s03 simulator running (deselect with '-m \"not s03\"')",
     "dlstbx: marks tests as requiring dlstbx (deselect with '-m \"not dlstbx\"')",
     "skip_log_setup: marks tests so that loggers are not setup before the test.",
+    "skip_in_pycharm: marks test as not working in pycharm testrunner",
 ]
 addopts = """
     --tb=native -vv --doctest-modules --doctest-glob="*.rst"
