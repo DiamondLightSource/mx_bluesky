@@ -30,20 +30,21 @@ for option in "$@"; do
 done
 
 PROJECTDIR=`dirname $0`/..
-VERSION=$1
-if [ -z $VERSION ]; then
-  if [ ! -f src/mx_bluesky/_version.py ]; then
-    python -m setuptools_scm --force-write-version-files
-  fi
-  VERSION=`hyperion --version | sed -e 's/[^a-zA-Z0-9._-]/_/g'`
-fi
 PROJECT=hyperion
-TAG=$PROJECT:$VERSION
-LATEST_TAG=$PROJECT:latest
 
 if [[ $BUILD == 1 ]]; then
-  echo "podman build --tag $TAG --tag $LATEST_TAG $PROJECTDIR"
-  TMPDIR=/tmp podman build --tag $TAG --tag $LATEST_TAG $PROJECTDIR
+  echo "Building initial image"
+  TMPDIR=/tmp podman build $PROJECTDIR
+  # Now extract the version from the built image and then rebuild with the label
+  IMAGE_VERSION=$(podman run --rm $TAG -c "hyperion --version" | sed -e 's/[^a-zA-Z0-9._-]/_/g')
+  TAG=$PROJECT:$IMAGE_VERSION
+  LATEST_TAG=$PROJECT:latest
+  echo "Labelling image with version $IMAGE_VERSION, tagging with tags $TAG $LATEST_TAG"
+  TMPDIR=/tmp podman build \
+    --tag $TAG \
+    --tag $LATEST_TAG \
+    --label "version=$IMAGE_VERSION" \
+    $PROJECTDIR  
 fi
 
 if [[ $PUSH == 1 ]]; then
@@ -54,5 +55,5 @@ if [[ $PUSH == 1 ]]; then
   fi
   echo "Pushing to ghcr.io/$NAMESPACE/$PROJECT:latest ..."
   podman push $PROJECT:latest docker://ghcr.io/$NAMESPACE/$PROJECT:latest
-  podman push $PROJECT:latest docker://ghcr.io/$NAMESPACE/$PROJECT:$VERSION
+  podman push $PROJECT:latest docker://ghcr.io/$NAMESPACE/$PROJECT:$IMAGE_VERSION
 fi
