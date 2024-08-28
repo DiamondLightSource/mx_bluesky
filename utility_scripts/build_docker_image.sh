@@ -32,13 +32,22 @@ done
 PROJECTDIR=`dirname $0`/..
 PROJECT=hyperion
 
+if ! git diff --cached --quiet; then
+  echo "Cannot build image from unclean workspace"
+  exit 1
+fi
+
+
 if [[ $BUILD == 1 ]]; then
   echo "Building initial image"
-  TMPDIR=/tmp podman build $PROJECTDIR
-  # Now extract the version from the built image and then rebuild with the label
-  IMAGE_VERSION=$(podman run --rm $TAG -c "hyperion --version" | sed -e 's/[^a-zA-Z0-9._-]/_/g')
-  TAG=$PROJECT:$IMAGE_VERSION
   LATEST_TAG=$PROJECT:latest
+  TMPDIR=/tmp podman build \
+    --tag $LATEST_TAG \
+    $PROJECTDIR
+  # Now extract the version from the built image and then rebuild with the label
+  IMAGE_VERSION=$(podman run --rm --entrypoint=hyperion $LATEST_TAG -c "--version" | \
+   sed -e 's/[^a-zA-Z0-9 ._-]/_/g')
+  TAG=$PROJECT:$IMAGE_VERSION
   echo "Labelling image with version $IMAGE_VERSION, tagging with tags $TAG $LATEST_TAG"
   TMPDIR=/tmp podman build \
     --tag $TAG \
