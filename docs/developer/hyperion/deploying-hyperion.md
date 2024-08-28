@@ -55,15 +55,20 @@ For further information, see https://github.com/containers/podman/issues/2542
 Deploying to kubernetes
 ===
 
-Once the docker image is built, the image can be deployed to kubernetes using the `deploy_to_k8s.sh` script
+Once the docker image is built, the image can be deployed to kubernetes using the `deploy_hyperion_to_k8s.sh` script
 
 ### Production deployment
 
-* From a development hyperion workspace
+* From a development hyperion workspace, first deploy the source folders
 ```commandline
 python utility_scripts/deploy/deploy_hyperion.py --kubernetes <beamline>
+```
+
+* Then create and deploy the helm release
+```commandline
+module load helm
 cd <path to deployed hyperion folder in /dls_sw>
-./utility_scripts/deploy/deploy_to_k8s.sh --beamline=<beamline> hyperion
+./utility_scripts/deploy/deploy_hyperion_to_k8s.sh --beamline=<beamline> hyperion
 ```
 
 This will create a helm release "hyperion". The source folders will be mounted as 
@@ -77,7 +82,7 @@ From a development `hyperion` workspace, either with a release image or using a 
 above, you install a dev deployment to the cluster you are currently logged into with `kubectl`:
 
 ```commandline
-./utility_scripts/deploy/deploy_to_k8s.sh --dev --beamline=<beamline> --repository=<your image repo> hyperion-test
+./utility_scripts/deploy/deploy_hyperion_to_k8s.sh --dev --beamline=<beamline> --repository=<your image repo> hyperion-test
 ```
 
 The dev deployment bind-mounts the current `hyperion` workspace and `../dodal` into the container so that you can 

@@ -33,15 +33,20 @@ for option in "$@"; do
             ;;
 
         --help|--info|--h)
-            echo "  --dev                 Use dev options, such as local graylog instances and S03"
-            echo "  -b, --beamline=BEAMLINE Overrides the BEAMLINE environment variable with the given beamline"
-            echo " "
-            echo "Operations"
-            echo "  --stop                  Used to stop a currently running instance of Hyperion. Will override any other operations"
-            echo "                          options"
-            echo "  --start                 Specify that the script should start the server"
-            echo "  --up                    Create the container for the service but do not start"
-            echo "  --restart               Specify that the script should stop and then start the server."
+            echo "$(basename $0) [options...]"
+cat <<END
+Script for the convenience of running a container image locally using podman-compose.
+
+  --dev                   Start a dev container bound against source folders that launches into a bash shell
+  -b, --beamline=BEAMLINE Overrides the BEAMLINE environment variable with the given beamline
+ 
+Operations
+  --stop                  Used to stop a currently running instance of Hyperion. Will override any other operations
+                          options
+  --start                 Specify that the script should start the server
+  --up                    Create the container for the service but do not start
+  --restart               Specify that the script should stop and then start the server.
+END
             exit 0
             ;;
         -*|--*)
