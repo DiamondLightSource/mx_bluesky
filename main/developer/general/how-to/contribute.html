@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Contributing &#8212; mx-bluesky 0.3.2.dev3+gad3a06c16 documentation</title>
+    <title>Contributing &#8212; mx-bluesky 0.3.3.dev3795+g7a2236c93 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=914facb6"></script>
+    <script src="../../../_static/documentation_options.js?v=e076d090"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -427,9 +427,21 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="deploy-a-release.html">Deploy a New Release</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../explanations/decisions.html">Architectural Decision Records</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../explanations/decisions/0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../explanations/decisions/0002-repository-structure.html">2. mx-bluesky repository structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../explanations/decisions/0003-python-version-support.html">1. Python version support</a></li>
 </ul>
 </details></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/standards.html">Standards</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Hyperion</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../hyperion/index.html">General MX-Bluesky Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../hyperion/reference/param-hierarchy.html">Hyperion Parameter class hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../hyperion/reference/readme.html">hyperion</a></li>
+
+
 </ul>
 </details></li>
 </ul>
@@ -515,24 +527,60 @@ document.write(`
                   
   <section id="contributing">
 <h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">#</a></h1>
-<p># Contribute to the project</p>
-<p>Contributions and issues are most welcome! All issues and pull requests are
-handled through [GitHub](<a class="github reference external" href="https://github.com/DiamondLightSource/mx-bluesky/issues">DiamondLightSource/mx-bluesky#issues</a>). Also, please check for any existing issues before
-filing a new one. If you have a great idea but it involves big changes, please
-file a ticket before making a pull request! We want to make sure you don’t spend
-your time coding something that might not fit the scope of the project.</p>
-<p>## Issue or Discussion?</p>
-<p>Github also offers [discussions](<a class="github reference external" href="https://github.com/DiamondLightSource/mx-bluesky/discussions">DiamondLightSource/mx-bluesky#discussions</a>) as a place to ask questions and share ideas. If
+<section id="how-to-contribute-to-mx-bluesky">
+<h2>How to contribute to mx-bluesky<a class="headerlink" href="#how-to-contribute-to-mx-bluesky" title="Link to this heading">#</a></h2>
+<p>We should prioritise working, agile code over strict standards, particularly for contributors that are not full time developers. The standards below are thus guidelines that developers should try to follow as much as possible (apart from when something is specified in bold, which is required).</p>
+<p>Contributions and issues are most welcome! All issues and pull requests are handled through <a class="reference external" href="https://github.com/DiamondLightSource/mx-bluesky/issues">GitHub</a>. Also, please check for any existing issues before filing a new one. If you have a great idea but it involves big changes, please file a ticket before making a pull request! We want to make sure you don’t spend your time coding something that might not fit the scope of the project.</p>
+<section id="general-workflow">
+<h3>General Workflow<a class="headerlink" href="#general-workflow" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p>An issue is created for the work. This issue should describe in as much detail as possible the work that needs to be done. Anyone is free to make a ticket and/or comment on one.</p></li>
+<li><p>If a developer is going to do the work they assign themselves to the issue.</p></li>
+<li><p>The developer makes a new branch with the format <code class="docutils literal notranslate"><span class="pre">issue_short_description</span></code> e.g. <code class="docutils literal notranslate"><span class="pre">122_create_a_contributing_file</span></code>. (External developers are also welcome to make forks)</p></li>
+<li><p>The developer does the work on this branch, adding their work in small commits. Commit messages should be informative and prefixed with the issue number e.g. <code class="docutils literal notranslate"><span class="pre">(#122)</span> <span class="pre">Added</span> <span class="pre">contributing</span> <span class="pre">file</span></code>.</p></li>
+<li><p>The developer submits a PR for the work. In the pull request should start with <code class="docutils literal notranslate"><span class="pre">Fixes</span> <span class="pre">#issue_num</span></code> e.g. <code class="docutils literal notranslate"><span class="pre">Fixes</span> <span class="pre">#122</span></code>, this will ensure the issue is automatically closed when the PR is merged. The developer should also add some background on how the reviewer might test the change.</p></li>
+<li><p>If the developer has a particular person in mind to review the work they should assign that person to the PR as a reviewer.</p></li>
+<li><p>The reviewer and developer go back and forth on the code until the reviewer approves it. (See “Reviewing Work” below)</p></li>
+<li><p>Once the work is approved the original developer merges it.</p></li>
+</ol>
+<p><strong>Work should not be done without an associated ticket describing what the work is</strong></p>
+</section>
+<section id="reviewing-work">
+<h3>Reviewing Work<a class="headerlink" href="#reviewing-work" title="Link to this heading">#</a></h3>
+<p><strong>Work must be reviewed by another developer before it can be merged</strong>. Remember that work is reviewed for a number of reasons:</p>
+<ul class="simple">
+<li><p>In order to maintain quality and avoid errors</p></li>
+<li><p>Help people learn</p></li>
+</ul>
+<p>It is not a judgement on someone’s technical abilities so be kind.</p>
+<p>It is suggested that the reviewer prefixes comments with something like the following:</p>
+<ul class="simple">
+<li><p><strong>must</strong>: A change that must be made before merging e.g. it will break something if not made</p></li>
+<li><p><strong>should/sugg</strong>: A change that should be made e.g. definitely improves code quality but does not neccessarily break anything</p></li>
+<li><p><strong>nit</strong>: A minor suggestion that the reviewer would like to see but is happy to leave as is e.g. rename a variable to something</p></li>
+</ul>
+<p>Developers are welcome to ignore <strong>nit</strong> comments if they wish and can choose not to do <strong>should</strong> comments but the must give a reason as to why they disagree with the change.</p>
+<p>For minor changes to code reviewers are welcome to make the changes themselves but in this case the original developer should then recheck what the reviewer has done.</p>
+</section>
+<section id="issue-or-discussion">
+<h3>Issue or Discussion?<a class="headerlink" href="#issue-or-discussion" title="Link to this heading">#</a></h3>
+<p>Github also offers <a class="reference external" href="https://github.com/DiamondLightSource/mx-bluesky/discussions">discussions</a> as a place to ask questions and share ideas. If
 your issue is open ended and it is not obvious when it can be “closed”, please
 raise it as a discussion instead.</p>
-<p>## Code Coverage</p>
+</section>
+<section id="code-coverage">
+<h3>Code Coverage<a class="headerlink" href="#code-coverage" title="Link to this heading">#</a></h3>
 <p>While 100% code coverage does not make a library bug-free, it significantly
 reduces the number of easily caught bugs! Please make sure coverage remains the
 same or is improved by a pull request!</p>
-<p>## Developer Information</p>
-<p>It is recommended that developers use a [vscode devcontainer](<a class="reference external" href="https://code.visualstudio.com/docs/devcontainers/containers">https://code.visualstudio.com/docs/devcontainers/containers</a>). This repository contains configuration to set up a containerized development environment that suits its own needs.</p>
-<p>This project was created using the [Diamond Light Source Copier Template](<a class="github reference external" href="https://github.com/DiamondLightSource/python-copier-template">DiamondLightSource/python-copier-template</a>) for Python projects.</p>
-<p>For more information on common tasks like setting up a developer environment, running the tests, and setting a pre-commit hook, see the template’s [How-to guides](<a class="reference external" href="https://diamondlightsource.github.io/python-copier-template/2.2.0/how-to.html">https://diamondlightsource.github.io/python-copier-template/2.2.0/how-to.html</a>).</p>
+</section>
+<section id="developer-information">
+<h3>Developer Information<a class="headerlink" href="#developer-information" title="Link to this heading">#</a></h3>
+<p>It is recommended that developers use a <a class="reference external" href="https://code.visualstudio.com/docs/devcontainers/containers">vscode devcontainer</a>. This repository contains configuration to set up a containerized development environment that suits its own needs.</p>
+<p>This project was created using the <a class="reference external" href="https://github.com/DiamondLightSource/python-copier-template">Diamond Light Source Copier Template</a> for Python projects.</p>
+<p>For more information on common tasks like setting up a developer environment, running the tests, and setting a pre-commit hook, see the template’s <a class="reference external" href="https://diamondlightsource.github.io/python-copier-template/2.2.0/how-to.html">How-to guides</a>.</p>
+</section>
+</section>
 </section>
 
 
@@ -572,6 +620,25 @@ same or is improved by a pull request!</p>
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-contribute-to-mx-bluesky">How to contribute to mx-bluesky</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#general-workflow">General Workflow</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reviewing-work">Reviewing Work</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-or-discussion">Issue or Discussion?</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-coverage">Code Coverage</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#developer-information">Developer Information</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
 
