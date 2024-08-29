@@ -57,4 +57,3 @@ services:
     environment:
       HYPERION_LOG_DIR: /tmp/dev
     entrypoint: [ "/bin/bash" ]
-    
