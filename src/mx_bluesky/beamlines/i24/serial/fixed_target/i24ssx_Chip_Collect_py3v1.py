@@ -747,6 +747,8 @@ def run_fixed_target_plan(
 ) -> MsgGenerator:
     setup_logging()
 
+    # in the first instance, write params here
+    # and write_params won't need to be a plan anymore
     logger.info("Getting parameters from file.")
     parameters = FixedTargetParameters.from_file(PARAM_FILE_PATH_FT / PARAM_FILE_NAME)
 
