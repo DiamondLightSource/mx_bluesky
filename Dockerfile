@@ -1,35 +1,29 @@
-FROM python:3.11 AS build
+# The devcontainer should use the developer target and run as root with podman
+# or docker with user namespaces.
+ARG PYTHON_VERSION=3.11
+FROM python:${PYTHON_VERSION} AS developer
 
-RUN pip install setuptools_scm
+# Add any system dependencies for the developer/build environment here
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    graphviz \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the pyproject.toml and install dependencies for better caching when developing
-# & rerunning deployment scripts
-COPY pyproject.toml /app/hyperion/
-WORKDIR "/app/hyperion"
-RUN mkdir -p src/mx_bluesky
+# Set up a virtual environment and put it in PATH
+RUN python -m venv /venv
+ENV PATH=/venv/bin:$PATH
 
-# This enables us to cache the pip install without needing _version.py
-# see https://setuptools-scm.readthedocs.io/en/latest/usage/
-RUN SETUPTOOLS_SCM_PRETEND_VERSION_FOR_MX_BLUESKY=1.0.0 pip install \
-    --no-cache-dir --no-compile -e .
+# The build stage installs the context into the venv
+FROM developer AS build
+COPY . /context
+WORKDIR /context
+RUN touch dev-requirements.txt && pip install -c dev-requirements.txt .
 
-# Check out and install dodal locally with no dependencies as this may be a different version to what
-# is referred to in the setup.cfg, but we don't care as it will be overridden by bind mounts in the
-# running container
-RUN mkdir ../dodal && \
-git clone https://github.com/DiamondLightSource/dodal.git ../dodal && \
-pip install --no-cache-dir --no-compile --no-deps -e ../dodal
+# The runtime stage copies the built venv into a slim runtime container
+FROM python:${PYTHON_VERSION}-slim AS runtime
+# Add apt-get system dependecies for runtime here if needed
+COPY --from=build /venv/ /venv/
+ENV PATH=/venv/bin:$PATH
 
-#
-# Everything above this line should be in the image cache unless pyproject.toml changes
-#
-ADD .git /app/hyperion/.git
-RUN git restore .
-
-# Regenerate _version.py with the correct version - this should run quickly since we already have our dependencies
-RUN rm src/mx_bluesky/_version.py
-RUN pip install --no-cache-dir --no-compile -e .
-
-ENTRYPOINT /app/hyperion/utility_scripts/docker/entrypoint.sh
-
-EXPOSE 5005
+# change this entrypoint if it is not the same as the repo
+ENTRYPOINT ["mx-bluesky"]
+CMD ["--version"]

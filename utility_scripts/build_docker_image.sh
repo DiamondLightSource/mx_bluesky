@@ -42,6 +42,7 @@ if [[ $BUILD == 1 ]]; then
   echo "Building initial image"
   LATEST_TAG=$PROJECT:latest
   TMPDIR=/tmp podman build \
+    -f $PROJECTDIR/Dockerfile.release \
     --tag $LATEST_TAG \
     $PROJECTDIR
   # Now extract the version from the built image and then rebuild with the label
@@ -50,6 +51,7 @@ if [[ $BUILD == 1 ]]; then
   TAG=$PROJECT:$IMAGE_VERSION
   echo "Labelling image with version $IMAGE_VERSION, tagging with tags $TAG $LATEST_TAG"
   TMPDIR=/tmp podman build \
+    -f $PROJECTDIR/Dockerfile.release \
     --tag $TAG \
     --tag $LATEST_TAG \
     --label "version=$IMAGE_VERSION" \
