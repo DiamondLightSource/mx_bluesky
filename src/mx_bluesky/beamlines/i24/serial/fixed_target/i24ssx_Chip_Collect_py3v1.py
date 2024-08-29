@@ -30,6 +30,9 @@ from mx_bluesky.beamlines.i24.serial.fixed_target.ft_utils import (
     MappingType,
     PumpProbeSetting,
 )
+from mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Manager_py3v1 import (
+    write_parameter_file,
+)
 from mx_bluesky.beamlines.i24.serial.parameters import (
     ChipDescription,
     FixedTargetParameters,
@@ -748,7 +751,8 @@ def run_fixed_target_plan(
     setup_logging()
 
     # in the first instance, write params here
-    # and write_params won't need to be a plan anymore
+    write_parameter_file(detector_stage)
+
     logger.info("Getting parameters from file.")
     parameters = FixedTargetParameters.from_file(PARAM_FILE_PATH_FT / PARAM_FILE_NAME)
 
