@@ -42,9 +42,9 @@ from mx_bluesky.hyperion.external_interaction.callbacks.xray_centre.ispyb_mappin
 )
 from mx_bluesky.hyperion.external_interaction.ispyb.data_model import (
     DataCollectionGridInfo,
+    Orientation,
     ScanDataInfo,
 )
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import Orientation
 from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_store import (
     IspybIds,
     StoreInIspyb,
@@ -413,7 +413,6 @@ def scan_data_infos_for_update_3d(
         dummy_params.detector_params
     )
 
-    assert dummy_params.ispyb_params is not None
     assert dummy_params is not None
     data_collection_grid_info = DataCollectionGridInfo(
         dx_in_mm=dummy_params.x_step_size_um,
