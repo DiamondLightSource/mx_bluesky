@@ -42,6 +42,9 @@ from mx_bluesky.i24.serial.parameters.constants import (
 )
 from mx_bluesky.i24.serial.setup_beamline import caget, cagetstring, caput, pv
 from mx_bluesky.i24.serial.setup_beamline import setup_beamline as sup
+from mx_bluesky.i24.serial.fixed_target.i24ssx_Chip_Manager_py3v1 import (
+    write_parameter_file,
+)
 from mx_bluesky.i24.serial.setup_beamline.setup_zebra_plans import (
     SHUTTER_OPEN_TIME,
     arm_zebra,
@@ -746,6 +749,16 @@ def run_fixed_target_plan(
     dcm: DCM = inject("dcm"),
 ) -> MsgGenerator:
     setup_logging()
+
+    # Add in set parameters functionality here so that button can be depreciated
+
+    logger.info("Robin testing if he can edit and run with changes")
+    logger.info("Now calling write params from collect script")
+
+    yield from write_parameter_file(detector_stage)
+
+    logger.info("AAAA DONE DONE DONE DONE BBBB")
+
 
     logger.info("Getting parameters from file.")
     parameters = FixedTargetParameters.from_file(PARAM_FILE_PATH_FT / PARAM_FILE_NAME)

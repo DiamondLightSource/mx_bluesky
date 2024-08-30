@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 2870
-y 245
+x 50
+y 124
 w 1030
 h 950
 font "arial-medium-r-18.0"
@@ -1429,49 +1429,6 @@ numDsps 1
 displayFileName {
   0 "EDM_LOCATION/ME14E-GeneralPurpose.edl"
 }
-endObjectProperties
-
-# (Shell Command)
-object shellCmdClass
-beginObjectProperties
-major 4
-minor 3
-release 0
-x 580
-y 665
-w 165
-h 50
-fgColor index 14
-bgColor index 17
-topShadowColor index 1
-botShadowColor index 14
-font "arial-medium-r-18.0"
-numCmds 1
-command {
-  0 "blueapi -c CONFIG_LOCATION controller run write_parameter_file"
-}
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 1
-x 590
-y 670
-w 141
-h 36
-font "arial-medium-r-16.0"
-fontAlign "center"
-fgColor index 14
-bgColor index 0
-useDisplayBg
-value {
-  "Set parameters "
-  "and create shotlist"
-}
-autoSize
 endObjectProperties
 
 # (Lines)
@@ -3694,24 +3651,27 @@ topShadowColor index 1
 botShadowColor index 8
 controlPv "ME14E-MO-IOC-01:GP1"
 font "arial-medium-r-18.0"
-numItems 4
+numItems 5
 symbolTag {
   0 "Oxford"
   1 "Oxford Inner"
   2 "Custom"
   3 "Minichip"
+  4 "MISP"
 }
 symbol0 {
   0 "OX"
   1 "B1"
   2 "Cu"
   3 "Mini"
+  4 "MI"
 }
 value0 {
   0 "oxford"
   1 "Oxford Inner"
   2 "Custom"
   3 "Minichip"
+  4 "MISP"
 }
 endObjectProperties
 
@@ -4092,3 +4052,4 @@ command {
   0 "blueapi -c CONFIG_LOCATION controller abort"
 }
 endObjectProperties
+
