@@ -49,7 +49,7 @@ def onMouse(event, x, y, flags, param):
         oav = param[1]
         beamX, beamY = _get_beam_centre(oav)
         logger.info(f"Clicked X and Y {x} {y}")
-        zoomcalibrator = _work_out_zoom_calibrator()
+        zoomcalibrator = _work_out_zoom_calibrator(oav)
         xmove = -1 * (beamX - x) * zoomcalibrator
         ymove = -1 * (beamY - y) * zoomcalibrator
         logger.info(f"Moving X and Y {xmove} {ymove}")
