@@ -88,7 +88,8 @@ hyperion.dev=true,\
 hyperion.runAsUser=$EUID,\
 hyperion.runAsGroup=$GID,\
 hyperion.supplementalGroups=[$SUPPLEMENTAL_GIDS],\
-hyperion.logDir=/app/hyperion/tmp "
+hyperion.logDir=/app/hyperion/tmp,\
+hyperion.externalHostname=test-hyperion.diamond.ac.uk "
   mkdir -p $PROJECTDIR/tmp
   DEPLOYMENT_DIR=$PROJECTDIR
 else

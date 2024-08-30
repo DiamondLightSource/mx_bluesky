@@ -3,7 +3,11 @@ kind: Service
 metadata:
   name: hyperion-svc
 spec:
+  {{- if .Values.hyperion.dev }}
   type: LoadBalancer
+  {{- else }}
+  type: ClusterIP
+  {{- end }}
   ports:
     - name: hyperion-api
       port: 5005

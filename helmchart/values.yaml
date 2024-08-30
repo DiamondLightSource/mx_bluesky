@@ -10,6 +10,7 @@ hyperion:
   # These should be overridden at install time
   projectDir: SET_ON_INSTALL
   appVersion: SET_ON_INSTALL
+  externalHostname: i03-hyperion.diamond.ac.uk
 dodal:
   projectDir: SET_ON_INSTALL
 service:
