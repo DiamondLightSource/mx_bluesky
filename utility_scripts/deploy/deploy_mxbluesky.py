@@ -166,12 +166,12 @@ if __name__ == "__main__":
     print(f"Setting up environment in {mx_repo.deploy_location}")
 
     if mx_repo.name == "mx_bluesky":
-        run_process_and_print_output("./dls_dev_setup.sh")
+        run_process_and_print_output("./utility_scripts/dls_dev_setup.sh")
 
     # If on beamline I24 also deploy the screens to run ssx collections
     if beamline == "i24":
         print("Setting up edm screens for serial collections on I24.")
-        run_process_and_print_output("./deploy/deploy_edm_for_ssx.sh")
+        run_process_and_print_output("./utility_scripts/deploy/deploy_edm_for_ssx.sh")
 
     move_symlink = input(
         """Move symlink (y/n)? WARNING: this will affect the running version!

@@ -4,7 +4,7 @@ major 4
 minor 0
 release 1
 x 2870
-y 245
+y 282
 w 1030
 h 950
 font "arial-medium-r-18.0"
@@ -3694,24 +3694,27 @@ topShadowColor index 1
 botShadowColor index 8
 controlPv "ME14E-MO-IOC-01:GP1"
 font "arial-medium-r-18.0"
-numItems 4
+numItems 5
 symbolTag {
   0 "Oxford"
   1 "Oxford Inner"
   2 "Custom"
   3 "Minichip"
+  4 "MISP"
 }
 symbol0 {
   0 "OX"
   1 "B1"
   2 "Cu"
   3 "Mini"
+  4 "MI"
 }
 value0 {
   0 "oxford"
   1 "Oxford Inner"
   2 "Custom"
   3 "Minichip"
+  4 "MISP"
 }
 endObjectProperties
 
