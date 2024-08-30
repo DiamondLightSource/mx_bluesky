@@ -36,9 +36,7 @@ def _get_beam_centre(oav: OAV):
 
 def _work_out_zoom_calibrator(oav: OAV):
     currentzoom = yield from bps.rd(oav.zoom_controller.percentage)
-    zoomcalibrator = (
-        1.547 - (0.03 * currentzoom) + (0.0001634 * currentzoom * currentzoom)
-    )
+    zoomcalibrator = 1.547 - (0.03 * currentzoom) + (0.0001634 * currentzoom**2)
     return zoomcalibrator
 
 
