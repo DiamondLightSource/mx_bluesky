@@ -4,7 +4,7 @@ major 4
 minor 0
 release 1
 x 3168
-y 118
+y 155
 w 650
 h 400
 font "arial-medium-r-18.0"
@@ -219,7 +219,7 @@ font "arial-medium-r-18.0"
 buttonLabel "Upload Parameters"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run upload_parameters '\{\"chipid\":\"oxford\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run upload_parameters"
 }
 endObjectProperties
 

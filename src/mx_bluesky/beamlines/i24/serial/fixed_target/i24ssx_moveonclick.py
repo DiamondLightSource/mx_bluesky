@@ -132,10 +132,7 @@ def update_ui(oav, frame):
     cv.imshow("OAV1view", frame)
 
 
-def start_viewer(oav1: str = OAV1_CAM):
-    # Get devices out of dodal
-    oav: OAV = i24.oav()
-    pmac: PMAC = i24.pmac()
+def start_viewer(oav: OAV, pmac: PMAC, oav1: str = OAV1_CAM):
     # Create a video caputure from OAV1
     cap = cv.VideoCapture(oav1)
 
@@ -198,4 +195,7 @@ def start_viewer(oav1: str = OAV1_CAM):
 
 if __name__ == "__main__":
     RE = RunEngine()
-    RE(start_viewer())
+    # Get devices out of dodal
+    oav: OAV = i24.oav()
+    pmac: PMAC = i24.pmac()
+    RE(start_viewer(oav, pmac))
