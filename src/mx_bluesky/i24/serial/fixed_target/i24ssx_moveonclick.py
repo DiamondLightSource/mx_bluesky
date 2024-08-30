@@ -20,7 +20,7 @@ logger = logging.getLogger("I24ssx.moveonclick")
 
 # Set scale.
 # TODO See https://github.com/DiamondLightSource/mx_bluesky/issues/44
-zoomcalibrator = 6  # 8 seems to work well for zoom 2
+# zoomcalibrator = 6  # 8 seems to work well for zoom 2
 
 
 def _get_beam_centre(oav: OAV):
@@ -32,6 +32,11 @@ def _get_beam_centre(oav: OAV):
     return oav.parameters.beam_centre_i, oav.parameters.beam_centre_j
 
 
+def _work_out_zoom_calibrator(oav: OAV):
+    currentzoom = yield from bps.rd(oav.zoom_controller.percentage)
+    zoomcalibrator = 1.547 - (0.03 * currentzoom) + (0.0001634* currentzoom * currentzoom)
+    return zoomcalibrator
+
 # Register clicks and move chip stages
 def onMouse(event, x, y, flags, param):
     if event == cv.EVENT_LBUTTONUP:
@@ -39,6 +44,7 @@ def onMouse(event, x, y, flags, param):
         oav = param[1]
         beamX, beamY = _get_beam_centre(oav)
         logger.info(f"Clicked X and Y {x} {y}")
+        zoomcalibrator = _work_out_zoom_calibrator()
         xmove = -1 * (beamX - x) * zoomcalibrator
         ymove = -1 * (beamY - y) * zoomcalibrator
         logger.info(f"Moving X and Y {xmove} {ymove}")
@@ -130,10 +136,7 @@ def update_ui(oav, frame):
     cv.imshow("OAV1view", frame)
 
 
-def start_viewer(oav1: str = OAV1_CAM):
-    # Get devices out of dodal
-    oav: OAV = i24.oav()
-    pmac: PMAC = i24.pmac()
+def start_viewer(oav: OAV, pmac: PMAC, oav1: str = OAV1_CAM):
     # Create a video caputure from OAV1
     cap = cv.VideoCapture(oav1)
 
@@ -195,5 +198,8 @@ def start_viewer(oav1: str = OAV1_CAM):
 
 
 if __name__ == "__main__":
+    # Get devices out of dodal
+    oav: OAV = i24.oav()
+    pmac: PMAC = i24.pmac()
     RE = RunEngine()
-    RE(start_viewer())
+    RE(start_viewer(oav, pmac))
