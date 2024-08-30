@@ -751,7 +751,7 @@ def run_fixed_target_plan(
     setup_logging()
 
     # in the first instance, write params here
-    write_parameter_file(detector_stage)
+    yield from write_parameter_file(detector_stage)
 
     logger.info("Getting parameters from file.")
     parameters = FixedTargetParameters.from_file(PARAM_FILE_PATH_FT / PARAM_FILE_NAME)

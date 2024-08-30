@@ -124,7 +124,7 @@ def initialise_stages(
 @log.log_on_entry
 def write_parameter_file(
     detector_stage: DetectorMotion,
-):
+) -> MsgGenerator:
     param_path: Path = PARAM_FILE_PATH_FT
     # Create directory if it doesn't yet exist.
     param_path.mkdir(parents=True, exist_ok=True)
@@ -180,6 +180,7 @@ def write_parameter_file(
         # that are only needed when full mapping is in use.
         logger.info("Full mapping in use. Running start up now.")
         startup.run()
+    yield from bps.null()
 
 
 def scrape_pvar_file(fid: str, pvar_dir: Path = PVAR_FILE_PATH):
