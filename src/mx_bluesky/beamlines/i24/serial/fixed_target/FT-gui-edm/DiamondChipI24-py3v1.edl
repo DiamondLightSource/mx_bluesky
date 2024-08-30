@@ -4,7 +4,7 @@ major 4
 minor 0
 release 1
 x 4011
-y 226
+y 263
 w 1030
 h 950
 font "arial-medium-r-18.0"
@@ -1387,49 +1387,6 @@ numDsps 1
 displayFileName {
   0 "EDM_LOCATION/ME14E-GeneralPurpose.edl"
 }
-endObjectProperties
-
-# (Shell Command)
-object shellCmdClass
-beginObjectProperties
-major 4
-minor 3
-release 0
-x 580
-y 665
-w 165
-h 50
-fgColor index 14
-bgColor index 17
-topShadowColor index 1
-botShadowColor index 14
-font "arial-medium-r-18.0"
-numCmds 1
-command {
-  0 "blueapi -c CONFIG_LOCATION controller run write_parameter_file"
-}
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 1
-x 590
-y 670
-w 141
-h 36
-font "arial-medium-r-16.0"
-fontAlign "center"
-fgColor index 14
-bgColor index 0
-useDisplayBg
-value {
-  "Set parameters "
-  "and create shotlist"
-}
-autoSize
 endObjectProperties
 
 # (Lines)
