@@ -198,8 +198,8 @@ def start_viewer(oav: OAV, pmac: PMAC, oav1: str = OAV1_CAM):
 
 
 if __name__ == "__main__":
+    RE = RunEngine()
     # Get devices out of dodal
     oav: OAV = i24.oav()
     pmac: PMAC = i24.pmac()
-    RE = RunEngine()
     RE(start_viewer(oav, pmac))
