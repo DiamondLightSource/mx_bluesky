@@ -9,8 +9,10 @@ from ophyd_async.core import get_mock_put
 from mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick import (
     onMouse,
     update_ui,
-    zoomcalibrator,
 )
+
+# FIXME
+zoomcalibrator = 6
 
 
 @pytest.mark.parametrize(
@@ -36,7 +38,11 @@ from mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick import (
 @patch(
     "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick._get_beam_centre"
 )
+@patch(
+    "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick._get_beam_centre"
+)
 def test_onMouse_gets_beam_position_and_sends_correct_str(
+    fake_zoom_calibrator: MagicMock,
     fake_get_beam_pos: MagicMock,
     beam_position: tuple,
     expected_xmove: str,
@@ -44,6 +50,7 @@ def test_onMouse_gets_beam_position_and_sends_correct_str(
     pmac: PMAC,
     RE,
 ):
+    fake_zoom_calibrator.return_value = zoomcalibrator
     fake_get_beam_pos.side_effect = [beam_position]
     fake_oav: OAV = MagicMock(spec=OAV)
     RE(onMouse(cv.EVENT_LBUTTONUP, 0, 0, "", param=[pmac, fake_oav]))
