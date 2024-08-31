@@ -194,8 +194,8 @@ async def test_thaw_and_stream_sets_sample_id_and_kicks_off_forwarder(
         )
     )
     assert await oav_forwarder.sample_id.get_value() == 100
-    oav_forwarder.kickoff.assert_called_once()
-    oav_forwarder.complete.assert_called_once()
+    oav_forwarder.kickoff.assert_called_once()  # type: ignore
+    oav_forwarder.complete.assert_called_once()  # type: ignore
 
 
 @patch("mx_bluesky.beamlines.i04.thawing_plan.MurkoCallback")
