@@ -107,6 +107,7 @@ class I03Constants:
     USE_PANDA_FOR_GRIDSCAN = False
     USE_GPU_FOR_GRIDSCAN_ANALYSIS = False
     THAWING_TIME = 20
+    USE_FASTEST_ZOCALO_RESULT = False
 
 
 @dataclass(frozen=True)

@@ -41,6 +41,7 @@ class GridCommon(
     )
     use_panda: bool = Field(default=CONST.I03.USE_PANDA_FOR_GRIDSCAN)
     use_gpu: bool = Field(default=CONST.I03.USE_GPU_FOR_GRIDSCAN_ANALYSIS)
+    use_fastest_zocalo_result: bool = Field(default=CONST.I03.USE_FASTEST_ZOCALO_RESULT)
     ispyb_experiment_type: IspybExperimentType = Field(
         default=IspybExperimentType.GRIDSCAN_3D
     )

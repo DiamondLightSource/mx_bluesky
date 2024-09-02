@@ -126,7 +126,9 @@ def flyscan_xray_centre(
     """
     parameters.features.update_self_from_server()
     composite.eiger.set_detector_parameters(parameters.detector_params)
+    # TODO: Create issue for removing this parameter once we're confident that GPU is accurate
     composite.zocalo.zocalo_environment = parameters.zocalo_environment
+    composite.zocalo.use_fastest_zocalo_result = parameters.use_fastest_zocalo_result
 
     feature_controlled = _get_feature_controlled(composite, parameters)
 
