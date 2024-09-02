@@ -46,6 +46,7 @@ from dodal.devices.undulator import Undulator
 from dodal.devices.util.test_utils import patch_motor as oa_patch_motor
 from dodal.devices.webcam import Webcam
 from dodal.devices.zebra import Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.log import LOGGER as dodal_logger
 from dodal.log import set_up_all_logging_handlers
 from ophyd.sim import NullStatus
@@ -457,6 +458,11 @@ def thawer(RE) -> Generator[Thawer, Any, Any]:
 
 
 @pytest.fixture
+def sample_shutter(RE) -> Generator[ZebraShutter, Any, Any]:
+    yield i03.sample_shutter(fake_with_ophyd_sim=True)
+
+
+@pytest.fixture
 def aperture_scatterguard(RE):
     positions = {
         AperturePosition.LARGE: SingleAperturePosition(
@@ -565,6 +571,7 @@ def fake_create_rotation_devices(
     dcm: DCM,
     robot: BartRobot,
     oav: OAV,
+    sample_shutter: ZebraShutter,
 ):
     set_mock_value(smargon.omega.max_velocity, 131)
     oav.zoom_controller.onst.sim_put("1.0x")  # type: ignore
@@ -585,7 +592,7 @@ def fake_create_rotation_devices(
         zebra=zebra,
         robot=robot,
         oav=oav,
-        sample_shutter=i03.sample_shutter(fake_with_ophyd_sim=True),
+        sample_shutter=sample_shutter,
     )
 
 

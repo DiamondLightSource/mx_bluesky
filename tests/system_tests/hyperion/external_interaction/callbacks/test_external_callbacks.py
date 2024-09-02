@@ -204,6 +204,7 @@ def test_remote_callbacks_write_to_dev_ispyb_for_rotation(
     robot,
     aperture_scatterguard,
     fake_create_devices,
+    sample_shutter,
 ):
     test_wl = 0.71
     test_bs_x = 0.023
@@ -230,6 +231,7 @@ def test_remote_callbacks_write_to_dev_ispyb_for_rotation(
         zebra=fake_create_devices["zebra"],
         robot=robot,
         oav=fake_create_devices["oav"],
+        sample_shutter=sample_shutter,
     )
 
     with patch("bluesky.preprocessors.__read_and_stash_a_motor", fake_read):
