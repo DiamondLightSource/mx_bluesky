@@ -30,13 +30,17 @@ def _get_beam_centre(oav: OAV):
     return oav.parameters.beam_centre_i, oav.parameters.beam_centre_j
 
 
-def _calculate_zoom_calibrator(oav: OAV, RE: RunEngine):
+def _calculate_zoom_calibrator(oav: OAV):
     """Set the scale for the zoom calibrator for the pmac moves."""
-    currentzoom = RE(
-        bps.rd(oav.zoom_controller.percentage), call_returns_result=True
-    ).plan_result
+    currentzoom = yield from bps.rd(oav.zoom_controller.percentage)
     zoomcalibrator = 1.547 - (0.03 * currentzoom) + (0.0001634 * currentzoom**2)
     return zoomcalibrator
+
+
+def _move_to_position(pmac: PMAC, xmove: str, ymove: str):
+    """Trigger pmac move to clicked position coordinates."""
+    yield from bps.abs_set(pmac.pmac_string, xmove, wait=True)
+    yield from bps.abs_set(pmac.pmac_string, ymove, wait=True)
 
 
 # Register clicks and move chip stages
@@ -47,14 +51,13 @@ def onMouse(event, x, y, flags, param):
         oav = param[2]
         beamX, beamY = _get_beam_centre(oav)
         logger.info(f"Clicked X and Y {x} {y}")
-        zoomcalibrator = _calculate_zoom_calibrator(oav, RE)
+        zoomcalibrator = RE(_calculate_zoom_calibrator(oav))
         xmove = -1 * (beamX - x) * zoomcalibrator
         ymove = -1 * (beamY - y) * zoomcalibrator
         logger.info(f"Moving X and Y {xmove} {ymove}")
         xmovepmacstring = "#1J:" + str(xmove)
         ymovepmacstring = "#2J:" + str(ymove)
-        RE(bps.abs_set(pmac.pmac_string, xmovepmacstring, wait=True))
-        RE(bps.abs_set(pmac.pmac_string, ymovepmacstring, wait=True))
+        RE(_move_to_position(pmac, xmovepmacstring, ymovepmacstring))
 
 
 def update_ui(oav, frame):
