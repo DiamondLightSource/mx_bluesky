@@ -136,7 +136,9 @@ def detect_grid_and_do_gridscan(
         parameters.snapshot_directory,
     )
 
-    yield from bps.abs_set(composite.backlight, BacklightPosition.OUT)
+    yield from bps.abs_set(
+        composite.backlight, BacklightPosition.OUT, group=CONST.WAIT.GRID_READY_FOR_DC
+    )
 
     yield from move_aperture_if_required(
         composite.aperture_scatterguard,
