@@ -12,9 +12,8 @@ from dodal.beamlines import i24
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.oav.oav_detector import OAV
 
-from mx_bluesky.beamlines.i24.serial.fixed_target import (
-    i24ssx_Chip_Manager_py3v1 as manager,
-)
+from mx_bluesky.beamlines.i24.serial.fixed_target import \
+    i24ssx_Chip_Manager_py3v1 as manager
 from mx_bluesky.beamlines.i24.serial.fixed_target.ft_utils import Fiducials
 from mx_bluesky.beamlines.i24.serial.parameters.constants import OAV1_CAM
 
@@ -30,9 +29,9 @@ def _get_beam_centre(oav: OAV):
     return oav.parameters.beam_centre_i, oav.parameters.beam_centre_j
 
 
-def _calculate_zoom_calibrator(oav: OAV):
+def _calculate_zoom_calibrator(oav: OAV, RE: RunEngine):
     """Set the scale for the zoom calibrator for the pmac moves."""
-    currentzoom = yield from bps.rd(oav.zoom_controller.percentage)
+    currentzoom = RE(bps.rd(oav.zoom_controller.percentage)).plan_result
     zoomcalibrator = 1.547 - (0.03 * currentzoom) + (0.0001634 * currentzoom**2)
     return zoomcalibrator
 
@@ -51,7 +50,7 @@ def onMouse(event, x, y, flags, param):
         oav = param[2]
         beamX, beamY = _get_beam_centre(oav)
         logger.info(f"Clicked X and Y {x} {y}")
-        zoomcalibrator = RE(_calculate_zoom_calibrator(oav))
+        zoomcalibrator = _calculate_zoom_calibrator(oav, RE)
         xmove = -1 * (beamX - x) * zoomcalibrator
         ymove = -1 * (beamY - y) * zoomcalibrator
         logger.info(f"Moving X and Y {xmove} {ymove}")
