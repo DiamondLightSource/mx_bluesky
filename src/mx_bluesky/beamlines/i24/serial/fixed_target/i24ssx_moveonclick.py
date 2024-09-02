@@ -12,8 +12,9 @@ from dodal.beamlines import i24
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.oav.oav_detector import OAV
 
-from mx_bluesky.beamlines.i24.serial.fixed_target import \
-    i24ssx_Chip_Manager_py3v1 as manager
+from mx_bluesky.beamlines.i24.serial.fixed_target import (
+    i24ssx_Chip_Manager_py3v1 as manager,
+)
 from mx_bluesky.beamlines.i24.serial.fixed_target.ft_utils import Fiducials
 from mx_bluesky.beamlines.i24.serial.parameters.constants import OAV1_CAM
 
@@ -31,7 +32,7 @@ def _get_beam_centre(oav: OAV):
 
 def _calculate_zoom_calibrator(oav: OAV, RE: RunEngine):
     """Set the scale for the zoom calibrator for the pmac moves."""
-    currentzoom = RE(bps.rd(oav.zoom_controller.percentage)).plan_result
+    currentzoom = RE(bps.rd(oav.zoom_controller.percentage)).plan_result  # type: ignore
     zoomcalibrator = 1.547 - (0.03 * currentzoom) + (0.0001634 * currentzoom**2)
     return zoomcalibrator
 

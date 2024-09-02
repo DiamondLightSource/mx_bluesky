@@ -11,8 +11,7 @@ from mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick import (
     update_ui,
 )
 
-# FIXME
-zoomcalibrator = 6
+ZOOMCALIBRATOR = 6
 
 
 @pytest.mark.parametrize(
@@ -20,18 +19,18 @@ zoomcalibrator = 6
     [
         (
             (15, 10),
-            "#1J:-" + str(15 * zoomcalibrator),
-            "#2J:-" + str(10 * zoomcalibrator),
+            "#1J:-" + str(15 * ZOOMCALIBRATOR),
+            "#2J:-" + str(10 * ZOOMCALIBRATOR),
         ),
         (
             (475, 309),
-            "#1J:-" + str(475 * zoomcalibrator),
-            "#2J:-" + str(309 * zoomcalibrator),
+            "#1J:-" + str(475 * ZOOMCALIBRATOR),
+            "#2J:-" + str(309 * ZOOMCALIBRATOR),
         ),
         (
             (638, 392),
-            "#1J:-" + str(638 * zoomcalibrator),
-            "#2J:-" + str(392 * zoomcalibrator),
+            "#1J:-" + str(638 * ZOOMCALIBRATOR),
+            "#2J:-" + str(392 * ZOOMCALIBRATOR),
         ),
     ],
 )
@@ -39,7 +38,7 @@ zoomcalibrator = 6
     "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick._get_beam_centre"
 )
 @patch(
-    "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick._get_beam_centre"
+    "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick._calculate_zoom_calibrator"
 )
 def test_onMouse_gets_beam_position_and_sends_correct_str(
     fake_zoom_calibrator: MagicMock,
@@ -50,10 +49,10 @@ def test_onMouse_gets_beam_position_and_sends_correct_str(
     pmac: PMAC,
     RE,
 ):
-    fake_zoom_calibrator.return_value = zoomcalibrator
+    fake_zoom_calibrator.side_effect = [ZOOMCALIBRATOR]
     fake_get_beam_pos.side_effect = [beam_position]
     fake_oav: OAV = MagicMock(spec=OAV)
-    RE(onMouse(cv.EVENT_LBUTTONUP, 0, 0, "", param=[pmac, fake_oav]))
+    onMouse(cv.EVENT_LBUTTONUP, 0, 0, "", param=[RE, pmac, fake_oav])
     mock_pmac_str = get_mock_put(pmac.pmac_string)
     mock_pmac_str.assert_has_calls(
         [
