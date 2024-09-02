@@ -12,7 +12,8 @@ from dodal.devices.backlight import BacklightPosition
 from dodal.devices.oav.oav_parameters import OAVParameters
 from dodal.devices.smargon import Smargon
 from dodal.devices.synchrotron import SynchrotronMode
-from dodal.devices.zebra import Zebra
+from dodal.devices.zebra import PC_GATE, Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutterControl
 from ophyd_async.core import get_mock_put
 
 from mx_bluesky.hyperion.experiment_plans.oav_snapshot_plan import (
@@ -577,4 +578,38 @@ def _add_sim_handlers_for_normal_operation(
     )
     sim_run_engine.add_handler(
         "read", lambda msg: {"smargon-omega": {"value": -1}}, "smargon-omega"
+    )
+
+
+def test_rotation_scan_turns_shutter_to_auto_with_pc_gate_then_back_to_manual(
+    fake_create_rotation_devices: RotationScanComposite,
+    sim_run_engine: RunEngineSimulator,
+    test_rotation_params: RotationScan,
+    oav_parameters_for_rotation: OAVParameters,
+):
+    _add_sim_handlers_for_normal_operation(fake_create_rotation_devices, sim_run_engine)
+    msgs = sim_run_engine.simulate_plan(
+        rotation_scan(
+            fake_create_rotation_devices,
+            test_rotation_params,
+            oav_parameters_for_rotation,
+        )
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "sample_shutter-control"
+        and msg.args[0] == ZebraShutterControl.AUTO,  # type:ignore
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "zebra-logic_gates-and_gates-2-sources-1"
+        and msg.args[0] == PC_GATE,  # type:ignore
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "sample_shutter-control"
+        and msg.args[0] == ZebraShutterControl.MANUAL,  # type:ignore
     )

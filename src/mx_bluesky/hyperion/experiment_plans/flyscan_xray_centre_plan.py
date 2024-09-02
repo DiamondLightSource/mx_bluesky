@@ -35,6 +35,7 @@ from dodal.devices.synchrotron import Synchrotron
 from dodal.devices.undulator import Undulator
 from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutter, ZebraShutterControl
 from dodal.devices.zocalo.zocalo_results import (
     ZOCALO_READING_PLAN_NAME,
     ZOCALO_STAGE_GROUP,
@@ -57,9 +58,9 @@ from mx_bluesky.hyperion.device_setup_plans.setup_panda import (
     setup_panda_for_flyscan,
 )
 from mx_bluesky.hyperion.device_setup_plans.setup_zebra import (
-    set_zebra_shutter_to_manual,
     setup_zebra_for_gridscan,
     setup_zebra_for_panda_flyscan,
+    tidy_up_zebra_after_gridscan,
 )
 from mx_bluesky.hyperion.device_setup_plans.xbpm_feedback import (
     transmission_and_xbpm_feedback_for_collection_decorator,
@@ -97,6 +98,7 @@ class FlyScanXRayCentreComposite:
     panda: HDFPanda
     panda_fast_grid_scan: PandAFastGridScan
     robot: BartRobot
+    sample_shutter: ZebraShutter
 
     @property
     def sample_motors(self) -> Smargon:
@@ -273,6 +275,13 @@ def run_gridscan(
     LOGGER.info("Waiting for gridscan validity check")
     yield from wait_for_gridscan_valid(feature_controlled.fgs_motors)
 
+    LOGGER.info("Set shutter to auto")
+    yield from bps.abs_set(
+        fgs_composite.sample_shutter.control,
+        ZebraShutterControl.AUTO,
+        group=CONST.WAIT.GRID_READY_FOR_DC,
+    )
+
     LOGGER.info("Waiting for arming to finish")
     yield from bps.wait(CONST.WAIT.GRID_READY_FOR_DC)
     yield from bps.stage(fgs_composite.eiger)
@@ -438,8 +447,11 @@ def _get_feature_controlled(
 def _generic_tidy(
     fgs_composite: FlyScanXRayCentreComposite, group, wait=True
 ) -> MsgGenerator:
-    LOGGER.info("Tidying up Zebra")
-    yield from set_zebra_shutter_to_manual(fgs_composite.zebra, group=group, wait=wait)
+    LOGGER.info("Tidying up Zebra and shutter")
+    yield from tidy_up_zebra_after_gridscan(fgs_composite.zebra, group=group, wait=wait)
+    yield from bps.abs_set(
+        fgs_composite.sample_shutter.control, ZebraShutterControl.MANUAL
+    )
     LOGGER.info("Tidying up Zocalo")
     # make sure we don't consume any other results
     yield from bps.unstage(fgs_composite.zocalo, group=group, wait=wait)

@@ -585,6 +585,7 @@ def fake_create_rotation_devices(
         zebra=zebra,
         robot=robot,
         oav=oav,
+        sample_shutter=i03.sample_shutter(fake_with_ophyd_sim=True),
     )
 
 
@@ -699,6 +700,7 @@ async def fake_fgs_composite(
         panda=panda,
         panda_fast_grid_scan=i03.panda_fast_grid_scan(fake_with_ophyd_sim=True),
         robot=i03.robot(fake_with_ophyd_sim=True),
+        sample_shutter=i03.sample_shutter(fake_with_ophyd_sim=True),
     )
 
     fake_composite.eiger.stage = MagicMock(return_value=done_status)

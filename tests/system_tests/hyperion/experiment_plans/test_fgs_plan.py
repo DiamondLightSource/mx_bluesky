@@ -94,6 +94,7 @@ async def fxc_composite():
         xbpm_feedback=i03.xbpm_feedback(fake_with_ophyd_sim=True),
         zebra=i03.zebra(),
         zocalo=zocalo,
+        sample_shutter=i03.sample_shutter(fake_with_ophyd_sim=True),
     )
 
     await composite.robot.barcode._backend.put("ABCDEFGHIJ")  # type: ignore
@@ -179,7 +180,7 @@ async def test_xbpm_feedback_decorator(
     autospec=True,
 )
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.set_zebra_shutter_to_manual",
+    "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.tidy_up_zebra_after_gridscan",
     autospec=True,
 )
 def test_full_plan_tidies_at_end(
@@ -214,7 +215,7 @@ def test_full_plan_tidies_at_end(
     autospec=True,
 )
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.set_zebra_shutter_to_manual",
+    "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.tidy_up_zebra_after_gridscan",
     autospec=True,
 )
 def test_full_plan_tidies_at_end_when_plan_fails(

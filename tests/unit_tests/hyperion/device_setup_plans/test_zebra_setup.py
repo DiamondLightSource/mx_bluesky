@@ -5,21 +5,25 @@ from bluesky import plan_stubs as bps
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i03
 from dodal.devices.zebra import (
+    AUTO_SHUTTER_GATE,
+    AUTO_SHUTTER_INPUT,
+    IN1_TTL,
     IN3_TTL,
     IN4_TTL,
-    OR1,
+    PC_GATE,
     PC_PULSE,
     TTL_DETECTOR,
-    TTL_SHUTTER,
+    TTL_PANDA,
     I03Axes,
     Zebra,
 )
 
 from mx_bluesky.hyperion.device_setup_plans.setup_zebra import (
     bluesky_retry,
-    set_zebra_shutter_to_manual,
     setup_zebra_for_gridscan,
+    setup_zebra_for_panda_flyscan,
     setup_zebra_for_rotation,
+    tidy_up_zebra_after_gridscan,
 )
 
 
@@ -29,10 +33,25 @@ def zebra():
     return i03.zebra(fake_with_ophyd_sim=True)
 
 
+async def _get_shutter_input(zebra: Zebra):
+    return (
+        await zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE]
+        .sources[AUTO_SHUTTER_INPUT]
+        .get_value()
+    )
+
+
+async def test_zebra_set_up_for_panda_gridscan(RE, zebra: Zebra):
+    RE(setup_zebra_for_panda_flyscan(zebra, wait=True))
+    assert await zebra.output.out_pvs[TTL_DETECTOR].get_value() == IN1_TTL
+    assert await zebra.output.out_pvs[TTL_PANDA].get_value() == IN3_TTL
+    assert await _get_shutter_input(zebra) == IN4_TTL
+
+
 async def test_zebra_set_up_for_gridscan(RE, zebra: Zebra):
     RE(setup_zebra_for_gridscan(zebra, wait=True))
     assert await zebra.output.out_pvs[TTL_DETECTOR].get_value() == IN3_TTL
-    assert await zebra.output.out_pvs[TTL_SHUTTER].get_value() == IN4_TTL
+    assert await _get_shutter_input(zebra) == IN4_TTL
 
 
 async def test_zebra_set_up_for_rotation(RE, zebra: Zebra):
@@ -42,9 +61,9 @@ async def test_zebra_set_up_for_rotation(RE, zebra: Zebra):
 
 
 async def test_zebra_cleanup(RE, zebra: Zebra):
-    RE(set_zebra_shutter_to_manual(zebra, wait=True))
+    RE(tidy_up_zebra_after_gridscan(zebra, wait=True))
     assert await zebra.output.out_pvs[TTL_DETECTOR].get_value() == PC_PULSE
-    assert await zebra.output.out_pvs[TTL_SHUTTER].get_value() == OR1
+    assert await _get_shutter_input(zebra) == PC_GATE
 
 
 class MyException(Exception):
