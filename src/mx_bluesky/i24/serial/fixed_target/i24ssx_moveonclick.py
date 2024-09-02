@@ -37,6 +37,10 @@ def _work_out_zoom_calibrator(oav: OAV):
     zoomcalibrator = 1.547 - (0.03 * currentzoom) + (0.0001634* currentzoom * currentzoom)
     return zoomcalibrator
 
+def _move_to_position(pmac: PMAC, xmove: str, ymove: str):
+    yield from bps.abs_set(pmac.pmac_string, xmove, wait=True)
+    yield from bps.abs_set(pmac.pmac_string, ymove, wait=True)
+
 # Register clicks and move chip stages
 def onMouse(event, x, y, flags, param):
     if event == cv.EVENT_LBUTTONUP:
@@ -50,8 +54,7 @@ def onMouse(event, x, y, flags, param):
         logger.info(f"Moving X and Y {xmove} {ymove}")
         xmovepmacstring = "#1J:" + str(xmove)
         ymovepmacstring = "#2J:" + str(ymove)
-        yield from bps.abs_set(pmac.pmac_string, xmovepmacstring, wait=True)
-        yield from bps.abs_set(pmac.pmac_string, ymovepmacstring, wait=True)
+        _move_to_position(pmac, xmovepmacstring, ymovepmacstring)
 
 
 def update_ui(oav, frame):
