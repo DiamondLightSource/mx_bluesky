@@ -88,7 +88,7 @@ class RotationExperiment(DiffractionExperimentWithSample):
         cls, aperture_position: AperturePositionGDANames | None
     ):
         if not aperture_position:
-            LOGGER.warn(
+            LOGGER.warning(
                 f"No aperture position selected. Defaulting to {DEFAULT_APERTURE_POSITION}"
             )
             return DEFAULT_APERTURE_POSITION
