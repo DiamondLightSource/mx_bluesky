@@ -371,8 +371,9 @@ def get_rotation_scan_plan(params: RotationScan):
     given parameters.
     Args:
         params: dict obtained by reading a json file conforming to the pydantic \
-            schema in ./src/jungfrau_commissioning/utils/params.py.
+            schema in .src/mx_bluesky/i24/jungfrau_commissioning/utils/params.py.
             see tests/unit_tests/beamlines/i24/jungfrau_commissioning/test_data/example_params.json for an example."""
+
     devices = create_rotation_scan_devices()
 
     params = deepcopy(
