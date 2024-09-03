@@ -250,7 +250,7 @@ class TestFlyscanXrayCentrePlan:
         RE(
             bps.abs_set(
                 fake_fgs_composite.aperture_scatterguard,
-                ApertureValue.LARGE,
+                ApertureValue.SMALL,
             )
         )
 
