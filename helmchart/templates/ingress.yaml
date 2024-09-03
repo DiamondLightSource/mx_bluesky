@@ -18,6 +18,6 @@ spec:
           service:
             name: hyperion-svc # this must match the name of the service you want to target
             port:
-              number: 5005
+              number: {{ .Values.hyperion.containerPort }}
   {{- end }}
   

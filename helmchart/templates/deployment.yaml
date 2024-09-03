@@ -62,7 +62,7 @@ spec:
             memory: "1Gi"
         ports:
           - name: hyperion-api
-            containerPort: 5005
+            containerPort: {{ .Values.hyperion.containerPort }}
             protocol: TCP
         env:
           - name: HYPERION_LOG_DIR

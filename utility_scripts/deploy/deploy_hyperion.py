@@ -18,9 +18,16 @@ VERSION_PATTERN_COMPILED = re.compile(
 DEV_DEPLOY_LOCATION = "/scratch/30day_tmp/hyperion_release_test/bluesky"
 
 
+class Options(NamedTuple):
+    release_dir: str
+    kubernetes: bool = False
+    print_release_dir: bool = False
+    quiet: bool = False
+
+
 class Deployment:
     # Set name, setup remote origin, get the latest version"""
-    def __init__(self, name: str, repo_args):
+    def __init__(self, name: str, repo_args, options: Options):
         self.name = name
         self.repo = Repo(repo_args)
 
@@ -32,7 +39,10 @@ class Deployment:
             t.name for t in self.repo.tags if VERSION_PATTERN_COMPILED.match(t.name)
         ]
         self.versions.sort(key=Version, reverse=True)
-        print(f"Found {self.name}_versions:\n{os.linesep.join(self.versions)}")
+
+        if not options.quiet:
+            print(f"Found {self.name}_versions:\n{os.linesep.join(self.versions)}")
+
         self.latest_version_str = self.versions[0]
 
     def deploy(self):
@@ -64,13 +74,8 @@ class Deployment:
             )
 
 
-class Options(NamedTuple):
-    release_dir: str
-    kubernetes: bool = False
-
-
 # Get the release directory based off the beamline and the latest hyperion version
-def _get_hyperion_release_dir_from_args() -> Options:
+def _parse_options() -> Options:
     parser = argparse.ArgumentParser(
         prog="deploy_hyperion", description="Deploy hyperion to a beamline"
     )
@@ -85,7 +90,11 @@ def _get_hyperion_release_dir_from_args() -> Options:
         choices=recognised_beamlines,
         help=f"The beamline to deploy hyperion to. 'dev' installs to {DEV_DEPLOY_LOCATION}",
     )
-
+    parser.add_argument(
+        "--print-release-dir",
+        action=argparse.BooleanOptionalAction,
+        help="Print the path to the release folder and then exit",
+    )
     args = parser.parse_args()
     if args.beamline == "dev":
         print("Running as dev")
@@ -93,7 +102,12 @@ def _get_hyperion_release_dir_from_args() -> Options:
     else:
         release_dir = f"/dls_sw/{args.beamline}/software/bluesky"
 
-    return Options(release_dir=release_dir, kubernetes=args.kubernetes)
+    return Options(
+        release_dir=release_dir,
+        kubernetes=args.kubernetes,
+        print_release_dir=args.print_release_dir,
+        quiet=args.print_release_dir,
+    )
 
 
 def _create_environment_from_control_machine(
@@ -129,25 +143,30 @@ def main(options: Options):
     release_area = options.release_dir
     this_repo_top = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
-    print(f"Repo top is {this_repo_top}")
+    if not options.quiet:
+        print(f"Repo top is {this_repo_top}")
 
     hyperion_repo = Deployment(
-        name="hyperion",
-        repo_args=os.path.join(this_repo_top, ".git"),
+        name="hyperion", repo_args=os.path.join(this_repo_top, ".git"), options=options
     )
 
     if hyperion_repo.name != "hyperion":
         raise ValueError("This function should only be used with the hyperion repo")
 
     release_area_version = os.path.join(
-        release_area, f"hyperion_{hyperion_repo.latest_version_str}"
+        release_area, f"mx_bluesky_{hyperion_repo.latest_version_str}"
     )
+
+    if options.print_release_dir:
+        print(release_area_version)
+        return
 
     print(f"Putting releases into {release_area_version}")
 
     dodal_repo = Deployment(
         name="dodal",
         repo_args=os.path.join(this_repo_top, "../dodal/.git"),
+        options=options,
     )
 
     dodal_repo.set_deploy_location(release_area_version)
@@ -218,5 +237,5 @@ Only do so if you have informed the beamline scientist and you're sure Hyperion 
 
 if __name__ == "__main__":
     # Gives path to /bluesky
-    options = _get_hyperion_release_dir_from_args()
+    options = _parse_options()
     main(options)

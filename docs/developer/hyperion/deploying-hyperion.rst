@@ -11,6 +11,15 @@ you will first need to create a GH personal access token and then log in with po
 Pushing the docker image
 ------------------------
 
+Obtaining a GitHub access token
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You will need to obtain a GitHub personal access token (classic) - not the new fine-grained token.
+It will need the specific permission scopes as detailed in the `ghcr documentation <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic>`_
+
+Building the image
+~~~~~~~~~~~~~~~~~~
+
 If building a test image, the image should be pushed to your personal GH account:
 
 ::
@@ -18,10 +27,6 @@ If building a test image, the image should be pushed to your personal GH account
     cat <mysecretfile> | podman login ghcr.io --username <your gh login> --password-stdin
 
 where ``mysecretfile`` contains your personal access token
-
-::
-
-    podman push ghcr.io/<your gh login>/
 
 Then run the ``build_docker_image.sh`` script.
 
@@ -68,23 +73,16 @@ Once the docker image is built, the image can be deployed to kubernetes using th
 Production deployment
 ~~~~~~~~~~~~~~~~~~~~~
 
-* From a development hyperion workspace, first deploy the source folders
+Then create and deploy the helm release
 
 ::
 
-    python utility_scripts/deploy/deploy_hyperion.py --kubernetes <beamline>
+    ./utility_scripts/deploy/deploy_hyperion_to_k8s.sh --beamline=<beamline> --checkout-to-prod hyperion
 
-* Then create and deploy the helm release
-
-::
-
-    module load helm
-    cd <path to deployed hyperion folder in /dls_sw>
-    ./utility_scripts/deploy/deploy_hyperion_to_k8s.sh --beamline=<beamline> hyperion
-
-This will create a helm release "hyperion". The source folders will be mounted as 
-bind mounts to allow the pod to pick up changes in production. For production these are expected to be in the normal 
-place defined in ``values.yaml``.
+This will run the ``deploy_hyperion.py`` script to deploy the latest hyperion to ``/dls_sw``.
+You will be prompted to log into the beamline cluster, then it will create a helm release "hyperion".
+The source folders will be mounted as bind mounts to allow the pod to pick up changes in production. 
+For production these are expected to be in the normal place defined in ``values.yaml``.
 
 Development deployment
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -102,6 +100,10 @@ The dev deployment bind-mounts the current ``hyperion`` workspace and ``../dodal
 run against your own development code. **Clusters do not allow bind mounts from arbitrary directories so 
 your workspace will have to be in a permitted directory such as your home directory.**
 
+By default the script will log into the ``argus`` cluster, if you want to deploy to an alternate cluster, 
+log in with ``kubectl set-context --current --namespace=<NAMESPACE>`` and then specify ``--no-login`` when running the 
+script
+
 Please note, the deployment script is intended to be run from a checked-out matching version of the git repository.
 
-``helm list`` should then show details of the installed release 
+``helm list`` should then show details of the installed release on a successful install

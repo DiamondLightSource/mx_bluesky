@@ -10,8 +10,8 @@ spec:
   {{- end }}
   ports:
     - name: hyperion-api
-      port: 5005
+      port: {{ .Values.hyperion.servicePort }}
       protocol: TCP
-      targetPort: 5005
+      targetPort: {{ .Values.hyperion.containerPort }}
   selector:
     app: hyperion

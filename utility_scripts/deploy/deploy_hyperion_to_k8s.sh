@@ -1,5 +1,7 @@
 #!/bin/bash
 # Installs helm package to kubernetes
+LOGIN=true
+
 for option in "$@"; do
     case $option in
         -b=*|--beamline=*)
@@ -10,6 +12,10 @@ for option in "$@"; do
             DEV=true
             shift
             ;;
+        --checkout-to-prod)
+            CHECKOUT=true
+            shift
+            ;;
         --repository=*)
             REPOSITORY="${option#*=}"
             shift
@@ -18,16 +24,30 @@ for option in "$@"; do
             APP_VERSION="${option#*=}"
             shift
             ;;
+        --no-login)
+            LOGIN=false
+            shift
+            ;;
         --help|--info|--h)
             CMD=`basename $0`
             echo "$CMD [options] <release>"
-            echo "Deploys hyperion to kubernetes"
-            echo "  --help                  This help"
-            echo "  --dev                   Install to a development kubernetes cluster (assumes project checked out under /home)"
-            echo "  -b, --beamline=BEAMLINE Overrides the BEAMLINE environment variable with the given beamline"
-            echo "  --repository=REPOSITORY Override the repository to fetch the image from"
-            echo "  --appVersion=version    Version of the image to fetch from the repository otherwise it is deduced
-             from the setuptools_scm"
+            cat <<EOM
+Deploys hyperion to kubernetes
+
+Important!
+If you do not specify --checkout-to-prod YOU MUST run this from the hyperion directory that will be bind-mounted to
+the container, NOT the directory that you built the container image from. 
+
+  --help                  This help
+  --appVersion=version    Version of the image to fetch from the repository otherwise it is deduced
+                          from the setuptools_scm
+  -b, --beamline=BEAMLINE Overrides the BEAMLINE environment variable with the given beamline
+  --checkout-to-prod      Checkout source folders to the production folder using deploy_hyperion.py
+  --dev                   Install to a development kubernetes cluster (assumes project checked out under /home)
+                          (default cluster is argus in user namespace)
+  --no-login              Do not attempt to log in to kubernetes instead use the current namespace and cluster
+  --repository=REPOSITORY Override the repository to fetch the image from
+EOM
             exit 0
             ;;
         -*|--*)
@@ -49,8 +69,44 @@ if [[ -z $RELEASE ]]; then
   exit 1
 fi
 
+if [[ -n $DEV ]]; then
+  if [[ -n $CHECKOUT ]]; then
+    echo "Cannot specify both --dev and --checkout-to-prod"
+    exit 1
+  fi
+  # First extract the version and location that will be deployed
+  DEPLOY_HYPERION="python $PROJECTDIR/utility_scripts/deploy/deploy_hyperion.py"
+  HYPERION_BASE=$($DEPLOY_HYPERION --print-release-dir)
+  
+  echo "Running deploy_hyperion.py to deploy to production folder..."
+  $DEPLOY_HYPERION --kubernetes $BEAMLINE || (echo "Deployment failed, aborting."; exit 1)
+  
+  NEW_PROJECTDIR=$HYPERION_BASE/hyperion
+  echo "Changing directory to $NEW_PROJECTDIR..."
+  cd $NEW_PROJECTDIR
+  PROJECTDIR=$NEW_PROJECTDIR
+  HYPERION_BASENAME=$(basename $HYPERION_BASE)
+  CHECKED_OUT_VERSION=${HYPERION_BASENAME#hyperion_v}
+else
+  CHECKED_OUT_VERSION=$(git describe --tag)
+fi
+
 HELM_OPTIONS=""
 PROJECTDIR=$(readlink -e $(dirname $0)/../..)
+
+
+if [[ $LOGIN = true ]]; then
+  if [[ -n $DEV ]]; then
+    CLUSTER=argus
+    NAMESPACE=$(whoami)
+  else
+    CLUSTER=k8s-$BEAMLINE
+    NAMESPACE=$BEAMLINE-beamline
+  fi
+  
+  module load $CLUSTER
+  kubectl config set-context --current --namespace=$NAMESPACE
+fi
 
 ensure_version_py() {
   # We require the _version.py to be created, this needs a minimal virtual environment
@@ -80,6 +136,13 @@ if [[ -z $APP_VERSION ]]; then
   APP_VERSION=$(app_version)
 fi
 
+echo "Checked out version that will be bind-mounted in $PROJECTDIR is $CHECKED_OUT_VERSION"
+echo "Container image version that will be pulled is $APP_VERSION" 
+
+if [[ $APP_VERSION != $CHECKED_OUT_VERSION ]]; then
+  echo "WARNING: Checked out version and container image versions differ!"
+fi
+
 if [[ -n $DEV ]]; then
   GID=`id -g`
   SUPPLEMENTAL_GIDS=37904
@@ -93,12 +156,14 @@ hyperion.externalHostname=test-hyperion.diamond.ac.uk "
   mkdir -p $PROJECTDIR/tmp
   DEPLOYMENT_DIR=$PROJECTDIR
 else
-  DEPLOYMENT_DIR=/dls_sw/i03/software/bluesky/hyperion_v${APP_VERSION}/hyperion
+  DEPLOYMENT_DIR=/dls_sw/i03/software/bluesky/mx_bluesky_v${APP_VERSION}/hyperion
 fi
 
 HELM_OPTIONS+="--set hyperion.appVersion=$APP_VERSION,\
 hyperion.projectDir=$DEPLOYMENT_DIR,\
 dodal.projectDir=$DEPLOYMENT_DIR/../dodal " 
+
+module load helm
 
 helm package $PROJECTDIR/helmchart --app-version $APP_VERSION
 # Helm package generates a file suffixed with the chart version

@@ -59,7 +59,7 @@ if [[ $BUILD == 1 ]]; then
 fi
 
 if [[ $PUSH == 1 ]]; then
-  NAMESPACE=`podman login --get-login ghcr.io`
+  NAMESPACE=$(podman login --get-login ghcr.io | tr '[:upper:]' '[:lower:]')
   if [[ $? != 0 ]]; then
     echo "Not logged in to ghcr.io"
     exit 1

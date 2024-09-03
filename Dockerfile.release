@@ -24,6 +24,9 @@ pip install --no-cache-dir --no-compile --no-deps -e ../dodal
 # Everything above this line should be in the image cache unless pyproject.toml changes
 #
 ADD .git /app/hyperion/.git
+# Restore the repository at the current commit instead of copying, to exclude uncommitted changes
+# This is so that if you build a developer image from this dockerfile then _version.py will not
+# append the dirty workdir hash, which causes complications during deployments that mount from a clean folder.
 RUN git restore .
 
 # Regenerate _version.py with the correct version - this should run quickly since we already have our dependencies
