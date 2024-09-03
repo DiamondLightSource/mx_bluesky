@@ -69,30 +69,42 @@ if [[ -z $RELEASE ]]; then
   exit 1
 fi
 
+HELM_OPTIONS=""
+PROJECTDIR=$(readlink -e $(dirname $0)/../..)
+HELMCHART_DIR=${PROJECTDIR}/helmchart
+
 if [[ -n $DEV ]]; then
   if [[ -n $CHECKOUT ]]; then
     echo "Cannot specify both --dev and --checkout-to-prod"
     exit 1
   fi
+  CHECKED_OUT_VERSION=$(git describe --tag)
+else
+  if [[ -z ${VIRTUAL_ENV#${PROJECTDIR}} ]]; then
+    echo "Virtual env not activated, activating"
+    . $PROJECTDIR/.venv/bin/activate
+  fi
+  
   # First extract the version and location that will be deployed
   DEPLOY_HYPERION="python $PROJECTDIR/utility_scripts/deploy/deploy_hyperion.py"
-  HYPERION_BASE=$($DEPLOY_HYPERION --print-release-dir)
+  HYPERION_BASE=$($DEPLOY_HYPERION --print-release-dir $BEAMLINE)
   
-  echo "Running deploy_hyperion.py to deploy to production folder..."
-  $DEPLOY_HYPERION --kubernetes $BEAMLINE || (echo "Deployment failed, aborting."; exit 1)
+  if [[ -n $CHECKOUT ]]; then
+    echo "Running deploy_hyperion.py to deploy to production folder..."
+    $DEPLOY_HYPERION --kubernetes $BEAMLINE
+    if [[ $? != 0 ]]; then
+      echo "Deployment failed, aborting."
+      exit 1
+    fi
+  fi
   
   NEW_PROJECTDIR=$HYPERION_BASE/hyperion
   echo "Changing directory to $NEW_PROJECTDIR..."
   cd $NEW_PROJECTDIR
   PROJECTDIR=$NEW_PROJECTDIR
   HYPERION_BASENAME=$(basename $HYPERION_BASE)
-  CHECKED_OUT_VERSION=${HYPERION_BASENAME#hyperion_v}
-else
-  CHECKED_OUT_VERSION=$(git describe --tag)
+  CHECKED_OUT_VERSION=${HYPERION_BASENAME#mx_bluesky_v}
 fi
-
-HELM_OPTIONS=""
-PROJECTDIR=$(readlink -e $(dirname $0)/../..)
 
 
 if [[ $LOGIN = true ]]; then
@@ -103,9 +115,6 @@ if [[ $LOGIN = true ]]; then
     CLUSTER=k8s-$BEAMLINE
     NAMESPACE=$BEAMLINE-beamline
   fi
-  
-  module load $CLUSTER
-  kubectl config set-context --current --namespace=$NAMESPACE
 fi
 
 ensure_version_py() {
@@ -165,6 +174,8 @@ dodal.projectDir=$DEPLOYMENT_DIR/../dodal "
 
 module load helm
 
-helm package $PROJECTDIR/helmchart --app-version $APP_VERSION
+helm package $HELMCHART_DIR --app-version $APP_VERSION
 # Helm package generates a file suffixed with the chart version
+module load $CLUSTER
+kubectl config set-context --current --namespace=$NAMESPACE
 helm upgrade --install $HELM_OPTIONS $RELEASE hyperion-0.0.1.tgz
