@@ -122,6 +122,7 @@ class BaseISPyBCallback(PlanReactiveCallback):
 
     def _handle_ispyb_transmission_flux_read(self, doc) -> Sequence[ScanDataInfo]:
         assert self.params
+        aperture = doc["data"]["aperture_scatterguard-selected_aperture"]
         aperture_radius = doc["data"]["aperture_scatterguard-radius"]
         beamsize = beam_size_from_aperture(aperture_radius)
         beamsize_x_mm = beamsize.x_um / 1000 if beamsize.x_um else None
@@ -150,7 +151,7 @@ class BaseISPyBCallback(PlanReactiveCallback):
             hwscan_data_collection_info, None, self.params
         )
         ISPYB_LOGGER.info("Updating ispyb data collection after flux read.")
-        self.append_to_comment(f"Aperture radius: {aperture_radius}. ")
+        self.append_to_comment(f"Aperture: {aperture}. ")
         return scan_data_infos
 
     @abstractmethod

@@ -49,9 +49,9 @@ def move_aperture_if_required(
 ):
     if not aperture_value:
         previous_aperture_position = yield from bps.rd(aperture_scatterguard)
-        assert isinstance(previous_aperture_position, dict)
+        assert isinstance(previous_aperture_position, ApertureValue)
         LOGGER.info(
-            f"Using previously set aperture position {previous_aperture_position['name']}"
+            f"Using previously set aperture position {previous_aperture_position}"
         )
 
     else:

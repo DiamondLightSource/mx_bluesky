@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from bluesky.utils import Msg
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.fast_grid_scan import ZebraFastGridScan
 from dodal.devices.oav.oav_detector import OAVConfigParams
 from dodal.devices.synchrotron import SynchrotronMode
@@ -48,7 +49,8 @@ BASIC_PRE_SETUP_DOC = {
 }
 
 BASIC_POST_SETUP_DOC = {
-    "aperture_scatterguard-radius": None,
+    "aperture_scatterguard-selected_aperture": ApertureValue.LARGE,
+    "aperture_scatterguard-radius": 100,
     "aperture_scatterguard-aperture-x": 15,
     "aperture_scatterguard-aperture-y": 16,
     "aperture_scatterguard-aperture-z": 12,
