@@ -76,6 +76,7 @@ async def oav_forwarder(RE: RunEngine) -> OAVToRedisForwarder:
             "prefix", "host", "password", name="oav_to_redis_forwarder"
         )
 
+    # Replace when https://github.com/bluesky/ophyd-async/issues/521 is released
     @AsyncStatus.wrap
     async def completed_status():
         pass
