@@ -5,6 +5,24 @@ START=0
 UP=0
 IN_DEV=false
 
+show_help() {
+    echo "$(basename $0) [options...]"
+cat <<END
+Script for the convenience of running a container image locally using podman-compose.
+
+  --dev                   Start a dev container bound against source folders that launches into a bash shell
+  -b, --beamline=BEAMLINE Overrides the BEAMLINE environment variable with the given beamline
+ 
+Operations
+  --stop                  Used to stop a currently running instance of Hyperion. Will override any other operations
+                          options
+  --start                 Specify that the script should start the server
+  --up                    Create the container for the service but do not start
+  --restart               Specify that the script should stop and then start the server.
+END
+    exit 0  
+}
+
 for option in "$@"; do
     case $option in
         -b=*|--beamline=*)
@@ -33,21 +51,7 @@ for option in "$@"; do
             ;;
 
         --help|--info|--h)
-            echo "$(basename $0) [options...]"
-cat <<END
-Script for the convenience of running a container image locally using podman-compose.
-
-  --dev                   Start a dev container bound against source folders that launches into a bash shell
-  -b, --beamline=BEAMLINE Overrides the BEAMLINE environment variable with the given beamline
- 
-Operations
-  --stop                  Used to stop a currently running instance of Hyperion. Will override any other operations
-                          options
-  --start                 Specify that the script should start the server
-  --up                    Create the container for the service but do not start
-  --restart               Specify that the script should stop and then start the server.
-END
-            exit 0
+            show_help
             ;;
         -*|--*)
             echo "Unknown option ${option}. Use --help for info on option usage."
@@ -55,6 +59,22 @@ END
             ;;
     esac
 done
+
+if [[ $START = 0 && $STOP = 0 && $UP = 0 ]]; then
+  echo "One of --start, --stop, --restart or --up must be specified"
+  show_help
+fi
+
+ensure_prerequisites() {
+      if [[ -z $VIRTUAL_ENV ]]; then
+        echo "Activating virtual environment"
+        . $RELATIVE_SCRIPT_DIR/.venv/bin/activate
+      fi
+      TYPE=$(type -t podman-compose)  
+      if [[ $TYPE != file ]]; then
+        pip install podman-compose
+      fi
+}
 
 kill_active_apps () {
     echo "Killing active instances of hyperion and hyperion-callbacks..."
@@ -90,6 +110,8 @@ else
   fi
   SERVICE=hyperion-dev
 fi
+
+ensure_prerequisites
 
 if [[ $LOGS == 1 ]]; then
   podman compose -f ${COMPOSE_YAML} logs ${SERVICE}
