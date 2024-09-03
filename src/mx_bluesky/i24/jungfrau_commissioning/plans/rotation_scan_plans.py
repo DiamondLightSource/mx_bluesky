@@ -269,7 +269,7 @@ def rotation_scan_plan(
 # @bpp.set_run_key_decorator("rotation_scan_main")
 # @bpp.run_decorator(md={"subplan_name": "rotation_scan_main"})
 # def rotation_scan_plan(
-#     params: RotationScanParameters,
+#     params: RotationScan,
 #     jungfrau: JungfrauM1,
 #     gonio: VGonio,
 #     zebra: Zebra,

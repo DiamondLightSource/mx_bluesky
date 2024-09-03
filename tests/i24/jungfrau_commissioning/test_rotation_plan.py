@@ -10,7 +10,7 @@ from mx_bluesky.i24.jungfrau_commissioning.plans.rotation_scan_plans import (
     move_to_start_w_buffer,
 )
 from mx_bluesky.i24.jungfrau_commissioning.plans.zebra_plans import arm_zebra
-from mx_bluesky.i24.jungfrau_commissioning.utils.params import RotationScanParameters
+from mx_bluesky.i24.jungfrau_commissioning.utils.params import RotationScan
 
 
 @patch(
@@ -19,7 +19,7 @@ from mx_bluesky.i24.jungfrau_commissioning.utils.params import RotationScanParam
 def test_rotation_scan_get_plan(
     nexus_callback: MagicMock, fake_create_devices_function
 ):
-    minimal_params = RotationScanParameters.from_file("example_params.json")
+    minimal_params = RotationScan.from_file("example_params.json")
     with patch(
         "jungfrau_commissioning.plans.rotation_scan_plans.create_rotation_scan_devices",
         fake_create_devices_function,
@@ -49,7 +49,7 @@ def test_cleanup_plan(bps_wait, fake_devices, RE: RunEngine):
 def test_move_to_start(
     nexus_callback: MagicMock, bps_wait: MagicMock, fake_devices, RE: RunEngine
 ):
-    params = RotationScanParameters.from_file("example_params.json")
+    params = RotationScan.from_file("example_params.json")
     gonio: VGonio = fake_devices["gonio"]
     RE(
         move_to_start_w_buffer(
@@ -75,7 +75,7 @@ def test_rotation_scan_do_plan(
     fake_create_devices_function,
     RE: RunEngine,
 ):
-    minimal_params = RotationScanParameters.from_file("example_params.json")
+    minimal_params = RotationScan.from_file("example_params.json")
     with patch(
         "jungfrau_commissioning.plans.rotation_scan_plans.create_rotation_scan_devices",
         fake_create_devices_function,

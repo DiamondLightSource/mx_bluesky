@@ -8,7 +8,7 @@ from dodal.devices.zebra import RotationDirection
 from mx_bluesky.i24.jungfrau_commissioning.plans.rotation_scan_plans import (
     get_rotation_scan_plan,
 )
-from mx_bluesky.i24.jungfrau_commissioning.utils.params import RotationScanParameters
+from mx_bluesky.i24.jungfrau_commissioning.utils.params import RotationScan
 
 
 @patch(
@@ -23,7 +23,7 @@ def test_rotation_scan_plan_nexus_callback(
     fake_create_devices_function,
     RE: RunEngine,
 ):
-    minimal_params = RotationScanParameters.from_file("example_params.json")
+    minimal_params = RotationScan.from_file("example_params.json")
     with patch(
         "jungfrau_commissioning.plans.rotation_scan_plans.create_rotation_scan_devices",
         fake_create_devices_function,
@@ -55,7 +55,7 @@ def test_rotation_scan_plan_nexus_callback_gets_readings(
     fake_create_devices_function,
     RE: RunEngine,
 ):
-    minimal_params = RotationScanParameters.from_file("example_params.json")
+    minimal_params = RotationScan.from_file("example_params.json")
     with patch(
         "jungfrau_commissioning.plans.rotation_scan_plans.create_rotation_scan_devices",
         fake_create_devices_function,
@@ -64,18 +64,16 @@ def test_rotation_scan_plan_nexus_callback_gets_readings(
 
     RE(plan)
     nexus_writer.assert_called_with(
-        RotationScanParameters(
-            rotation_axis="omega",
+        RotationScan(
             scan_width_deg=360.0,
-            image_width_deg=0.1,
+            rotation_increment_deg=0.1,
             omega_start_deg=0.0,
             exposure_time_s=0.001,
             acquire_time_s=0.001,
-            x=0,
-            y=0,
-            z=0,
+            x_start_um=0,
+            y_start_um=0,
+            z_start_um=0,
             rotation_direction=RotationDirection.POSITIVE,
-            offset_deg=1.0,
             shutter_opening_time_s=0.6,
             storage_directory="/tmp/jungfrau_data/",
             nexus_filename="scan",
@@ -94,7 +92,7 @@ def test_rotation_scan_plan_nexus_callback_writes_files(
     fake_create_devices_function,
     RE: RunEngine,
 ):
-    minimal_params = RotationScanParameters.from_file("example_params.json")
+    minimal_params = RotationScan.from_file("example_params.json")
     nexus_filename = str(
         Path(minimal_params.storage_directory)
         / (minimal_params.nexus_filename + ".nxs")
