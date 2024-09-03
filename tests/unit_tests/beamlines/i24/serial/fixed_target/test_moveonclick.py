@@ -1,5 +1,6 @@
 from unittest.mock import ANY, MagicMock, call, patch
 
+import bluesky.plan_stubs as bps
 import cv2 as cv
 import pytest
 from dodal.devices.i24.pmac import PMAC
@@ -49,7 +50,12 @@ def test_onMouse_gets_beam_position_and_sends_correct_str(
     pmac: PMAC,
     RE,
 ):
-    fake_zoom_calibrator.side_effect = [ZOOMCALIBRATOR]
+    # fake_zoom_calibrator.return_value = ZOOMCALIBRATOR
+    def fake_generator(value):
+        yield from bps.null()
+        return value
+
+    fake_zoom_calibrator.side_effect = [fake_generator(ZOOMCALIBRATOR)]
     fake_get_beam_pos.side_effect = [beam_position]
     fake_oav: OAV = MagicMock(spec=OAV)
     onMouse(cv.EVENT_LBUTTONUP, 0, 0, "", param=[RE, pmac, fake_oav])

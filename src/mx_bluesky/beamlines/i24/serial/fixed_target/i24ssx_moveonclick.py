@@ -30,9 +30,9 @@ def _get_beam_centre(oav: OAV):
     return oav.parameters.beam_centre_i, oav.parameters.beam_centre_j
 
 
-def _calculate_zoom_calibrator(oav: OAV, RE: RunEngine):
+def _calculate_zoom_calibrator(oav: OAV):
     """Set the scale for the zoom calibrator for the pmac moves."""
-    currentzoom = RE(bps.rd(oav.zoom_controller.percentage)).plan_result  # type: ignore
+    currentzoom = yield from bps.rd(oav.zoom_controller.percentage)
     zoomcalibrator = 1.547 - (0.03 * currentzoom) + (0.0001634 * currentzoom**2)
     return zoomcalibrator
 
@@ -51,7 +51,7 @@ def onMouse(event, x, y, flags, param):
         oav = param[2]
         beamX, beamY = _get_beam_centre(oav)
         logger.info(f"Clicked X and Y {x} {y}")
-        zoomcalibrator = _calculate_zoom_calibrator(oav, RE)
+        zoomcalibrator = RE(_calculate_zoom_calibrator(oav)).plan_result  # type: ignore
         xmove = -1 * (beamX - x) * zoomcalibrator
         ymove = -1 * (beamY - y) * zoomcalibrator
         logger.info(f"Moving X and Y {xmove} {ymove}")
@@ -68,7 +68,6 @@ def update_ui(oav, frame):
     cv.ellipse(
         frame, (beamX, beamY), (12, 8), 0.0, 0.0, 360, (0, 255, 255), thickness=2
     )
-    # putText(frame,'text',bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
     cv.putText(
         frame,
         "Key bindings",
