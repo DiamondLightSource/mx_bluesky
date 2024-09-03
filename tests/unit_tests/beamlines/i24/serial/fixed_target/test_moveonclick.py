@@ -8,11 +8,17 @@ from dodal.devices.oav.oav_detector import OAV
 from ophyd_async.core import get_mock_put
 
 from mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick import (
+    _calculate_zoom_calibrator,
     onMouse,
     update_ui,
 )
 
 ZOOMCALIBRATOR = 6
+
+
+def fake_generator(value):
+    yield from bps.null()
+    return value
 
 
 @pytest.mark.parametrize(
@@ -50,11 +56,6 @@ def test_onMouse_gets_beam_position_and_sends_correct_str(
     pmac: PMAC,
     RE,
 ):
-    # fake_zoom_calibrator.return_value = ZOOMCALIBRATOR
-    def fake_generator(value):
-        yield from bps.null()
-        return value
-
     fake_zoom_calibrator.side_effect = [fake_generator(ZOOMCALIBRATOR)]
     fake_get_beam_pos.side_effect = [beam_position]
     fake_oav: OAV = MagicMock(spec=OAV)
@@ -66,6 +67,20 @@ def test_onMouse_gets_beam_position_and_sends_correct_str(
             call(expected_ymove, wait=True, timeout=10),
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "zoom_percentage, expected_calibrator", [(1, 1.517), (20, 1.012), (50, 0.455)]
+)
+@patch("mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick.bps.rd")
+def test_calculate_zoom_calibrator(
+    fake_read: MagicMock, zoom_percentage: int, expected_calibrator: float, RE
+):
+    fake_read.side_effect = [fake_generator(zoom_percentage)]
+    fake_oav: OAV = MagicMock(spec=OAV)
+    res = RE(_calculate_zoom_calibrator(fake_oav)).plan_result  # type: ignore
+
+    assert res == pytest.approx(expected_calibrator, abs=1e-3)
 
 
 @patch("mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick.cv")
