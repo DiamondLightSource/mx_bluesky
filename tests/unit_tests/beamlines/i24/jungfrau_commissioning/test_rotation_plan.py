@@ -19,7 +19,7 @@ def test_rotation_scan_get_plan(
     nexus_callback: MagicMock, fake_create_devices_function
 ):
     minimal_params = RotationScan.from_file(
-        "tests/i24/jungfrau_commissioning/test_data/example_params.json"
+        "tests/unit_tests/beamlines/i24/jungfrau_commissioning/test_data/example_params.json"
     )
     with patch(
         "mx_bluesky.i24.jungfrau_commissioning.plans.rotation_scan_plans.create_rotation_scan_devices",
@@ -55,7 +55,7 @@ def test_rotation_scan_do_plan(
     RE: RunEngine,
 ):
     minimal_params = RotationScan.from_file(
-        "tests/i24/jungfrau_commissioning/test_data/example_params.json"
+        "tests/unit_tests/beamlines/i24/jungfrau_commissioning/test_data/example_params.json"
     )
     with patch(
         "mx_bluesky.i24.jungfrau_commissioning.plans.rotation_scan_plans.create_rotation_scan_devices",

@@ -24,7 +24,7 @@ def test_rotation_scan_plan_nexus_callback(
     RE: RunEngine,
 ):
     minimal_params = RotationScan.from_file(
-        "tests/i24/jungfrau_commissioning/test_data/example_params.json"
+        "tests/unit_tests/beamlines/i24/jungfrau_commissioning/test_data/example_params.json"
     )
     with patch(
         "mx_bluesky.i24.jungfrau_commissioning.plans.rotation_scan_plans.create_rotation_scan_devices",
@@ -58,7 +58,7 @@ def test_rotation_scan_plan_nexus_callback_gets_readings(
     RE: RunEngine,
 ):
     minimal_params = RotationScan.from_file(
-        "tests/i24/jungfrau_commissioning/test_data/example_params.json"
+        "tests/unit_tests/beamlines/i24/jungfrau_commissioning/test_data/example_params.json"
     )
     with patch(
         "mx_bluesky.i24.jungfrau_commissioning.plans.rotation_scan_plans.create_rotation_scan_devices",
@@ -97,7 +97,7 @@ def test_rotation_scan_plan_nexus_callback_writes_files(
     RE: RunEngine,
 ):
     minimal_params = RotationScan.from_file(
-        "tests/i24/jungfrau_commissioning/test_data/example_params.json"
+        "tests/unit_tests/beamlines/i24/jungfrau_commissioning/test_data/example_params.json"
     )
     nexus_filename = str(
         Path(minimal_params.storage_directory)
