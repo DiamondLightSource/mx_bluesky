@@ -49,11 +49,11 @@ BASIC_PRE_SETUP_DOC = {
 }
 
 BASIC_POST_SETUP_DOC = {
-    "aperture_scatterguard-selected_aperture": ApertureValue.LARGE,
-    "aperture_scatterguard-radius": 100,
+    "aperture_scatterguard-selected_aperture": ApertureValue.ROBOT_LOAD,
+    "aperture_scatterguard-radius": None,
     "aperture_scatterguard-aperture-x": 15,
     "aperture_scatterguard-aperture-y": 16,
-    "aperture_scatterguard-aperture-z": 12,
+    "aperture_scatterguard-aperture-z": 2,
     "aperture_scatterguard-scatterguard-x": 18,
     "aperture_scatterguard-scatterguard-y": 19,
     "attenuator-actual_transmission": 0,

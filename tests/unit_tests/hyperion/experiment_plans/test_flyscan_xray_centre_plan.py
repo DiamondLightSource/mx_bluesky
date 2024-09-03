@@ -235,12 +235,12 @@ class TestFlyscanXrayCentrePlan:
         xgap_test_value = 0.1234
         ygap_test_value = 0.2345
         ap_sg_test_value = AperturePosition(
-            aperture_x=0,
-            aperture_y=1,
+            aperture_x=10,
+            aperture_y=11,
             aperture_z=2,
-            scatterguard_x=3,
-            scatterguard_y=4,
-            radius=100,
+            scatterguard_x=13,
+            scatterguard_y=14,
+            radius=20,
         )
         fake_fgs_composite.s4_slit_gaps.xgap.user_readback.sim_put(xgap_test_value)  # type: ignore
         fake_fgs_composite.s4_slit_gaps.ygap.user_readback.sim_put(ygap_test_value)  # type: ignore
@@ -298,7 +298,7 @@ class TestFlyscanXrayCentrePlan:
             assert_event(
                 test_ispyb_callback.activity_gated_event.mock_calls[1],  # pyright: ignore
                 {
-                    "aperture_scatterguard-selected_aperture": ApertureValue.LARGE,
+                    "aperture_scatterguard-selected_aperture": ApertureValue.SMALL,
                     "aperture_scatterguard-aperture-x": ap_sg_test_value.aperture_x,
                     "aperture_scatterguard-aperture-y": ap_sg_test_value.aperture_y,
                     "aperture_scatterguard-aperture-z": ap_sg_test_value.aperture_z,
