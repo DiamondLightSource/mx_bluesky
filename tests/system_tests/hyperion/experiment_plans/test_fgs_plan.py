@@ -100,7 +100,7 @@ async def fxc_composite():
     composite.dcm.energy_in_kev.user_readback.sim_put(12.345)  # type: ignore
 
     large = composite.aperture_scatterguard._loaded_positions[AperturePosition.LARGE]
-    await composite.aperture_scatterguard._set_raw_unsafe(large.location)
+    await composite.aperture_scatterguard._set_raw_unsafe(large)
     composite.eiger.cam.manual_trigger.put("Yes")
     composite.eiger.odin.check_odin_initialised = lambda: (True, "")
     composite.eiger.stage = MagicMock(return_value=NullStatus())

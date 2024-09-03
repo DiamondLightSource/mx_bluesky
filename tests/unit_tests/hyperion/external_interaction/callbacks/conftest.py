@@ -92,7 +92,7 @@ class TestData(OavGridSnapshotTestEvents):
             "aperture_scatterguard-selected_aperture": {
                 "name": "Medium",
                 "GDA_name": "MEDIUM",
-                "radius_microns": 50,
+                "radius": 50,
                 "location": (15, 16, 2, 18, 19),
             },
             "attenuator-actual_transmission": 0.98,
@@ -183,7 +183,7 @@ class TestData(OavGridSnapshotTestEvents):
             "aperture_scatterguard-selected_aperture": {
                 "name": "Medium",
                 "GDA_name": "MEDIUM",
-                "radius_microns": 50,
+                "radius": 50,
                 "location": (15, 16, 2, 18, 19),
             },
             "attenuator-actual_transmission": 1,

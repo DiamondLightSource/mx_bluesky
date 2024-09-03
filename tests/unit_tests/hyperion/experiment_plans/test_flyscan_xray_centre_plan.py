@@ -237,7 +237,7 @@ class TestFlyscanXrayCentrePlan:
         ap_sg_test_value = {
             "name": "Small",
             "GDA_name": "SMALL_APERTURE",
-            "radius_microns": 20,
+            "radius": 20,
             "location": (10, 11, 2, 13, 14),
         }
         fake_fgs_composite.s4_slit_gaps.xgap.user_readback.sim_put(xgap_test_value)  # type: ignore
@@ -362,8 +362,8 @@ class TestFlyscanXrayCentrePlan:
         aperture_scatterguard = fgs_composite_with_panda_pcap.aperture_scatterguard
         large = aperture_scatterguard._loaded_positions[AperturePosition.LARGE]
         medium = aperture_scatterguard._loaded_positions[AperturePosition.MEDIUM]
-        ap_call_large = call(large.location)
-        ap_call_medium = call(medium.location)
+        ap_call_large = call(large)
+        ap_call_medium = call(medium)
 
         move_aperture.assert_has_calls(
             [ap_call_large, ap_call_large, ap_call_medium], any_order=True

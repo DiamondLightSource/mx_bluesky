@@ -51,7 +51,7 @@ BASIC_POST_SETUP_DOC = {
     "aperture_scatterguard-selected_aperture": {
         "name": "Robot_load",
         "GDA_name": "ROBOT_LOAD",
-        "radius_microns": None,
+        "radius": None,
         "location": (15, 16, 2, 18, 19),
     },
     "attenuator-actual_transmission": 0,
