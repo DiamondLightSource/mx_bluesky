@@ -51,7 +51,7 @@ To list all the available devices in the {col.CYAN}i24{col.ENDC} module you can 
 
 To run a basic default rotation scan, you can execute the following commands:
 
-    {col.BLUE}params = RotationScan.from_file("example_params.json"){col.ENDC}
+    {col.BLUE}params = RotationScan.from_file(tests/i24/jungfrau_commissioning/test_data/example_params.json){col.ENDC}
     {col.BLUE}plan = get_rotation_scan_plan(params, []){col.ENDC} # <- at this stage, \
 devices are initialised if they aren't already
     {col.BLUE}RE(plan){col.ENDC} # <- sends the plan to the RunEngine for execution

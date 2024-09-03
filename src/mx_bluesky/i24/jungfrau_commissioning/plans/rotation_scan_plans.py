@@ -372,7 +372,7 @@ def get_rotation_scan_plan(params: RotationScan):
     Args:
         params: dict obtained by reading a json file conforming to the pydantic \
             schema in ./src/jungfrau_commissioning/utils/params.py.
-            see "example_params.json" for an example."""
+            see tests/i24/jungfrau_commissioning/test_data/example_params.json for an example."""
     devices = create_rotation_scan_devices()
 
     params = deepcopy(
