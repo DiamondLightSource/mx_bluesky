@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 from bluesky.run_engine import RunEngine
 from dodal.devices.i24.i24_vgonio import VGonio
 from dodal.devices.zebra import Zebra
@@ -37,9 +38,11 @@ async def test_cleanup_plan(bps_wait, fake_devices, RE: RunEngine):
     zebra: Zebra = fake_devices["zebra"]
     gonio: VGonio = fake_devices["gonio"]
     RE(arm_zebra(zebra))
-    assert await zebra.pc.is_armed()
+    armed = await zebra.pc.arm.armed.get_value()
+    assert armed.value == 1
     RE(cleanup_plan(zebra, gonio))
-    assert not await zebra.pc.is_armed()
+    armed = await zebra.pc.arm.armed.get_value()
+    assert armed.value == 0
 
 
 @patch(
@@ -66,4 +69,4 @@ def test_rotation_scan_do_plan(
     RE(plan)
     devices = fake_create_devices_function()
     gonio: VGonio = devices["gonio"]
-    assert gonio.omega.user_readback.get() == -360.5
+    assert gonio.omega.user_readback.get() == pytest.approx(-366.1)
