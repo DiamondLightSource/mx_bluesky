@@ -5,7 +5,6 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from dodal.beamline_specific_utils.i03 import beam_size_from_aperture
-from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector.det_resolution import resolution
 from dodal.devices.synchrotron import SynchrotronMode
 
@@ -123,7 +122,7 @@ class BaseISPyBCallback(PlanReactiveCallback):
 
     def _handle_ispyb_transmission_flux_read(self, doc) -> Sequence[ScanDataInfo]:
         assert self.params
-        aperture_radius = ApertureValue(**doc["data"]["aperture_scatterguard-radius"])
+        aperture_radius = doc["data"]["aperture_scatterguard-radius"]
         beamsize = beam_size_from_aperture(aperture_radius)
         beamsize_x_mm = beamsize.x_um / 1000 if beamsize.x_um else None
         beamsize_y_mm = beamsize.y_um / 1000 if beamsize.y_um else None

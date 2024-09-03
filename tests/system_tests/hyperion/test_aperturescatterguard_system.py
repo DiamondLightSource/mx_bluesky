@@ -4,8 +4,8 @@ from dodal.common.beamlines.beamline_parameters import (
     GDABeamlineParameters,
 )
 from dodal.devices.aperturescatterguard import (
+    AperturePosition,
     ApertureScatterguard,
-    ApertureValue,
     load_positions_from_beamline_parameters,
 )
 from ophyd_async.core import DeviceCollector
@@ -19,7 +19,7 @@ def ap_sg():
             prefix="BL03S",
             name="ap_sg",
             loaded_positions=load_positions_from_beamline_parameters(params),
-            tolerances=ApertureValue.tolerances_from_gda_params(params),
+            tolerances=AperturePosition.tolerances_from_gda_params(params),
         )
     return ap_sg
 

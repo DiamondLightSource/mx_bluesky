@@ -48,12 +48,12 @@ BASIC_PRE_SETUP_DOC = {
 }
 
 BASIC_POST_SETUP_DOC = {
-    "aperture_scatterguard-selected_aperture": {
-        "name": "Robot_load",
-        "GDA_name": "ROBOT_LOAD",
-        "radius": None,
-        "location": (15, 16, 2, 18, 19),
-    },
+    "aperture_scatterguard-radius": None,
+    "aperture_scatterguard-aperture-x": 15,
+    "aperture_scatterguard-aperture-y": 16,
+    "aperture_scatterguard-aperture-z": 12,
+    "aperture_scatterguard-scatterguard-x": 18,
+    "aperture_scatterguard-scatterguard-y": 19,
     "attenuator-actual_transmission": 0,
     "flux_flux_reading": 10,
     "dcm-energy_in_kev": 11.105,

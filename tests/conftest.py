@@ -457,7 +457,7 @@ def thawer(RE) -> Generator[Thawer, Any, Any]:
 @pytest.fixture
 def aperture_scatterguard(RE):
     positions = {
-        AperturePosition.LARGE: ApertureValue(
+        ApertureValue.LARGE: AperturePosition(
             aperture_x=0,
             aperture_y=1,
             aperture_z=2,
@@ -465,7 +465,7 @@ def aperture_scatterguard(RE):
             scatterguard_y=4,
             radius=100,
         ),
-        AperturePosition.MEDIUM: ApertureValue(
+        ApertureValue.MEDIUM: AperturePosition(
             aperture_x=5,
             aperture_y=6,
             aperture_z=2,
@@ -473,15 +473,15 @@ def aperture_scatterguard(RE):
             scatterguard_y=9,
             radius=50,
         ),
-        AperturePosition.SMALL: ApertureValue(
+        ApertureValue.SMALL: AperturePosition(
             aperture_x=10,
             aperture_y=11,
-            aperture_z=12,
+            aperture_z=2,
             scatterguard_x=13,
             scatterguard_y=14,
             radius=20,
         ),
-        AperturePosition.ROBOT_LOAD: ApertureValue(
+        ApertureValue.ROBOT_LOAD: AperturePosition(
             aperture_x=15,
             aperture_y=16,
             aperture_z=2,
@@ -496,8 +496,8 @@ def aperture_scatterguard(RE):
             return_value=positions,
         ),
         patch(
-            "dodal.beamlines.i03.ApertureValue.tolerances_from_gda_params",
-            return_value=ApertureValue(
+            "dodal.beamlines.i03.AperturePosition.tolerances_from_gda_params",
+            return_value=AperturePosition(
                 aperture_x=0.1,
                 aperture_y=0.1,
                 aperture_z=0.1,
@@ -514,7 +514,7 @@ def aperture_scatterguard(RE):
         patch_async_motor(ap_sg.scatterguard.x),
         patch_async_motor(ap_sg.scatterguard.y),
     ):
-        RE(bps.abs_set(ap_sg, AperturePosition.SMALL))
+        RE(bps.abs_set(ap_sg, ApertureValue.SMALL))
 
         set_mock_value(ap_sg.aperture.small, 1)
         yield ap_sg
