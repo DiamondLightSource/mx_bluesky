@@ -3,15 +3,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 from bluesky.callbacks import CallbackBase
-from hyperion.external_interaction.nexus.write_nexus import NexusWriter
 from nexgen.nxs_utils import Attenuator, Axis, Beam, Detector, Goniometer, Source
 from nexgen.nxs_utils.detector import JungfrauDetector
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
 
+from mx_bluesky.hyperion.external_interaction.nexus.write_nexus import NexusWriter
 from mx_bluesky.i24.jungfrau_commissioning.utils.log import LOGGER
 from mx_bluesky.i24.jungfrau_commissioning.utils.params import RotationScan
+
+NEXUS_BIT_DEPTH = np.int64
 
 
 def create_detector_parameters(params: RotationScan) -> Detector:
@@ -90,18 +93,6 @@ class JFRotationNexusWriter(NexusWriter):
         transmission: float,
     ) -> None:
         self.detector = create_detector_parameters(parameters)
-        self.beam, self.attenuator = (
-            Beam(wavelength, flux),
-            Attenuator(transmission),
-        )
-        self.source = Source("I24")
-        self.directory = Path(parameters.storage_directory)
-        self.filename = parameters.nexus_filename
-        self.start_index = 0
-        self.full_num_of_images = parameters.num_images
-        self.nexus_file = self.directory / f"{parameters.nexus_filename}.nxs"
-        self.master_file = self.directory / f"{parameters.nexus_filename}_master.h5"
-
         scan_spec = Line(
             axis="omega",
             start=parameters.omega_start_deg,
@@ -109,7 +100,22 @@ class JFRotationNexusWriter(NexusWriter):
             num=parameters.num_images,
         )
         scan_path = ScanPath(scan_spec.calculate())
-        self.scan_points: dict = scan_path.consume().midpoints
+        super().__init__(
+            parameters, self._get_data_shape_for_vds(), scan_path.consume().midpoints
+        )
+
+        self.beam, self.attenuator = (
+            Beam(wavelength, flux),
+            Attenuator(transmission),
+        )
+        self.source = Source("I24")
+        self.directory = Path(parameters.storage_directory)
+        # self.filename = parameters.nexus_filename
+        # self.start_index = 0
+        # self.full_num_of_images = parameters.num_images
+        # self.nexus_file = self.directory / f"{parameters.nexus_filename}.nxs"
+        # self.master_file = self.directory / f"{parameters.nexus_filename}_master.h5"
+
         self.goniometer = create_I24_VGonio_axes(parameters, self.scan_points)
 
     def _get_data_shape_for_vds(self) -> tuple[int, ...]:
@@ -135,7 +141,7 @@ class NexusFileHandlerCallback(CallbackBase):
 
     nexus_writer: JFRotationNexusWriter
     descriptors: dict[str, dict] = {}
-    parameters: RotationScanParameters
+    parameters: RotationScan
     wavelength: float | None = None
     flux: float | None = None
     transmission: float | None = None
@@ -147,7 +153,7 @@ class NexusFileHandlerCallback(CallbackBase):
             )
             json_params = doc.get("rotation_scan_params")
             assert json_params is not None
-            self.parameters = RotationScanParameters(**json.loads(json_params))
+            self.parameters = RotationScan(**json.loads(json_params))
             self.run_start_uid = doc.get("uid")
 
     def descriptor(self, doc: dict):
@@ -161,11 +167,11 @@ class NexusFileHandlerCallback(CallbackBase):
             assert self.parameters is not None
             data: dict | None = doc.get("data")
             assert data is not None
-            self.parameters.x = data.get("vgonio_x")
-            self.parameters.y = data.get("vgonio_yh")
-            self.parameters.z = data.get("vgonio_z")
+            self.parameters.x_start_um = data.get("vgonio_x")
+            self.parameters.y_start_um = data.get("vgonio_yh")
+            self.parameters.z_start_um = data.get("vgonio_z")
             LOGGER.info(
-                f"Nexus handler received x, y, z: {self.parameters.x ,self.parameters.y ,self.parameters.z}."  # noqa
+                f"Nexus handler received x, y, z: {self.parameters.x_start_um ,self.parameters.y_start_um ,self.parameters.z_start_um}."  # noqa
             )
         if event_descriptor.get("name") == "beam params":
             assert self.parameters is not None
@@ -183,9 +189,9 @@ class NexusFileHandlerCallback(CallbackBase):
             self.run_start_uid is not None
             and doc.get("run_start") == self.run_start_uid
         ):
-            assert self.parameters.x is not None
-            assert self.parameters.y is not None
-            assert self.parameters.z is not None
+            assert self.parameters.x_start_um is not None
+            assert self.parameters.y_start_um is not None
+            assert self.parameters.z_start_um is not None
             assert self.transmission is not None
             assert self.flux is not None
             assert self.wavelength is not None
@@ -193,4 +199,4 @@ class NexusFileHandlerCallback(CallbackBase):
             nexus_writer = JFRotationNexusWriter(
                 self.parameters, self.wavelength, self.flux, self.transmission
             )
-            nexus_writer.create_nexus_file()
+            nexus_writer.create_nexus_file(NEXUS_BIT_DEPTH)

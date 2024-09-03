@@ -2,14 +2,16 @@ import json
 from typing import Any
 
 from dodal.devices.zebra import RotationDirection
-from pydantic import BaseModel, validator
+from pydantic import validator
+
+from mx_bluesky.hyperion.parameters.components import OptionalXyzStarts
 
 DIRECTION = RotationDirection.NEGATIVE
 SHUTTER_OPENING_TIME = 0.5
 ACCELERATION_MARGIN = 0.1
 
 
-class RotationScan(BaseModel):
+class RotationScan(OptionalXyzStarts):
     rotation_direction: RotationDirection = DIRECTION
     shutter_opening_time_s: float = SHUTTER_OPENING_TIME
     scan_width_deg: float = 360.0
