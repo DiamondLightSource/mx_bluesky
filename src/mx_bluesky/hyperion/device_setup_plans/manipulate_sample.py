@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import bluesky.plan_stubs as bps
 from dodal.devices.aperturescatterguard import (
-    AperturePositionGDANames,
     ApertureScatterguard,
+    ApertureValue,
 )
 from dodal.devices.attenuator import Attenuator
 from dodal.devices.backlight import Backlight, BacklightPosition
@@ -26,38 +26,39 @@ def begin_sample_environment_setup(
 
 def setup_sample_environment(
     aperture_scatterguard: ApertureScatterguard,
-    aperture_position_gda_name: AperturePositionGDANames | None,
+    aperture_position_gda_name: str | None,
     backlight: Backlight,
     group="setup_senv",
 ):
     """Move the aperture into required position, move out the backlight."""
-
+    aperture_value = (
+        None
+        if not aperture_position_gda_name
+        else ApertureValue(aperture_position_gda_name)
+    )
     yield from move_aperture_if_required(
-        aperture_scatterguard, aperture_position_gda_name, group=group
+        aperture_scatterguard, aperture_value, group=group
     )
     yield from bps.abs_set(backlight, BacklightPosition.OUT, group=group)
 
 
 def move_aperture_if_required(
     aperture_scatterguard: ApertureScatterguard,
-    aperture_position_gda_name: AperturePositionGDANames | None,
+    aperture_value: ApertureValue | None,
     group="move_aperture",
 ):
-    if not aperture_position_gda_name:
+    if not aperture_value:
         previous_aperture_position = yield from bps.rd(aperture_scatterguard)
-        assert isinstance(previous_aperture_position, dict)
+        assert isinstance(previous_aperture_position, ApertureValue)
         LOGGER.info(
-            f"Using previously set aperture position {previous_aperture_position['name']}"
+            f"Using previously set aperture position {previous_aperture_position}"
         )
 
     else:
-        aperture_position = aperture_scatterguard.get_position_from_gda_aperture_name(
-            aperture_position_gda_name
-        )
-        LOGGER.info(f"Setting aperture position to {aperture_position}")
+        LOGGER.info(f"Setting aperture position to {aperture_value}")
         yield from bps.abs_set(
             aperture_scatterguard,
-            aperture_position,
+            aperture_value,
             group=group,
         )
 

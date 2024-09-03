@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from dodal.devices.aperturescatterguard import AperturePositionGDANames
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import (
     DetectorDistanceToBeamXYConverter,
     DetectorParams,
@@ -41,9 +41,7 @@ class GridCommon(
     ispyb_experiment_type: IspybExperimentType = Field(
         default=IspybExperimentType.GRIDSCAN_3D
     )
-    selected_aperture: AperturePositionGDANames | None = Field(
-        default=AperturePositionGDANames.SMALL_APERTURE
-    )
+    selected_aperture: ApertureValue | None = Field(default=ApertureValue.SMALL)
 
     @property
     def detector_params(self):

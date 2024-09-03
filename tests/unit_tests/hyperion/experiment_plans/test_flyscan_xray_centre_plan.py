@@ -12,7 +12,7 @@ from bluesky.simulators import assert_message_and_return_remaining
 from bluesky.utils import FailedStatus, Msg
 from dodal.beamlines import i03
 from dodal.common.beamlines.beamline_utils import clear_device
-from dodal.devices.aperturescatterguard import AperturePosition
+from dodal.devices.aperturescatterguard import AperturePosition, ApertureValue
 from dodal.devices.detector.det_dim_constants import (
     EIGER_TYPE_EIGER2_X_16M,
 )
@@ -234,12 +234,14 @@ class TestFlyscanXrayCentrePlan:
 
         xgap_test_value = 0.1234
         ygap_test_value = 0.2345
-        ap_sg_test_value = {
-            "name": "Small",
-            "GDA_name": "SMALL_APERTURE",
-            "radius_microns": 20,
-            "location": (10, 11, 2, 13, 14),
-        }
+        ap_sg_test_value = AperturePosition(
+            aperture_x=10,
+            aperture_y=11,
+            aperture_z=2,
+            scatterguard_x=13,
+            scatterguard_y=14,
+            radius=20,
+        )
         fake_fgs_composite.s4_slit_gaps.xgap.user_readback.sim_put(xgap_test_value)  # type: ignore
         fake_fgs_composite.s4_slit_gaps.ygap.user_readback.sim_put(ygap_test_value)  # type: ignore
         flux_test_value = 10.0
@@ -248,7 +250,7 @@ class TestFlyscanXrayCentrePlan:
         RE(
             bps.abs_set(
                 fake_fgs_composite.aperture_scatterguard,
-                AperturePosition.LARGE,
+                ApertureValue.SMALL,
             )
         )
 
@@ -296,7 +298,13 @@ class TestFlyscanXrayCentrePlan:
             assert_event(
                 test_ispyb_callback.activity_gated_event.mock_calls[1],  # pyright: ignore
                 {
-                    'aperture_scatterguard-selected_aperture': ap_sg_test_value,
+                    "aperture_scatterguard-selected_aperture": ApertureValue.SMALL,
+                    "aperture_scatterguard-aperture-x": ap_sg_test_value.aperture_x,
+                    "aperture_scatterguard-aperture-y": ap_sg_test_value.aperture_y,
+                    "aperture_scatterguard-aperture-z": ap_sg_test_value.aperture_z,
+                    "aperture_scatterguard-scatterguard-x": ap_sg_test_value.scatterguard_x,
+                    "aperture_scatterguard-scatterguard-y": ap_sg_test_value.scatterguard_y,
+                    "aperture_scatterguard-radius": ap_sg_test_value.radius,
                     "attenuator-actual_transmission": transmission_test_value,
                     "flux_flux_reading": flux_test_value,
                     "dcm-energy_in_kev": current_energy_kev_test_value,
@@ -360,10 +368,10 @@ class TestFlyscanXrayCentrePlan:
         )
 
         aperture_scatterguard = fgs_composite_with_panda_pcap.aperture_scatterguard
-        large = aperture_scatterguard._loaded_positions[AperturePosition.LARGE]
-        medium = aperture_scatterguard._loaded_positions[AperturePosition.MEDIUM]
-        ap_call_large = call(large.location)
-        ap_call_medium = call(medium.location)
+        large = aperture_scatterguard._loaded_positions[ApertureValue.LARGE]
+        medium = aperture_scatterguard._loaded_positions[ApertureValue.MEDIUM]
+        ap_call_large = call(large, ApertureValue.LARGE)
+        ap_call_medium = call(medium, ApertureValue.MEDIUM)
 
         move_aperture.assert_has_calls(
             [ap_call_large, ap_call_large, ap_call_medium], any_order=True

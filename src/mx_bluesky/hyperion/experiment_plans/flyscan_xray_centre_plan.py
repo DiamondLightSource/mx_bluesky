@@ -12,8 +12,8 @@ import bluesky.preprocessors as bpp
 import numpy as np
 from blueapi.core import BlueskyContext, MsgGenerator
 from dodal.devices.aperturescatterguard import (
-    AperturePosition,
     ApertureScatterguard,
+    ApertureValue,
 )
 from dodal.devices.attenuator import Attenuator
 from dodal.devices.backlight import Backlight
@@ -366,9 +366,8 @@ def set_aperture_for_bbox_size(
 ):
     # bbox_size is [x,y,z], for i03 we only care about x
     new_selected_aperture = (
-        AperturePosition.MEDIUM if bbox_size[0] < 2 else AperturePosition.LARGE
+        ApertureValue.MEDIUM if bbox_size[0] < 2 else ApertureValue.LARGE
     )
-    gda_name = aperture_device.get_gda_name_for_position(new_selected_aperture)
     LOGGER.info(
         f"Setting aperture to {new_selected_aperture} based on bounding box size {bbox_size}."
     )
@@ -377,7 +376,7 @@ def set_aperture_for_bbox_size(
     @bpp.run_decorator(
         md={
             "subplan_name": "change_aperture",
-            "aperture_size": gda_name,
+            "aperture_size": new_selected_aperture.value,
         }
     )
     def set_aperture():
