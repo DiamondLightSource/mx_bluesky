@@ -19,9 +19,6 @@ from scanspec.core import AxesPoints
 from semver import Version
 
 from mx_bluesky.hyperion.external_interaction.config_server import FeatureFlags
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import (
-    IspybParams,
-)
 from mx_bluesky.hyperion.parameters.constants import CONST
 
 T = TypeVar("T")
@@ -197,11 +194,6 @@ class DiffractionExperiment(HyperionParameters, WithSnapshot):
     @property
     @abstractmethod
     def detector_params(self) -> DetectorParams: ...
-
-    @property
-    @abstractmethod
-    def ispyb_params(self) -> IspybParams:  # Soon to remove
-        ...
 
 
 class WithScan(BaseModel):

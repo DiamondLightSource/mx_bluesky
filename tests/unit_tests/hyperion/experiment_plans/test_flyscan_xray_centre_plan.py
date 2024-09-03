@@ -673,8 +673,13 @@ class TestFlyscanXrayCentrePlan:
         "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.move_x_y_z",
         autospec=True,
     )
+    @patch(
+        "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.check_topup_and_wait_if_necessary",
+        autospec=True,
+    )
     def test_GIVEN_no_results_from_zocalo_WHEN_communicator_wait_for_results_called_THEN_fallback_centre_used(
         self,
+        mock_topup,
         move_xyz: MagicMock,
         mock_mv: MagicMock,
         mock_kickoff: MagicMock,
@@ -869,8 +874,13 @@ class TestFlyscanXrayCentrePlan:
         autospec=True,
         spec_set=True,
     )
+    @patch(
+        "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.check_topup_and_wait_if_necessary",
+        autospec=True,
+    )
     def test_when_grid_scan_ran_then_eiger_disarmed_before_zocalo_end(
         self,
+        mock_check_topup,
         nexuswriter,
         wait_for_valid,
         mock_mv,
@@ -985,8 +995,13 @@ class TestFlyscanXrayCentrePlan:
         "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.bps.kickoff",
         autospec=True,
     )
+    @patch(
+        "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.check_topup_and_wait_if_necessary",
+        autospec=True,
+    )
     def test_fgs_arms_eiger_without_grid_detect(
         self,
+        mock_topup,
         mock_kickoff,
         mock_complete,
         mock_wait,
@@ -1019,8 +1034,13 @@ class TestFlyscanXrayCentrePlan:
         "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.bps.complete",
         autospec=True,
     )
+    @patch(
+        "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.check_topup_and_wait_if_necessary",
+        autospec=True,
+    )
     def test_when_grid_scan_fails_then_detector_disarmed_and_correct_exception_returned(
         self,
+        mock_topup,
         mock_complete,
         mock_wait,
         mock_kickoff,
@@ -1072,8 +1092,13 @@ class TestFlyscanXrayCentrePlan:
         "mx_bluesky.hyperion.external_interaction.callbacks.zocalo_callback.ZocaloTrigger",
         autospec=True,
     )
+    @patch(
+        "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.check_topup_and_wait_if_necessary",
+        autospec=True,
+    )
     def test_kickoff_and_complete_gridscan_triggers_zocalo(
         self,
+        mock_topup,
         mock_zocalo_trigger_class: MagicMock,
         mock_complete: MagicMock,
         mock_kickoff: MagicMock,
