@@ -20,7 +20,7 @@ from dodal.devices.smargon import Smargon
 from dodal.devices.synchrotron import Synchrotron
 from dodal.devices.undulator import Undulator
 from dodal.devices.zebra import RotationDirection, Zebra
-from dodal.devices.zebra_controlled_shutter import ZebraShutter, ZebraShutterControl
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.plans.check_topup import check_topup_and_wait_if_necessary
 
 from mx_bluesky.hyperion.device_setup_plans.manipulate_sample import (
@@ -37,8 +37,8 @@ from mx_bluesky.hyperion.device_setup_plans.read_hardware_for_setup import (
 )
 from mx_bluesky.hyperion.device_setup_plans.setup_zebra import (
     arm_zebra,
-    disarm_zebra,
     setup_zebra_for_rotation,
+    tidy_up_zebra_after_rotation_scan,
 )
 from mx_bluesky.hyperion.device_setup_plans.utils import (
     start_preparing_data_collection_then_do_plan,
@@ -218,12 +218,9 @@ def rotation_scan_plan(
             group=CONST.WAIT.ROTATION_READY_FOR_DC,
         )
 
-        yield from bps.abs_set(
-            composite.sample_shutter.control_mode, ZebraShutterControl.AUTO
-        )
-
         yield from setup_zebra_for_rotation(
             composite.zebra,
+            composite.sample_shutter,
             start_angle=motion_values.start_scan_deg,
             scan_width=motion_values.scan_width_deg,
             direction=motion_values.direction,
@@ -289,12 +286,10 @@ def _cleanup_plan(composite: RotationScanComposite, **kwargs):
     max_vel = yield from bps.rd(composite.smargon.omega.max_velocity)
     yield from cleanup_sample_environment(composite.detector_motion, group="cleanup")
     yield from bps.abs_set(composite.smargon.omega.velocity, max_vel, group="cleanup")
-    yield from bps.abs_set(
-        composite.sample_shutter.control_mode,
-        ZebraShutterControl.MANUAL,
-        group="cleanup",
+    yield from tidy_up_zebra_after_rotation_scan(
+        composite.zebra, composite.sample_shutter, group="cleanup", wait=False
     )
-    yield from bpp.finalize_wrapper(disarm_zebra(composite.zebra), bps.wait("cleanup"))
+    yield from bps.wait("cleanup")
 
 
 def _move_and_rotation(

@@ -35,7 +35,7 @@ from dodal.devices.synchrotron import Synchrotron
 from dodal.devices.undulator import Undulator
 from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import Zebra
-from dodal.devices.zebra_controlled_shutter import ZebraShutter, ZebraShutterControl
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.devices.zocalo.zocalo_results import (
     ZOCALO_READING_PLAN_NAME,
     ZOCALO_STAGE_GROUP,
@@ -275,13 +275,6 @@ def run_gridscan(
     LOGGER.info("Waiting for gridscan validity check")
     yield from wait_for_gridscan_valid(feature_controlled.fgs_motors)
 
-    LOGGER.info("Set shutter to auto")
-    yield from bps.abs_set(
-        fgs_composite.sample_shutter.control_mode,
-        ZebraShutterControl.AUTO,
-        group=CONST.WAIT.GRID_READY_FOR_DC,
-    )
-
     LOGGER.info("Waiting for arming to finish")
     yield from bps.wait(CONST.WAIT.GRID_READY_FOR_DC)
     yield from bps.stage(fgs_composite.eiger)
@@ -446,10 +439,9 @@ def _get_feature_controlled(
 def _generic_tidy(
     fgs_composite: FlyScanXRayCentreComposite, group, wait=True
 ) -> MsgGenerator:
-    LOGGER.info("Tidying up Zebra and shutter")
-    yield from tidy_up_zebra_after_gridscan(fgs_composite.zebra, group=group, wait=wait)
-    yield from bps.abs_set(
-        fgs_composite.sample_shutter.control_mode, ZebraShutterControl.MANUAL
+    LOGGER.info("Tidying up Zebra")
+    yield from tidy_up_zebra_after_gridscan(
+        fgs_composite.zebra, fgs_composite.sample_shutter, group=group, wait=wait
     )
     LOGGER.info("Tidying up Zocalo")
     # make sure we don't consume any other results
@@ -470,7 +462,9 @@ def _zebra_triggering_setup(
     parameters: ThreeDGridScan,
     initial_xyz: np.ndarray,
 ):
-    yield from setup_zebra_for_gridscan(fgs_composite.zebra, wait=True)
+    yield from setup_zebra_for_gridscan(
+        fgs_composite.zebra, fgs_composite.sample_shutter, wait=True
+    )
 
 
 def _panda_triggering_setup(
@@ -528,4 +522,6 @@ def _panda_triggering_setup(
     )
 
     LOGGER.info("Setting up Zebra for panda flyscan")
-    yield from setup_zebra_for_panda_flyscan(fgs_composite.zebra, wait=True)
+    yield from setup_zebra_for_panda_flyscan(
+        fgs_composite.zebra, fgs_composite.sample_shutter, wait=True
+    )
