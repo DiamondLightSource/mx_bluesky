@@ -217,7 +217,7 @@ def rotation_scan_plan(
         )
 
         yield from bps.abs_set(
-            composite.sample_shutter.control, ZebraShutterControl.AUTO
+            composite.sample_shutter.control_mode, ZebraShutterControl.AUTO
         )
 
         yield from setup_zebra_for_rotation(
@@ -289,7 +289,7 @@ def _cleanup_plan(composite: RotationScanComposite, **kwargs):
     yield from cleanup_sample_environment(composite.detector_motion, group="cleanup")
     yield from bps.abs_set(composite.smargon.omega.velocity, max_vel, group="cleanup")
     yield from bps.abs_set(
-        composite.sample_shutter.control,
+        composite.sample_shutter.control_mode,
         ZebraShutterControl.MANUAL,
         group="cleanup",
     )

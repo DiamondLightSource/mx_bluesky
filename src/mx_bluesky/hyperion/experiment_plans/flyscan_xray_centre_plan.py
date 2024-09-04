@@ -277,7 +277,7 @@ def run_gridscan(
 
     LOGGER.info("Set shutter to auto")
     yield from bps.abs_set(
-        fgs_composite.sample_shutter.control,
+        fgs_composite.sample_shutter.control_mode,
         ZebraShutterControl.AUTO,
         group=CONST.WAIT.GRID_READY_FOR_DC,
     )
@@ -450,7 +450,7 @@ def _generic_tidy(
     LOGGER.info("Tidying up Zebra and shutter")
     yield from tidy_up_zebra_after_gridscan(fgs_composite.zebra, group=group, wait=wait)
     yield from bps.abs_set(
-        fgs_composite.sample_shutter.control, ZebraShutterControl.MANUAL
+        fgs_composite.sample_shutter.control_mode, ZebraShutterControl.MANUAL
     )
     LOGGER.info("Tidying up Zocalo")
     # make sure we don't consume any other results
