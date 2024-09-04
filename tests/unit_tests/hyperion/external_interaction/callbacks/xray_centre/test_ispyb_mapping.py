@@ -7,8 +7,8 @@ from mx_bluesky.hyperion.external_interaction.callbacks.xray_centre.ispyb_mappin
 )
 from mx_bluesky.hyperion.external_interaction.ispyb.data_model import (
     DataCollectionGridInfo,
+    Orientation,
 )
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import Orientation
 from mx_bluesky.hyperion.parameters.gridscan import ThreeDGridScan
 
 from ...conftest import (

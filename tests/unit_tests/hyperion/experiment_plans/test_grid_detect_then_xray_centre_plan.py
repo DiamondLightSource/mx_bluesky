@@ -8,7 +8,7 @@ from bluesky.run_engine import RunEngine
 from bluesky.simulators import RunEngineSimulator, assert_message_and_return_remaining
 from bluesky.utils import Msg
 from dodal.beamlines import i03
-from dodal.devices.aperturescatterguard import AperturePosition
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.backlight import BacklightPosition
 from dodal.devices.eiger import EigerDetector
 from dodal.devices.oav.oav_detector import OAVConfigParams
@@ -165,7 +165,7 @@ async def test_detect_grid_and_do_gridscan(
         )
 
         # Check aperture was changed to SMALL
-        mock_aperture_scatterguard.assert_called_once_with(AperturePosition.SMALL)
+        mock_aperture_scatterguard.assert_called_once_with(ApertureValue.SMALL)
 
         # Check we called out to underlying fast grid scan plan
         mock_flyscan_xray_centre_plan.assert_called_once_with(ANY, ANY)
@@ -193,13 +193,10 @@ def test_when_full_grid_scan_run_then_parameters_sent_to_fgs_as_expected(
 
     mock_grid_detection_plan.side_effect = _fake_grid_detection
 
-    with (
-        patch.object(eiger.do_arm, "set", MagicMock()),
-        patch.object(
-            grid_detect_devices_with_oav_config_params.aperture_scatterguard,
-            "set",
-            MagicMock(),
-        ),
+    with patch.object(
+        grid_detect_devices_with_oav_config_params.aperture_scatterguard,
+        "set",
+        MagicMock(),
     ):
         RE(
             ispyb_activation_wrapper(
