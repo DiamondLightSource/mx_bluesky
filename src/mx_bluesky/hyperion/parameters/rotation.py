@@ -18,9 +18,6 @@ from scanspec.core import AxesPoints
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
 
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import (
-    RotationIspybParams,
-)
 from mx_bluesky.hyperion.parameters.components import (
     DiffractionExperimentWithSample,
     IspybExperimentType,
@@ -81,20 +78,6 @@ class RotationExperiment(DiffractionExperimentWithSample):
 
 
 class RotationScan(WithScan, RotationScanPerSweep, RotationExperiment):
-    @property
-    def ispyb_params(self):  # pyright: ignore
-        return RotationIspybParams(
-            visit_path=str(self.visit_directory),
-            comment=self.comment,
-            xtal_snapshots_omega_start=(
-                self.ispyb_extras.xtal_snapshots_omega_start
-                if self.ispyb_extras
-                else []
-            ),
-            ispyb_experiment_type=self.ispyb_experiment_type,
-            position=None,
-        )
-
     @property
     def detector_params(self):
         return self._detector_params(self.omega_start_deg)

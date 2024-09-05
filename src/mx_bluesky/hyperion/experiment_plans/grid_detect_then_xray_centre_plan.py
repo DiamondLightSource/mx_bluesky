@@ -24,6 +24,7 @@ from dodal.devices.synchrotron import Synchrotron
 from dodal.devices.undulator import Undulator
 from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.devices.zocalo import ZocaloResults
 from ophyd_async.panda import HDFPanda
 
@@ -83,6 +84,7 @@ class GridDetectThenXRayCentreComposite:
     panda: HDFPanda
     panda_fast_grid_scan: PandAFastGridScan
     robot: BartRobot
+    sample_shutter: ZebraShutter
 
 
 def create_devices(context: BlueskyContext) -> GridDetectThenXRayCentreComposite:
@@ -136,7 +138,9 @@ def detect_grid_and_do_gridscan(
         parameters.snapshot_directory,
     )
 
-    yield from bps.abs_set(composite.backlight, BacklightPosition.OUT)
+    yield from bps.abs_set(
+        composite.backlight, BacklightPosition.OUT, group=CONST.WAIT.GRID_READY_FOR_DC
+    )
 
     yield from move_aperture_if_required(
         composite.aperture_scatterguard,
@@ -163,6 +167,7 @@ def detect_grid_and_do_gridscan(
             zebra_fast_grid_scan=composite.zebra_fast_grid_scan,
             dcm=composite.dcm,
             robot=composite.robot,
+            sample_shutter=composite.sample_shutter,
         ),
         create_parameters_for_flyscan_xray_centre(
             parameters, grid_params_callback.get_grid_parameters()

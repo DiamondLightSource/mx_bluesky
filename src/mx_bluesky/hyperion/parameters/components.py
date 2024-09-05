@@ -8,7 +8,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import SupportsInt, TypeVar
 
-from dodal.devices.aperturescatterguard import AperturePositionGDANames
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import (
     DetectorParams,
     TriggerMode,
@@ -19,9 +19,6 @@ from scanspec.core import AxesPoints
 from semver import Version
 
 from mx_bluesky.hyperion.external_interaction.config_server import FeatureFlags
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import (
-    IspybParams,
-)
 from mx_bluesky.hyperion.parameters.constants import CONST
 
 T = TypeVar("T")
@@ -169,7 +166,7 @@ class DiffractionExperiment(HyperionParameters, WithSnapshot):
     detector_distance_mm: float | None = Field(default=None, gt=0)
     demand_energy_ev: float | None = Field(default=None, gt=0)
     run_number: int | None = Field(default=None, ge=0)
-    selected_aperture: AperturePositionGDANames | None = Field(default=None)
+    selected_aperture: ApertureValue | None = Field(default=None)
     transmission_frac: float = Field(default=0.1)
     ispyb_experiment_type: IspybExperimentType
     storage_directory: str
@@ -197,11 +194,6 @@ class DiffractionExperiment(HyperionParameters, WithSnapshot):
     @property
     @abstractmethod
     def detector_params(self) -> DetectorParams: ...
-
-    @property
-    @abstractmethod
-    def ispyb_params(self) -> IspybParams:  # Soon to remove
-        ...
 
 
 class WithScan(BaseModel):

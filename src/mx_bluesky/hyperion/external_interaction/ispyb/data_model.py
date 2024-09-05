@@ -1,6 +1,10 @@
 from dataclasses import asdict, dataclass
+from enum import Enum
 
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import Orientation
+
+class Orientation(Enum):
+    HORIZONTAL = "horizontal"
+    VERTICAL = "vertical"
 
 
 @dataclass()

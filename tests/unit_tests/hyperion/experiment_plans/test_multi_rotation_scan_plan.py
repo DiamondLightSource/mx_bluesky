@@ -149,7 +149,12 @@ def _run_multi_rotation_plan(
         RE(multi_rotation_scan(devices, params, oav_params))
 
 
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.rotation_scan_plan.check_topup_and_wait_if_necessary",
+    autospec=True,
+)
 def test_full_multi_rotation_plan_docs_emitted(
+    _,
     RE: RunEngine,
     test_multi_rotation_params: MultiRotationScan,
     fake_create_rotation_devices: RotationScanComposite,
@@ -219,7 +224,12 @@ def test_full_multi_rotation_plan_docs_emitted(
 @patch(
     "mx_bluesky.hyperion.external_interaction.callbacks.rotation.nexus_callback.NexusWriter"
 )
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.rotation_scan_plan.check_topup_and_wait_if_necessary",
+    autospec=True,
+)
 def test_full_multi_rotation_plan_nexus_writer_called_correctly(
+    _,
     mock_nexus_writer: MagicMock,
     RE: RunEngine,
     test_multi_rotation_params: MultiRotationScan,
@@ -253,7 +263,12 @@ def test_full_multi_rotation_plan_nexus_writer_called_correctly(
         }
 
 
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.rotation_scan_plan.check_topup_and_wait_if_necessary",
+    autospec=True,
+)
 def test_full_multi_rotation_plan_nexus_files_written_correctly(
+    _,
     RE: RunEngine,
     test_multi_rotation_params: MultiRotationScan,
     fake_create_rotation_devices: RotationScanComposite,
@@ -370,7 +385,12 @@ def test_full_multi_rotation_plan_nexus_files_written_correctly(
 @patch(
     "mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback.StoreInIspyb"
 )
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.rotation_scan_plan.check_topup_and_wait_if_necessary",
+    autospec=True,
+)
 def test_full_multi_rotation_plan_ispyb_called_correctly(
+    _,
     mock_ispyb_store: MagicMock,
     RE: RunEngine,
     test_multi_rotation_params: MultiRotationScan,
@@ -403,7 +423,12 @@ def test_full_multi_rotation_plan_ispyb_called_correctly(
         assert ispyb_store_calls[3][0] == "end_deposition"
 
 
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.rotation_scan_plan.check_topup_and_wait_if_necessary",
+    autospec=True,
+)
 def test_full_multi_rotation_plan_ispyb_interaction_end_to_end(
+    _,
     mock_ispyb_conn_multiscan,
     RE: RunEngine,
     test_multi_rotation_params: MultiRotationScan,

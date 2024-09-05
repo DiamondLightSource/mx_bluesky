@@ -7,10 +7,12 @@ from bluesky.run_engine import RunEngine
 from dodal.beamlines import i04
 from dodal.devices.oav.oav_detector import OAV
 from dodal.devices.oav.oav_to_redis_forwarder import OAVToRedisForwarder
+from dodal.devices.robot import BartRobot
 from dodal.devices.smargon import Smargon
 from dodal.devices.thawer import Thawer, ThawerStates
 from ophyd.sim import NullStatus, instantiate_fake_device
 from ophyd_async.core import (
+    AsyncStatus,
     DeviceCollector,
     callback_on_mock_put,
     get_mock_put,
@@ -18,7 +20,7 @@ from ophyd_async.core import (
 )
 from ophyd_async.epics.motion import Motor
 
-from mx_bluesky.beamlines.i04.thawing_plan import thaw, thaw_and_center
+from mx_bluesky.beamlines.i04.thawing_plan import thaw, thaw_and_stream_to_redis
 
 DISPLAY_CONFIGURATION = "tests/devices/unit_tests/test_display.configuration"
 ZOOM_LEVELS_XML = "tests/devices/unit_tests/test_jCameraManZoomLevels.xml"
@@ -73,7 +75,20 @@ async def oav_forwarder(RE: RunEngine) -> OAVToRedisForwarder:
         oav_forwarder = OAVToRedisForwarder(
             "prefix", "host", "password", name="oav_to_redis_forwarder"
         )
+
+    # Replace when https://github.com/bluesky/ophyd-async/issues/521 is released
+    @AsyncStatus.wrap
+    async def completed_status():
+        pass
+
+    oav_forwarder.kickoff = MagicMock(side_effect=completed_status)
+    oav_forwarder.complete = MagicMock(side_effect=completed_status)
     return oav_forwarder
+
+
+@pytest.fixture
+async def robot(RE: RunEngine) -> BartRobot:
+    return i04.robot(fake_with_ophyd_sim=True)
 
 
 def _do_thaw_and_confirm_cleanup(
@@ -158,7 +173,34 @@ def test_given_different_rotations_then_motor_moved_relative(
 
 
 @patch("mx_bluesky.beamlines.i04.thawing_plan.MurkoCallback")
-def test_thaw_and_centre_adds_murko_callback_and_produces_expected_messages(
+async def test_thaw_and_stream_sets_sample_id_and_kicks_off_forwarder(
+    patch_murko_callback: MagicMock,
+    smargon: Smargon,
+    thawer: Thawer,
+    oav_forwarder: OAVToRedisForwarder,
+    oav: OAV,
+    robot: BartRobot,
+    RE: RunEngine,
+):
+    set_mock_value(robot.sample_id, 100)
+    RE(
+        thaw_and_stream_to_redis(
+            10,
+            360,
+            thawer=thawer,
+            smargon=smargon,
+            oav=oav,
+            robot=robot,
+            oav_to_redis_forwarder=oav_forwarder,
+        )
+    )
+    assert await oav_forwarder.sample_id.get_value() == 100
+    oav_forwarder.kickoff.assert_called_once()  # type: ignore
+    oav_forwarder.complete.assert_called_once()  # type: ignore
+
+
+@patch("mx_bluesky.beamlines.i04.thawing_plan.MurkoCallback")
+def test_thaw_and_stream_adds_murko_callback_and_produces_expected_messages(
     patch_murko_callback: MagicMock,
     smargon: Smargon,
     thawer: Thawer,
@@ -168,7 +210,7 @@ def test_thaw_and_centre_adds_murko_callback_and_produces_expected_messages(
 ):
     patch_murko_instance = patch_murko_callback.return_value
     RE(
-        thaw_and_center(
+        thaw_and_stream_to_redis(
             10,
             360,
             thawer=thawer,
@@ -193,7 +235,7 @@ def test_thaw_and_centre_adds_murko_callback_and_produces_expected_messages(
 
 
 @patch("mx_bluesky.beamlines.i04.thawing_plan.MurkoCallback.call_murko")
-def test_thaw_and_centre_will_produce_events_that_call_murko(
+def test_thaw_and_stream_will_produce_events_that_call_murko(
     patch_murko_call: MagicMock,
     smargon: Smargon,
     thawer: Thawer,
@@ -202,7 +244,7 @@ def test_thaw_and_centre_will_produce_events_that_call_murko(
     RE: RunEngine,
 ):
     RE(
-        thaw_and_center(
+        thaw_and_stream_to_redis(
             10,
             360,
             thawer=thawer,

@@ -1,4 +1,5 @@
 import pytest
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.synchrotron import SynchrotronMode
 from dodal.devices.zocalo.zocalo_results import ZOCALO_READING_PLAN_NAME
 from event_model.documents import Event, EventDescriptor, RunStart, RunStop
@@ -89,12 +90,13 @@ class TestData(OavGridSnapshotTestEvents):
         "descriptor": "bd45c2e5-2b85-4280-95d7-a9a15800a78b",
         "time": 2666604299.928203,
         "data": {
-            "aperture_scatterguard-selected_aperture": {
-                "name": "Medium",
-                "GDA_name": "MEDIUM",
-                "radius_microns": 50,
-                "location": (15, 16, 2, 18, 19),
-            },
+            "aperture_scatterguard-aperture-x": 15,
+            "aperture_scatterguard-aperture-y": 16,
+            "aperture_scatterguard-aperture-z": 2,
+            "aperture_scatterguard-scatterguard-x": 18,
+            "aperture_scatterguard-scatterguard-y": 19,
+            "aperture_scatterguard-selected_aperture": ApertureValue.MEDIUM,
+            "aperture_scatterguard-radius": 50,
             "attenuator-actual_transmission": 0.98,
             "flux_flux_reading": 9.81,
             "dcm-energy_in_kev": 11.105,
@@ -180,12 +182,13 @@ class TestData(OavGridSnapshotTestEvents):
         "descriptor": "bd45c2e5-2b85-4280-95d7-a9a15800a78b",
         "time": 2666604299.928203,
         "data": {
-            "aperture_scatterguard-selected_aperture": {
-                "name": "Medium",
-                "GDA_name": "MEDIUM",
-                "radius_microns": 50,
-                "location": (15, 16, 2, 18, 19),
-            },
+            "aperture_scatterguard-aperture-x": 15,
+            "aperture_scatterguard-aperture-y": 16,
+            "aperture_scatterguard-aperture-z": 2,
+            "aperture_scatterguard-scatterguard-x": 18,
+            "aperture_scatterguard-scatterguard-y": 19,
+            "aperture_scatterguard-selected_aperture": ApertureValue.MEDIUM,
+            "aperture_scatterguard-radius": 50,
             "attenuator-actual_transmission": 1,
             "flux_flux_reading": 10,
             "dcm-energy_in_kev": 11.105,
