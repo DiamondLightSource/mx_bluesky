@@ -2,13 +2,10 @@ from __future__ import annotations
 
 import re
 
-from dodal.devices.detector import DetectorParams
-
 from mx_bluesky.hyperion.external_interaction.ispyb.data_model import (
     DataCollectionGroupInfo,
     DataCollectionInfo,
 )
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import IspybParams
 from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_store import (
     EIGER_FILE_SUFFIX,
     I03_EIGER_DETECTOR,
@@ -71,16 +68,3 @@ def get_proposal_and_session_from_visit_string(visit_string: str) -> tuple[str, 
 def get_visit_string_from_path(path: str | None) -> str | None:
     match = re.search(VISIT_PATH_REGEX, path) if path else None
     return str(match.group(1)) if match else None
-
-
-def get_visit_string(ispyb_params: IspybParams, detector_params: DetectorParams) -> str:
-    assert ispyb_params and detector_params, "StoreInISPyB didn't acquire params"
-    visit_path_match = get_visit_string_from_path(ispyb_params.visit_path)
-    if visit_path_match:
-        return visit_path_match
-    visit_path_match = get_visit_string_from_path(detector_params.directory)
-    if not visit_path_match:
-        raise ValueError(
-            f"Visit not found from {ispyb_params.visit_path} or {detector_params.directory}"
-        )
-    return visit_path_match

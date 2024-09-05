@@ -29,9 +29,9 @@ from mx_bluesky.hyperion.external_interaction.ispyb.data_model import (
     DataCollectionGridInfo,
     DataCollectionInfo,
     DataCollectionPositionInfo,
+    Orientation,
     ScanDataInfo,
 )
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import Orientation
 from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_store import (
     IspybIds,
     StoreInIspyb,

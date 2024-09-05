@@ -118,6 +118,7 @@ def fake_create_rotation_devices():
         zebra=zebra,
         robot=robot,
         oav=oav,
+        sample_shutter=i03.sample_shutter(fake_with_ophyd_sim=True),
     )
 
 

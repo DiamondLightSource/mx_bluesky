@@ -7,9 +7,9 @@ from dodal.common.beamlines.beamline_parameters import (
     GDABeamlineParameters,
 )
 from dodal.devices.aperturescatterguard import (
+    AperturePosition,
     ApertureScatterguard,
     load_positions_from_beamline_parameters,
-    load_tolerances_from_beamline_params,
 )
 from dodal.devices.s4_slit_gaps import S4SlitGaps
 from dodal.devices.undulator import Undulator
@@ -36,7 +36,7 @@ async def test_getting_data_for_ispyb():
         prefix="BL03S",
         name="ap_sg",
         loaded_positions=load_positions_from_beamline_parameters(params),
-        tolerances=load_tolerances_from_beamline_params(params),
+        tolerances=AperturePosition.tolerances_from_gda_params(params),
     )
     smargon = i03.smargon(fake_with_ophyd_sim=True)
     eiger = i03.eiger(fake_with_ophyd_sim=True)

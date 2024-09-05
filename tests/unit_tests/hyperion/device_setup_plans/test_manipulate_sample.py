@@ -2,11 +2,7 @@ from unittest.mock import patch
 
 import pytest
 from bluesky.run_engine import RunEngine
-from dodal.devices.aperturescatterguard import (
-    AperturePosition,
-    AperturePositionGDANames,
-    ApertureScatterguard,
-)
+from dodal.devices.aperturescatterguard import ApertureScatterguard, ApertureValue
 
 from mx_bluesky.hyperion.device_setup_plans.manipulate_sample import (
     move_aperture_if_required,

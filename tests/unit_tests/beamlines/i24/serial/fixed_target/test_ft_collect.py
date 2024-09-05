@@ -93,7 +93,11 @@ def test_get_prog_number(chip_type, map_type, pump_repeat, expected_prog):
         ),  # Map irrelevant, pp to Medium1, checker disabled
     ],
 )
+@patch(
+    "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.bps.sleep"
+)
 def test_load_motion_program_data(
+    mock_sleep,
     map_type: int,
     pump_repeat: int,
     checker: bool,
@@ -205,7 +209,10 @@ def test_finish_i24(
 
 
 @patch("mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.DCID")
-def test_run_aborted_plan(fake_dcid: MagicMock, pmac: PMAC, RE):
+@patch(
+    "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.bps.sleep"
+)
+def test_run_aborted_plan(mock_sleep, fake_dcid: MagicMock, pmac: PMAC, RE):
     RE(run_aborted_plan(pmac, fake_dcid))
 
     mock_pmac_string = get_mock_put(pmac.pmac_string)
