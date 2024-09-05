@@ -4,6 +4,7 @@ Robin Owen 12 Jan 2021
 """
 
 import logging
+from collections.abc import Sequence
 
 import bluesky.plan_stubs as bps
 import cv2 as cv
@@ -43,6 +44,24 @@ def _move_to_position(pmac: PMAC, xmove: str, ymove: str):
     yield from bps.abs_set(pmac.pmac_string, ymove, wait=True)
 
 
+def _move_on_mouse_click_plan(
+    oav: OAV, pmac: PMAC, beam_centre: Sequence[int], clicked_position: Sequence[int]
+):
+    """A plan that calculates the zoom calibrator and moves to the clicked \
+        position coordinates.
+    """
+    zoomcalibrator = yield from _calculate_zoom_calibrator(oav)
+    beamX, beamY = beam_centre
+    x, y = clicked_position
+    xmove = -1 * (beamX - x) * zoomcalibrator
+    ymove = -1 * (beamY - y) * zoomcalibrator
+    logger.info(f"Moving X and Y {xmove} {ymove}")
+    xmovepmacstring = "#1J:" + str(xmove)
+    ymovepmacstring = "#2J:" + str(ymove)
+    yield from bps.abs_set(pmac.pmac_string, xmovepmacstring, wait=True)
+    yield from bps.abs_set(pmac.pmac_string, ymovepmacstring, wait=True)
+
+
 # Register clicks and move chip stages
 def onMouse(event, x, y, flags, param):
     if event == cv.EVENT_LBUTTONUP:
@@ -51,13 +70,7 @@ def onMouse(event, x, y, flags, param):
         oav = param[2]
         beamX, beamY = _get_beam_centre(oav)
         logger.info(f"Clicked X and Y {x} {y}")
-        zoomcalibrator = RE(_calculate_zoom_calibrator(oav)).plan_result  # type: ignore
-        xmove = -1 * (beamX - x) * zoomcalibrator
-        ymove = -1 * (beamY - y) * zoomcalibrator
-        logger.info(f"Moving X and Y {xmove} {ymove}")
-        xmovepmacstring = "#1J:" + str(xmove)
-        ymovepmacstring = "#2J:" + str(ymove)
-        RE(_move_to_position(pmac, xmovepmacstring, ymovepmacstring))
+        RE(_move_on_mouse_click_plan(oav, pmac, (beamX, beamY), (x, y)))
 
 
 def update_ui(oav, frame):
