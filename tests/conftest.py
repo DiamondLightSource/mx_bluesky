@@ -48,11 +48,16 @@ from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.log import LOGGER as dodal_logger
 from dodal.log import set_up_all_logging_handlers
 from ophyd.sim import NullStatus
-from ophyd_async.core import Device, DeviceVector, callback_on_mock_put, set_mock_value
-from ophyd_async.core.async_status import AsyncStatus
-from ophyd_async.epics.motion.motor import Motor
+from ophyd_async.core import (
+    AsyncStatus,
+    Device,
+    DeviceVector,
+    callback_on_mock_put,
+    set_mock_value,
+)
+from ophyd_async.epics.motor import Motor
 from ophyd_async.epics.signal import epics_signal_rw
-from ophyd_async.panda._common_blocks import DatasetTable
+from ophyd_async.fastcs.panda import DatasetTable
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
 
@@ -881,5 +886,5 @@ class DocumentCapturer:
 @pytest.fixture
 def feature_flags():
     return FeatureFlags(
-        **{field_name: False for field_name in FeatureFlags.__fields__.keys()}
+        **{field_name: False for field_name in FeatureFlags.model_fields.keys()}
     )

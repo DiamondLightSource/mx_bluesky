@@ -10,8 +10,7 @@ from dodal.devices.oav.oav_detector import OAVConfigParams
 from dodal.devices.synchrotron import SynchrotronMode
 from dodal.devices.zocalo import ZocaloResults, ZocaloTrigger
 from event_model import Event
-from ophyd_async.core import DeviceCollector
-from ophyd_async.core.async_status import AsyncStatus
+from ophyd_async.core import AsyncStatus, DeviceCollector
 
 from mx_bluesky.hyperion.external_interaction.callbacks.common.callback_util import (
     create_gridscan_callbacks,
@@ -99,7 +98,7 @@ def run_generic_ispyb_handler_setup(
     ispyb_handler.activity_gated_start(
         {
             "subplan_name": CONST.PLAN.GRIDSCAN_OUTER,
-            "hyperion_parameters": params.json(),
+            "hyperion_parameters": params.model_dump_json(),
         }  # type: ignore
     )
     ispyb_handler.activity_gated_descriptor(

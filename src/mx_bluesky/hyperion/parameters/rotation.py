@@ -13,7 +13,7 @@ from dodal.devices.detector.det_dist_to_beam_converter import (
 from dodal.devices.zebra import (
     RotationDirection,
 )
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 from scanspec.core import AxesPoints
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
@@ -106,14 +106,15 @@ class MultiRotationScan(RotationExperiment, SplitScan):
 
     def _single_rotation_scan(self, scan: RotationScanPerSweep) -> RotationScan:
         # self has everything from RotationExperiment
-        params = self.dict()
+        params = self.model_dump()
         del params["rotation_scans"]
         # provided `scan` has everything from RotationScanPerSweep
-        params.update(scan.dict())
+        params.update(scan.model_dump())
         # together they have everything for RotationScan
         return RotationScan(**params)
 
-    @root_validator(pre=False)  # type: ignore
+    @model_validator(mode="before")  # type: ignore
+    @classmethod
     def validate_snapshot_directory(cls, values):
         start_img = 0
         for scan in values["rotation_scans"]:

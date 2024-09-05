@@ -39,11 +39,11 @@ def create_devices(context: BlueskyContext) -> GridDetectThenXRayCentreComposite
 def create_parameters_for_grid_detection(
     pin_centre_parameters: PinTipCentreThenXrayCentre,
 ) -> GridScanWithEdgeDetect:
-    params_json = json.loads(pin_centre_parameters.json())
+    params_json = json.loads(pin_centre_parameters.model_dump_json())
     del params_json["tip_offset_um"]
     grid_detect_and_xray_centre = GridScanWithEdgeDetect(**params_json)
     LOGGER.info(
-        f"Parameters for grid detect and xray centre: {grid_detect_and_xray_centre.json(indent=2)}"
+        f"Parameters for grid detect and xray centre: {grid_detect_and_xray_centre.model_dump_json(indent=2)}"
     )
     return grid_detect_and_xray_centre
 

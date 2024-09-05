@@ -40,12 +40,12 @@ dependencies = [
     # These dependencies may be issued as pre-release versions and should have a pin constraint
     # as by default pip-install will not upgrade to a pre-release.
     # 
-    "blueapi == 0.4.5a1",
+    "blueapi @ git+https://github.com/DiamondLightSource/blueapi.git@0.4.5-a5",
     "daq-config-server >= 0.1.1",
     "ophyd == 1.9.0",
     "ophyd-async >= 0.3a5",
     "bluesky >= 1.13.0a4",
-    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@9e0e09ac0166899d49128e6c6a01e7c14e443f1f",
+    "dls-dodal",
 ]
 
 
@@ -58,7 +58,8 @@ requires-python = ">=3.11"
 dev = [
     "black",
     "build",
-    "copier",
+    # Commented out due to dependency version conflict with pydantic 1.x
+    # "copier",
     "diff-cover",
     "GitPython",
     "ipython",
@@ -126,7 +127,7 @@ filterwarnings = [
     # Ignore incorrect errors  from bluesky (remove when https://github.com/bluesky/bluesky/issues/1797 is released)
     "ignore:((.|\n)*)was never iterated.*:RuntimeWarning",
     # Ignore deprecation warning from sqlalchemy
-    "ignore::sqlalchemy.exc.MovedIn20Warning",
+    #"ignore::sqlalchemy.exc.MovedIn20Warning",
     # Ignore deprecation warning from setuptools_dso (remove when https://github.com/epics-base/setuptools_dso/issues/36 is released)
     "ignore::DeprecationWarning:wheel",
     # Ophyd status objects in tests
@@ -135,6 +136,8 @@ filterwarnings = [
     "ignore:(.*)unclosed file(.*)name='(.*)dodal.log'(.*):ResourceWarning",
     "ignore:(.*)unclosed <socket(.*):ResourceWarning",
     "ignore:(.*)unclosed event loop(.*):ResourceWarning",
+    "ignore::DeprecationWarning:blueapi",
+    "ignore::DeprecationWarning:ispyb",
 ]
 # Doctest python code in docs, python code in src docstrings, test functions in tests
 testpaths = "docs src tests/unit_tests"

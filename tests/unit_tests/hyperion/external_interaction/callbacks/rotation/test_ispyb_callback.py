@@ -53,7 +53,7 @@ def rotation_start_outer_doc_without_snapshots(
 ):
     dummy_rotation_params.ispyb_extras.xtal_snapshots_omega_start = None
     test_rotation_start_outer_document["hyperion_parameters"] = (
-        dummy_rotation_params.json()
+        dummy_rotation_params.model_dump_json()
     )
     return test_rotation_start_outer_document
 

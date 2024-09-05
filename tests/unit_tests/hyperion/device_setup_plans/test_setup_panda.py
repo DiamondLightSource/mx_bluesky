@@ -7,9 +7,9 @@ import pytest
 from bluesky.plan_stubs import null
 from bluesky.run_engine import RunEngine
 from bluesky.simulators import RunEngineSimulator, assert_message_and_return_remaining
-from dodal.common.types import UpdatingDirectoryProvider
+from dodal.common.types import UpdatingPathProvider
 from dodal.devices.fast_grid_scan import PandAGridScanParams
-from ophyd_async.panda import SeqTrigger
+from ophyd_async.fastcs.panda import SeqTrigger
 
 from mx_bluesky.hyperion.device_setup_plans.setup_panda import (
     MM_TO_ENCODER_COUNTS,
@@ -229,16 +229,16 @@ def test_disarm_panda_disables_correct_blocks(sim_run_engine):
     assert num_of_waits == 1
 
 
-@patch("mx_bluesky.hyperion.device_setup_plans.setup_panda.get_directory_provider")
+@patch("mx_bluesky.hyperion.device_setup_plans.setup_panda.get_path_provider")
 @patch("mx_bluesky.hyperion.device_setup_plans.setup_panda.datetime", spec=datetime)
 def test_set_panda_directory(
-    mock_datetime, mock_get_directory_provider: MagicMock, tmp_path, RE
+    mock_datetime, mock_get_path_provider: MagicMock, tmp_path, RE
 ):
-    mock_directory_provider = MagicMock(spec=UpdatingDirectoryProvider)
+    mock_directory_provider = MagicMock(spec=UpdatingPathProvider)
     mock_datetime.now = MagicMock(
         return_value=datetime.fromisoformat("2024-08-11T15:59:23")
     )
-    mock_get_directory_provider.return_value = mock_directory_provider
+    mock_get_path_provider.return_value = mock_directory_provider
 
     RE(set_panda_directory(tmp_path))
     mock_directory_provider.update.assert_called_with(

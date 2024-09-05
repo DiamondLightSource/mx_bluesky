@@ -58,7 +58,7 @@ def params():
 def test_outer_start_doc(params: RotationScan):
     return {
         "subplan_name": CONST.PLAN.ROTATION_OUTER,
-        "hyperion_parameters": params.json(),
+        "hyperion_parameters": params.model_dump_json(),
     }
 
 
@@ -97,7 +97,7 @@ def fake_rotation_scan(
     @bpp.run_decorator(  # attach experiment metadata to the start document
         md={
             "subplan_name": CONST.PLAN.ROTATION_OUTER,
-            "hyperion_parameters": params.json(),
+            "hyperion_parameters": params.model_dump_json(),
             CONST.TRIGGER.ZOCALO: CONST.PLAN.ROTATION_MAIN,
             "zocalo_environment": params.zocalo_environment,
         }
@@ -153,7 +153,7 @@ def test_nexus_handler_gets_documents_in_mock_plan(
 
     assert nexus_handler.activity_gated_start.call_count == 2  # type: ignore
     call_content_outer = nexus_handler.activity_gated_start.call_args_list[0].args[0]  # type: ignore
-    assert call_content_outer["hyperion_parameters"] == params.json()
+    assert call_content_outer["hyperion_parameters"] == params.model_dump_json()
     call_content_inner = nexus_handler.activity_gated_start.call_args_list[1].args[0]  # type: ignore
     assert call_content_inner["subplan_name"] == CONST.PLAN.ROTATION_MAIN
 
@@ -414,7 +414,7 @@ def test_ispyb_handler_stores_sampleid_for_full_collection_not_screening(
         params.ispyb_experiment_type = IspybExperimentType.CHARACTERIZATION
     assert params.num_images == n_images
     doc["subplan_name"] = CONST.PLAN.ROTATION_OUTER  # type: ignore
-    doc["hyperion_parameters"] = params.json()  # type: ignore
+    doc["hyperion_parameters"] = params.model_dump_json()  # type: ignore
 
     cb.start(doc)
     assert (cb.last_sample_id == 987678) is store_id
