@@ -33,7 +33,6 @@ from mx_bluesky.hyperion.parameters.components import (
 from mx_bluesky.hyperion.parameters.constants import (
     CONST,
     I03Constants,
-    RotationParamConstants,
 )
 
 
@@ -85,10 +84,11 @@ class RotationExperiment(DiffractionExperimentWithSample):
     @validator("selected_aperture")
     def _set_default_aperture_position(cls, aperture_position: ApertureValue | None):
         if not aperture_position:
+            default_aperture = CONST.PARAM.ROTATION.DEFAULT_APERTURE_POSITION
             LOGGER.warning(
-                f"No aperture position selected. Defaulting to {RotationParamConstants.DEFAULT_APERTURE_POSITION}"
+                f"No aperture position selected. Defaulting to {default_aperture}"
             )
-            return RotationParamConstants.DEFAULT_APERTURE_POSITION
+            return default_aperture
         else:
             return aperture_position
 
