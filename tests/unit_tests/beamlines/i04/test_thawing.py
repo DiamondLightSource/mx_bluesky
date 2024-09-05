@@ -164,7 +164,7 @@ def test_given_different_rotations_then_motor_moved_relative(
     expected_end: float,
     RE: RunEngine,
 ):
-    set_mock_value(smargon.omega.user_readback, start_pos)
+    set_mock_value(smargon.omega.user_setpoint, start_pos)
     RE(thaw(10, rotation, thawer=thawer, smargon=smargon))
     assert get_mock_put(smargon.omega.user_setpoint).call_args_list == [
         call(expected_end, wait=ANY, timeout=ANY),
