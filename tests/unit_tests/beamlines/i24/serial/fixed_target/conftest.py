@@ -18,7 +18,7 @@ def dummy_params_without_pp():
         "detector_distance_mm": 100,
         "detector_name": "eiger",
         "num_exposures": 1,
-        "chip": oxford_defaults.dict(),
+        "chip": oxford_defaults.model_dump(),
         "map_type": 1,
         "pump_repeat": 0,
         "checker_pattern": False,

@@ -16,7 +16,7 @@ def test_get_chip_format_for_oxford_chips(
     expected_step_size: float,
     expected_num_steps: int,
 ):
-    test_defaults = get_chip_format(ChipType(chip_type)).dict()
+    test_defaults = get_chip_format(ChipType(chip_type)).model_dump()
 
     assert (
         test_defaults["x_num_steps"] == expected_num_steps

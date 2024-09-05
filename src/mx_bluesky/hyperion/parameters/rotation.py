@@ -13,7 +13,7 @@ from dodal.devices.detector.det_dist_to_beam_converter import (
 from dodal.devices.zebra import (
     RotationDirection,
 )
-from pydantic import Field, model_validator
+from pydantic import Field
 from scanspec.core import AxesPoints
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
@@ -37,7 +37,7 @@ class RotationScanPerSweep(OptionalGonioAngleStarts, OptionalXyzStarts):
     scan_width_deg: float = Field(default=360, gt=0)
     rotation_direction: RotationDirection = Field(default=RotationDirection.NEGATIVE)
     nexus_vds_start_img: int = Field(default=0, ge=0)
-    ispyb_extras: TemporaryIspybExtras | None
+    ispyb_extras: TemporaryIspybExtras | None = None
 
 
 class RotationExperiment(DiffractionExperimentWithSample):
@@ -112,15 +112,6 @@ class MultiRotationScan(RotationExperiment, SplitScan):
         params.update(scan.model_dump())
         # together they have everything for RotationScan
         return RotationScan(**params)
-
-    @model_validator(mode="before")  # type: ignore
-    @classmethod
-    def validate_snapshot_directory(cls, values):
-        start_img = 0
-        for scan in values["rotation_scans"]:
-            scan.nexus_vds_start_img = start_img
-            start_img += scan.scan_width_deg / values["rotation_increment_deg"]
-        return values
 
     @property
     def single_rotation_scans(self) -> Iterator[RotationScan]:

@@ -95,7 +95,7 @@ def create_parameters_for_flyscan_xray_centre(
     grid_scan_with_edge_params: GridScanWithEdgeDetect,
     grid_parameters: GridParamUpdate,
 ) -> ThreeDGridScan:
-    params_json = grid_scan_with_edge_params.dict()
+    params_json = grid_scan_with_edge_params.model_dump()
     params_json.update(grid_parameters)
     flyscan_xray_centre_parameters = ThreeDGridScan(**params_json)
     LOGGER.info(f"Parameters for FGS: {flyscan_xray_centre_parameters}")
