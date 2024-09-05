@@ -33,9 +33,11 @@ from mx_bluesky.hyperion.parameters.components import (
     TemporaryIspybExtras,
     WithScan,
 )
-from mx_bluesky.hyperion.parameters.constants import CONST, I03Constants
-
-DEFAULT_APERTURE_POSITION = AperturePositionGDANames.LARGE_APERTURE
+from mx_bluesky.hyperion.parameters.constants import (
+    CONST,
+    I03Constants,
+    RotationParamConstants,
+)
 
 
 class RotationScanPerSweep(OptionalGonioAngleStarts, OptionalXyzStarts):
@@ -89,9 +91,9 @@ class RotationExperiment(DiffractionExperimentWithSample):
     ):
         if not aperture_position:
             LOGGER.warning(
-                f"No aperture position selected. Defaulting to {DEFAULT_APERTURE_POSITION}"
+                f"No aperture position selected. Defaulting to {RotationParamConstants.DEFAULT_APERTURE_POSITION}"
             )
-            return DEFAULT_APERTURE_POSITION
+            return RotationParamConstants.DEFAULT_APERTURE_POSITION
         else:
             return aperture_position
 
