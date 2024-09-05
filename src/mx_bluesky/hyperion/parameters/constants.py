@@ -1,7 +1,7 @@
 import os
 from enum import Enum
 
-from dodal.devices.aperturescatterguard import AperturePositionGDANames
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import EIGER2_X_16M_SIZE
 from pydantic.dataclasses import dataclass
 
@@ -80,7 +80,7 @@ class GridscanParamConstants:
 
 @dataclass(frozen=True)
 class RotationParamConstants:
-    DEFAULT_APERTURE_POSITION = AperturePositionGDANames.LARGE_APERTURE
+    DEFAULT_APERTURE_POSITION = ApertureValue.LARGE
 
 
 @dataclass(frozen=True)

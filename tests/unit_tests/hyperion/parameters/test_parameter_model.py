@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
-from dodal.devices.aperturescatterguard import AperturePositionGDANames
+from dodal.devices.aperturescatterguard import ApertureValue
 from pydantic import ValidationError
 
 from mx_bluesky.hyperion.parameters.constants import GridscanParamConstants
@@ -120,4 +120,4 @@ def test_selected_aperture_uses_default():
     )
     raw_params["selected_aperture"] = None
     params = RotationScan(**raw_params)
-    assert params.selected_aperture == AperturePositionGDANames.LARGE_APERTURE
+    assert params.selected_aperture == ApertureValue.LARGE

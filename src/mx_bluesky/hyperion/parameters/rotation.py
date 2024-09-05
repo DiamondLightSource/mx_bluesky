@@ -6,7 +6,7 @@ from itertools import accumulate
 from typing import Annotated, Any
 
 from annotated_types import Len
-from dodal.devices.aperturescatterguard import AperturePositionGDANames
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import DetectorParams
 from dodal.devices.detector.det_dist_to_beam_converter import (
     DetectorDistanceToBeamXYConverter,
@@ -83,9 +83,7 @@ class RotationExperiment(DiffractionExperimentWithSample):
         )
 
     @validator("selected_aperture")
-    def _set_default_aperture_position(
-        cls, aperture_position: AperturePositionGDANames | None
-    ):
+    def _set_default_aperture_position(cls, aperture_position: ApertureValue | None):
         if not aperture_position:
             LOGGER.warning(
                 f"No aperture position selected. Defaulting to {RotationParamConstants.DEFAULT_APERTURE_POSITION}"
