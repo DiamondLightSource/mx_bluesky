@@ -138,7 +138,7 @@ def flyscan_xray_centre(
             "subplan_name": CONST.PLAN.GRIDSCAN_OUTER,
             CONST.TRIGGER.ZOCALO: CONST.PLAN.DO_FGS,
             "zocalo_environment": parameters.zocalo_environment,
-            "hyperion_parameters": parameters.model_dump_json,
+            "hyperion_parameters": parameters.model_dump_json(),
             "activate_callbacks": [
                 "GridscanNexusFileCallback",
             ],

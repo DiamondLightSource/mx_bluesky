@@ -30,7 +30,7 @@ def test_get_chip_format_for_oxford_chips(
 def test_get_chip_format_for_custom_chips(fake_caget: MagicMock):
     fake_caget.side_effect = ["10", "2", "0.2", "0.2"]
     test_chip_type = ChipType(2)
-    test_defaults = get_chip_format(test_chip_type).dict()
+    test_defaults = get_chip_format(test_chip_type).model_dump()
 
     assert test_defaults["x_num_steps"] == 10
     assert test_defaults["y_num_steps"] == 2

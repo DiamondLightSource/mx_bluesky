@@ -417,11 +417,11 @@ def test_when_plan_run_then_lower_gonio_moved_before_robot_loads_and_back_after_
     initial_values = {"x": 0.11, "y": 0.12, "z": 0.13}
 
     def get_read(axis, msg):
-        return {f"lower_gonio-{axis}": {"value": initial_values[axis]}}
+        return {"readback": initial_values[axis]}
 
     for axis in initial_values.keys():
         sim_run_engine.add_handler(
-            "read", partial(get_read, axis), f"lower_gonio-{axis}"
+            "locate", partial(get_read, axis), f"lower_gonio-{axis}"
         )
 
     messages = sim_run_engine.simulate_plan(

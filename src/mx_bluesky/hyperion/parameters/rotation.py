@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 from itertools import accumulate
-from typing import Annotated
+from typing import Annotated, Any
 
 from annotated_types import Len
 from dodal.devices.detector import DetectorParams
@@ -13,7 +13,7 @@ from dodal.devices.detector.det_dist_to_beam_converter import (
 from dodal.devices.zebra import (
     RotationDirection,
 )
-from pydantic import Field
+from pydantic import Field, model_validator
 from scanspec.core import AxesPoints
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
@@ -112,6 +112,16 @@ class MultiRotationScan(RotationExperiment, SplitScan):
         params.update(scan.model_dump())
         # together they have everything for RotationScan
         return RotationScan(**params)
+
+    @model_validator(mode="after")
+    @classmethod
+    def correct_start_vds(cls, values: Any) -> Any:
+        assert isinstance(values, MultiRotationScan)
+        start_img = 0.0
+        for scan in values.rotation_scans:
+            scan.nexus_vds_start_img = int(start_img)
+            start_img += scan.scan_width_deg / values.rotation_increment_deg
+        return values
 
     @property
     def single_rotation_scans(self) -> Iterator[RotationScan]:
