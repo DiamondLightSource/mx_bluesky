@@ -136,8 +136,8 @@ def test_robot_load_then_centre_doesnt_set_energy_if_not_specified_and_current_e
 ):
     robot_load_composite.eiger.set_detector_parameters = MagicMock()
     sim_run_engine.add_handler(
-        "read",
-        lambda msg: {"dcm-energy_in_kev": {"value": 11.105}},
+        "locate",
+        lambda msg: {"readback": 11.105},
         "dcm-energy_in_kev",
     )
     messages = sim_run_engine.simulate_plan(
@@ -165,8 +165,8 @@ def run_simulating_smargon_wait(
         return {"values": {"value": int(num_of_reads < total_disabled_reads)}}
 
     sim_run_engine.add_handler(
-        "read",
-        lambda msg: {"dcm-energy_in_kev": {"value": 11.105}},
+        "locate",
+        lambda msg: {"readback": 11.105},
         "dcm-energy_in_kev",
     )
     sim_run_engine.add_handler(
@@ -370,11 +370,11 @@ def test_given_lower_gonio_moved_when_robot_load_then_lower_gonio_moved_to_home_
     initial_values = {"x": 0.11, "y": 0.12, "z": 0.13}
 
     def get_read(axis, msg):
-        return {f"lower_gonio-{axis}": {"value": initial_values[axis]}}
+        return {"readback": initial_values[axis]}
 
     for axis in initial_values.keys():
         sim_run_engine.add_handler(
-            "read", partial(get_read, axis), f"lower_gonio-{axis}"
+            "locate", partial(get_read, axis), f"lower_gonio-{axis}"
         )
 
     messages = sim_run_engine.simulate_plan(
@@ -417,11 +417,11 @@ def test_when_plan_run_then_lower_gonio_moved_before_robot_loads_and_back_after_
     initial_values = {"x": 0.11, "y": 0.12, "z": 0.13}
 
     def get_read(axis, msg):
-        return {f"lower_gonio-{axis}": {"value": initial_values[axis]}}
+        return {"readback": initial_values[axis]}
 
     for axis in initial_values.keys():
         sim_run_engine.add_handler(
-            "read", partial(get_read, axis), f"lower_gonio-{axis}"
+            "locate", partial(get_read, axis), f"lower_gonio-{axis}"
         )
 
     messages = sim_run_engine.simulate_plan(

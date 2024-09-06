@@ -4,7 +4,6 @@ import os
 
 from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import (
-    DetectorDistanceToBeamXYConverter,
     DetectorParams,
 )
 from dodal.devices.fast_grid_scan import (
@@ -70,9 +69,6 @@ class GridCommon(
             use_roi_mode=self.use_roi_mode,
             det_dist_to_beam_converter_path=self.det_dist_to_beam_converter_path,
             trigger_mode=self.trigger_mode,
-            beam_xy_converter=DetectorDistanceToBeamXYConverter(
-                self.det_dist_to_beam_converter_path
-            ),
             enable_dev_shm=self.use_gpu,
             **optional_args,
         )
@@ -89,7 +85,7 @@ class RobotLoadThenCentre(GridCommon):
     thawing_time: float = Field(default=CONST.I03.THAWING_TIME)
 
     def pin_centre_then_xray_centre_params(self):
-        my_params = self.dict()
+        my_params = self.model_dump()
         del my_params["thawing_time"]
         return PinTipCentreThenXrayCentre(**my_params)
 

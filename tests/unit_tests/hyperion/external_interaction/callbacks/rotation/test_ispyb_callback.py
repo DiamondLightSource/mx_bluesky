@@ -53,7 +53,7 @@ def rotation_start_outer_doc_without_snapshots(
 ):
     dummy_rotation_params.ispyb_extras.xtal_snapshots_omega_start = None
     test_rotation_start_outer_document["hyperion_parameters"] = (
-        dummy_rotation_params.json()
+        dummy_rotation_params.model_dump_json()
     )
     return test_rotation_start_outer_document
 
@@ -301,7 +301,7 @@ def test_comment_correct_after_hardware_read(
     test_rotation_start_outer_document["hyperion_parameters"] = (
         test_rotation_start_outer_document[
             "hyperion_parameters"
-        ].replace('"comment": "test"', '"comment": "a lovely unit test"')
+        ].replace('"comment":"test"', '"comment":"a lovely unit test"')
     )
     callback.activity_gated_start(test_rotation_start_outer_document)  # pyright: ignore
     callback.activity_gated_start(
