@@ -14,9 +14,9 @@ class MappingType(IntEnum):
     Lite = 1
     Full = 2
 
-    # def __str__(self) -> str:
-    #     """Returns the mapping."""
-    #     return self.name
+    def __str__(self) -> str:
+        """Returns the mapping."""
+        return self.name
 
 
 # FIXME See https://github.com/DiamondLightSource/mx_bluesky/issues/77
