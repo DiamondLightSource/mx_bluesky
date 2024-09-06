@@ -121,9 +121,6 @@ addopts = """
 # https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
 filterwarnings = [
     "error",
-    # Ignore deprecation warning from zocalo (https://github.com/DiamondLightSource/python-zocalo/issues/256)
-    "ignore::DeprecationWarning:zocalo",
-    "ignore::DeprecationWarning:pkg_resources",
     # Ignore incorrect errors from bluesky (remove when https://github.com/bluesky/bluesky/issues/1797 is released)
     "ignore:((.|\n)*)was never iterated.*:RuntimeWarning",
     # Ignore deprecation warning from sqlalchemy
