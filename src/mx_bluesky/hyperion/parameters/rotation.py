@@ -7,9 +7,6 @@ from typing import Annotated, Any
 
 from annotated_types import Len
 from dodal.devices.detector import DetectorParams
-from dodal.devices.detector.det_dist_to_beam_converter import (
-    DetectorDistanceToBeamXYConverter,
-)
 from dodal.devices.zebra import (
     RotationDirection,
 )
@@ -70,9 +67,6 @@ class RotationExperiment(DiffractionExperimentWithSample):
             num_triggers=1,
             use_roi_mode=False,
             det_dist_to_beam_converter_path=self.det_dist_to_beam_converter_path,
-            beam_xy_converter=DetectorDistanceToBeamXYConverter(
-                self.det_dist_to_beam_converter_path
-            ),
             **optional_args,
         )
 
