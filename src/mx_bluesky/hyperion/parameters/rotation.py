@@ -3,10 +3,9 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 from itertools import accumulate
-from typing import Annotated, Any
+from typing import Annotated
 
 from annotated_types import Len
-from dodal.devices.aperturescatterguard import AperturePositionGDANames
 from dodal.devices.detector import DetectorParams
 from dodal.devices.detector.det_dist_to_beam_converter import (
     DetectorDistanceToBeamXYConverter,
@@ -14,8 +13,7 @@ from dodal.devices.detector.det_dist_to_beam_converter import (
 from dodal.devices.zebra import (
     RotationDirection,
 )
-from dodal.log import LOGGER
-from pydantic import Field, root_validator, validator
+from pydantic import Field, root_validator
 from scanspec.core import AxesPoints
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
@@ -35,8 +33,6 @@ from mx_bluesky.hyperion.parameters.components import (
 )
 from mx_bluesky.hyperion.parameters.constants import CONST, I03Constants
 
-DEFAULT_APERTURE_POSITION = AperturePositionGDANames.LARGE_APERTURE
-
 
 class RotationScanPerSweep(OptionalGonioAngleStarts, OptionalXyzStarts):
     omega_start_deg: float = Field(default=0)  # type: ignore
@@ -55,7 +51,7 @@ class RotationExperiment(DiffractionExperimentWithSample):
     )
 
     def _detector_params(self, omega_start_deg: float):
-        self.det_dist_to_beam_converter_path = (
+        self.det_dist_to_beam_converter_path: str = (
             self.det_dist_to_beam_converter_path
             or CONST.PARAM.DETECTOR.BEAM_XY_LUT_PATH
         )
@@ -82,18 +78,6 @@ class RotationExperiment(DiffractionExperimentWithSample):
             ),
             **optional_args,
         )
-
-    @validator("selected_aperture")
-    def _set_default_aperture_position(
-        cls, aperture_position: AperturePositionGDANames | None
-    ):
-        if not aperture_position:
-            LOGGER.warning(
-                f"No aperture position selected. Defaulting to {DEFAULT_APERTURE_POSITION}"
-            )
-            return DEFAULT_APERTURE_POSITION
-        else:
-            return aperture_position
 
 
 class RotationScan(WithScan, RotationScanPerSweep, RotationExperiment):
@@ -147,7 +131,7 @@ class MultiRotationScan(RotationExperiment, SplitScan):
         return RotationScan(**params)
 
     @root_validator(pre=False)  # type: ignore
-    def validate_snapshot_directory(cls, values: dict[str, Any]) -> dict[str, Any]:
+    def validate_snapshot_directory(cls, values):
         start_img = 0
         for scan in values["rotation_scans"]:
             scan.nexus_vds_start_img = start_img
