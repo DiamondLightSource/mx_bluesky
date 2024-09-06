@@ -8,7 +8,7 @@ from typing import cast
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
 from blueapi.core import BlueskyContext, MsgGenerator
-from dodal.devices.aperturescatterguard import AperturePosition, ApertureScatterguard
+from dodal.devices.aperturescatterguard import ApertureScatterguard, ApertureValue
 from dodal.devices.attenuator import Attenuator
 from dodal.devices.backlight import Backlight
 from dodal.devices.dcm import DCM
@@ -130,7 +130,7 @@ def take_robot_snapshots(oav: OAV, webcam: Webcam, directory: Path):
 def prepare_for_robot_load(composite: RobotLoadThenCentreComposite):
     yield from bps.abs_set(
         composite.aperture_scatterguard,
-        AperturePosition.ROBOT_LOAD,
+        ApertureValue.ROBOT_LOAD,
         group="prepare_robot_load",
     )
 
@@ -194,7 +194,7 @@ def robot_load_then_centre_plan(
         md={
             "subplan_name": CONST.PLAN.ROBOT_LOAD,
             "metadata": {
-                "visit_path": params.ispyb_params.visit_path,
+                "visit_path": str(params.visit_directory),
                 "sample_id": params.sample_id,
                 "sample_puck": params.sample_puck,
                 "sample_pin": params.sample_pin,

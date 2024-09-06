@@ -12,8 +12,8 @@ import bluesky.preprocessors as bpp
 import numpy as np
 from blueapi.core import BlueskyContext, MsgGenerator
 from dodal.devices.aperturescatterguard import (
-    AperturePosition,
     ApertureScatterguard,
+    ApertureValue,
 )
 from dodal.devices.attenuator import Attenuator
 from dodal.devices.backlight import Backlight
@@ -35,6 +35,7 @@ from dodal.devices.synchrotron import Synchrotron
 from dodal.devices.undulator import Undulator
 from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.devices.zocalo.zocalo_results import (
     ZOCALO_READING_PLAN_NAME,
     ZOCALO_STAGE_GROUP,
@@ -57,9 +58,9 @@ from mx_bluesky.hyperion.device_setup_plans.setup_panda import (
     setup_panda_for_flyscan,
 )
 from mx_bluesky.hyperion.device_setup_plans.setup_zebra import (
-    set_zebra_shutter_to_manual,
     setup_zebra_for_gridscan,
     setup_zebra_for_panda_flyscan,
+    tidy_up_zebra_after_gridscan,
 )
 from mx_bluesky.hyperion.device_setup_plans.xbpm_feedback import (
     transmission_and_xbpm_feedback_for_collection_decorator,
@@ -97,6 +98,7 @@ class FlyScanXRayCentreComposite:
     panda: HDFPanda
     panda_fast_grid_scan: PandAFastGridScan
     robot: BartRobot
+    sample_shutter: ZebraShutter
 
     @property
     def sample_motors(self) -> Smargon:
@@ -367,9 +369,8 @@ def set_aperture_for_bbox_size(
 ):
     # bbox_size is [x,y,z], for i03 we only care about x
     new_selected_aperture = (
-        AperturePosition.MEDIUM if bbox_size[0] < 2 else AperturePosition.LARGE
+        ApertureValue.MEDIUM if bbox_size[0] < 2 else ApertureValue.LARGE
     )
-    gda_name = aperture_device.get_gda_name_for_position(new_selected_aperture)
     LOGGER.info(
         f"Setting aperture to {new_selected_aperture} based on bounding box size {bbox_size}."
     )
@@ -378,7 +379,7 @@ def set_aperture_for_bbox_size(
     @bpp.run_decorator(
         md={
             "subplan_name": "change_aperture",
-            "aperture_size": gda_name,
+            "aperture_size": new_selected_aperture.value,
         }
     )
     def set_aperture():
@@ -440,7 +441,9 @@ def _generic_tidy(
     fgs_composite: FlyScanXRayCentreComposite, group, wait=True
 ) -> MsgGenerator:
     LOGGER.info("Tidying up Zebra")
-    yield from set_zebra_shutter_to_manual(fgs_composite.zebra, group=group, wait=wait)
+    yield from tidy_up_zebra_after_gridscan(
+        fgs_composite.zebra, fgs_composite.sample_shutter, group=group, wait=wait
+    )
     LOGGER.info("Tidying up Zocalo")
     # make sure we don't consume any other results
     yield from bps.unstage(fgs_composite.zocalo, group=group, wait=wait)
@@ -460,7 +463,9 @@ def _zebra_triggering_setup(
     parameters: ThreeDGridScan,
     initial_xyz: np.ndarray,
 ):
-    yield from setup_zebra_for_gridscan(fgs_composite.zebra, wait=True)
+    yield from setup_zebra_for_gridscan(
+        fgs_composite.zebra, fgs_composite.sample_shutter, wait=True
+    )
 
 
 def _panda_triggering_setup(
@@ -518,4 +523,6 @@ def _panda_triggering_setup(
     )
 
     LOGGER.info("Setting up Zebra for panda flyscan")
-    yield from setup_zebra_for_panda_flyscan(fgs_composite.zebra, wait=True)
+    yield from setup_zebra_for_panda_flyscan(
+        fgs_composite.zebra, fgs_composite.sample_shutter, wait=True
+    )

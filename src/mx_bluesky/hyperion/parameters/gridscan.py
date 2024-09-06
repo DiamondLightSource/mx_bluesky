@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from dodal.devices.aperturescatterguard import AperturePositionGDANames
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import (
     DetectorDistanceToBeamXYConverter,
     DetectorParams,
@@ -15,9 +15,6 @@ from pydantic import Field, PrivateAttr
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line, Static
 
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import (
-    GridscanIspybParams,
-)
 from mx_bluesky.hyperion.parameters.components import (
     DiffractionExperimentWithSample,
     IspybExperimentType,
@@ -45,19 +42,7 @@ class GridCommon(
     ispyb_experiment_type: IspybExperimentType = Field(
         default=IspybExperimentType.GRIDSCAN_3D
     )
-    selected_aperture: AperturePositionGDANames | None = Field(
-        default=AperturePositionGDANames.SMALL_APERTURE
-    )
-
-    @property
-    def ispyb_params(self):
-        return GridscanIspybParams(
-            visit_path=str(self.visit_directory),
-            comment=self.comment,
-            sample_id=self.sample_id,
-            ispyb_experiment_type=self.ispyb_experiment_type,
-            position=None,
-        )
+    selected_aperture: ApertureValue | None = Field(default=ApertureValue.SMALL)
 
     @property
     def detector_params(self):

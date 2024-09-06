@@ -8,7 +8,7 @@ import pytest
 import pytest_asyncio
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i03
-from dodal.devices.aperturescatterguard import AperturePosition
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.smargon import Smargon
 from ophyd.sim import NullStatus
 from ophyd_async.core import set_mock_value
@@ -94,13 +94,14 @@ async def fxc_composite():
         xbpm_feedback=i03.xbpm_feedback(fake_with_ophyd_sim=True),
         zebra=i03.zebra(),
         zocalo=zocalo,
+        sample_shutter=i03.sample_shutter(fake_with_ophyd_sim=True),
     )
 
     await composite.robot.barcode._backend.put("ABCDEFGHIJ")  # type: ignore
     composite.dcm.energy_in_kev.user_readback.sim_put(12.345)  # type: ignore
 
-    large = composite.aperture_scatterguard._loaded_positions[AperturePosition.LARGE]
-    await composite.aperture_scatterguard._set_raw_unsafe(large.location)
+    large = composite.aperture_scatterguard._loaded_positions[ApertureValue.LARGE]
+    await composite.aperture_scatterguard._set_raw_unsafe(large)
     composite.eiger.cam.manual_trigger.put("Yes")
     composite.eiger.odin.check_odin_initialised = lambda: (True, "")
     composite.eiger.stage = MagicMock(return_value=NullStatus())
@@ -179,7 +180,7 @@ async def test_xbpm_feedback_decorator(
     autospec=True,
 )
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.set_zebra_shutter_to_manual",
+    "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.tidy_up_zebra_after_gridscan",
     autospec=True,
 )
 def test_full_plan_tidies_at_end(
@@ -214,7 +215,7 @@ def test_full_plan_tidies_at_end(
     autospec=True,
 )
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.set_zebra_shutter_to_manual",
+    "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.tidy_up_zebra_after_gridscan",
     autospec=True,
 )
 def test_full_plan_tidies_at_end_when_plan_fails(

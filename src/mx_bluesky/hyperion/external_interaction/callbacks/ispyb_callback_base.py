@@ -5,7 +5,6 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from dodal.beamline_specific_utils.i03 import beam_size_from_aperture
-from dodal.devices.aperturescatterguard import SingleAperturePosition
 from dodal.devices.detector.det_resolution import resolution
 from dodal.devices.synchrotron import SynchrotronMode
 
@@ -123,10 +122,9 @@ class BaseISPyBCallback(PlanReactiveCallback):
 
     def _handle_ispyb_transmission_flux_read(self, doc) -> Sequence[ScanDataInfo]:
         assert self.params
-        aperture_size = SingleAperturePosition(
-            **doc["data"]["aperture_scatterguard-selected_aperture"]
-        )
-        beamsize = beam_size_from_aperture(aperture_size)
+        aperture = doc["data"]["aperture_scatterguard-selected_aperture"]
+        aperture_radius = doc["data"]["aperture_scatterguard-radius"]
+        beamsize = beam_size_from_aperture(aperture_radius)
         beamsize_x_mm = beamsize.x_um / 1000 if beamsize.x_um else None
         beamsize_y_mm = beamsize.y_um / 1000 if beamsize.y_um else None
         hwscan_data_collection_info = DataCollectionInfo(
@@ -153,7 +151,7 @@ class BaseISPyBCallback(PlanReactiveCallback):
             hwscan_data_collection_info, None, self.params
         )
         ISPYB_LOGGER.info("Updating ispyb data collection after flux read.")
-        self.append_to_comment(f"Aperture: {aperture_size.name}. ")
+        self.append_to_comment(f"Aperture: {aperture}. ")
         return scan_data_infos
 
     @abstractmethod

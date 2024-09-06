@@ -475,7 +475,7 @@ def start_i24(
         caput(pv.pilat_acquire, "1")  # Arm pilatus
         yield from arm_zebra(zebra)
         caput(pv.pilat_filename, filename)
-        time.sleep(1.5)
+        sleep(1.5)
 
     elif parameters.detector_name == "eiger":
         logger.info("Using Eiger detector")
@@ -549,7 +549,7 @@ def start_i24(
             )
         yield from arm_zebra(zebra)
 
-        time.sleep(1.5)
+        sleep(1.5)
 
     else:
         msg = f"Unknown Detector Type, det_type = {parameters.detector_name}"
