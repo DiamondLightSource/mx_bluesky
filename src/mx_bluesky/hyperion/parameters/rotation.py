@@ -132,6 +132,7 @@ class MultiRotationScan(RotationExperiment, SplitScan):
         for scan in values.rotation_scans:
             scan.nexus_vds_start_img = int(start_img)
             start_img += scan.scan_width_deg / values.rotation_increment_deg
+        return values
 
     @property
     def single_rotation_scans(self) -> Iterator[RotationScan]:
