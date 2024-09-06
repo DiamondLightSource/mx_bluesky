@@ -73,9 +73,10 @@ def fake_devices(
     oav.zoom_controller.fvst.set("9.0x")
 
     with (
-        patch("dodal.devices.areadetector.plugins.MJPG.requests"),
+        patch("dodal.devices.areadetector.plugins.MJPG.requests") as patch_requests,
         patch("dodal.devices.areadetector.plugins.MJPG.Image") as mock_image_class,
     ):
+        patch_requests.get.return_value.content = b""
         mock_image = MagicMock()
         mock_image_class.open.return_value.__enter__.return_value = mock_image
 
