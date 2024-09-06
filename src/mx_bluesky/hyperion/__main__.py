@@ -71,9 +71,13 @@ class StatusAndMessage:
 class ErrorStatusAndMessage(StatusAndMessage):
     exception_type: str = ""
 
-    def __init__(self, exception: Exception) -> None:
-        super().__init__(Status.FAILED, repr(exception))
-        self.exception_type = type(exception).__name__
+
+def make_error_status_and_message(exception: Exception):
+    return ErrorStatusAndMessage(
+        status=Status.FAILED.value,
+        message=repr(exception),
+        exception_type=type(exception).__name__,
+    )
 
 
 class BlueskyRunner:
@@ -119,7 +123,7 @@ class BlueskyRunner:
         plan_name: str,
         callbacks: CallbacksFactory | None,
     ) -> StatusAndMessage:
-        LOGGER.info(f"Started with parameters: {parameters.json(indent=2)}")
+        LOGGER.info(f"Started with parameters: {parameters.model_dump_json(indent=2)}")
 
         devices: Any = PLAN_REGISTRY[plan_name]["setup"](self.context)
 
@@ -146,7 +150,7 @@ class BlueskyRunner:
             self.RE.abort()
             self.current_status = StatusAndMessage(Status.IDLE)
         except Exception as e:
-            self.current_status = ErrorStatusAndMessage(e)
+            self.current_status = make_error_status_and_message(e)
 
     def stop(self) -> StatusAndMessage:
         if self.current_status.status == Status.IDLE.value:
@@ -197,7 +201,7 @@ class BlueskyRunner:
                     self.last_run_aborted = False
                 except WarningException as exception:
                     LOGGER.warning("Warning Exception", exc_info=True)
-                    self.current_status = ErrorStatusAndMessage(exception)
+                    self.current_status = make_error_status_and_message(exception)
                 except Exception as exception:
                     LOGGER.error("Exception on running plan", exc_info=True)
 
@@ -205,7 +209,7 @@ class BlueskyRunner:
                         # Aborting will cause an exception here that we want to swallow
                         self.last_run_aborted = False
                     else:
-                        self.current_status = ErrorStatusAndMessage(exception)
+                        self.current_status = make_error_status_and_message(exception)
                 finally:
                     [
                         self.RE.unsubscribe(cb)
@@ -231,6 +235,8 @@ def compose_start_args(context: BlueskyContext, plan_name: str, action: Actions)
         )
     try:
         parameters = experiment_internal_param_type(**json.loads(request.data))
+        if parameters.model_extra:
+            raise ValueError(f"Extra fields not allowed {parameters.model_extra}")
     except Exception as e:
         raise ValueError(
             f"Supplied parameters don't match the plan for this endpoint {request.data}"
@@ -255,7 +261,7 @@ class RunExperiment(Resource):
                     plan, params, plan_name, callback_type
                 )
             except Exception as e:
-                status_and_message = ErrorStatusAndMessage(e)
+                status_and_message = make_error_status_and_message(e)
                 LOGGER.error(format_exception(e))
 
         elif action == Actions.STOP.value:

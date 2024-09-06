@@ -26,7 +26,7 @@ from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import Zebra
 from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.devices.zocalo import ZocaloResults
-from ophyd_async.panda import HDFPanda
+from ophyd_async.fastcs.panda import HDFPanda
 
 from mx_bluesky.hyperion.device_setup_plans.manipulate_sample import (
     move_aperture_if_required,
@@ -95,7 +95,7 @@ def create_parameters_for_flyscan_xray_centre(
     grid_scan_with_edge_params: GridScanWithEdgeDetect,
     grid_parameters: GridParamUpdate,
 ) -> ThreeDGridScan:
-    params_json = grid_scan_with_edge_params.dict()
+    params_json = grid_scan_with_edge_params.model_dump()
     params_json.update(grid_parameters)
     flyscan_xray_centre_parameters = ThreeDGridScan(**params_json)
     LOGGER.info(f"Parameters for FGS: {flyscan_xray_centre_parameters}")
