@@ -124,10 +124,10 @@ filterwarnings = [
     # Ignore deprecation warning from zocalo (https://github.com/DiamondLightSource/python-zocalo/issues/256)
     "ignore::DeprecationWarning:zocalo",
     "ignore::DeprecationWarning:pkg_resources",
-    # Ignore incorrect errors  from bluesky (remove when https://github.com/bluesky/bluesky/issues/1797 is released)
+    # Ignore incorrect errors from bluesky (remove when https://github.com/bluesky/bluesky/issues/1797 is released)
     "ignore:((.|\n)*)was never iterated.*:RuntimeWarning",
     # Ignore deprecation warning from sqlalchemy
-    #"ignore::sqlalchemy.exc.MovedIn20Warning",
+    "ignore::sqlalchemy.exc.MovedIn20Warning",
     # Ignore deprecation warning from setuptools_dso (remove when https://github.com/epics-base/setuptools_dso/issues/36 is released)
     "ignore::DeprecationWarning:wheel",
     # Ophyd status objects in tests
@@ -136,8 +136,8 @@ filterwarnings = [
     "ignore:(.*)unclosed file(.*)name='(.*)dodal.log'(.*):ResourceWarning",
     "ignore:(.*)unclosed <socket(.*):ResourceWarning",
     "ignore:(.*)unclosed event loop(.*):ResourceWarning",
+    # Ignore pydantic 2 issues from blueapi, see https://github.com/DiamondLightSource/blueapi/issues/622
     "ignore::DeprecationWarning:blueapi",
-    "ignore::DeprecationWarning:ispyb",
 ]
 # Doctest python code in docs, python code in src docstrings, test functions in tests
 testpaths = "docs src tests/unit_tests"
