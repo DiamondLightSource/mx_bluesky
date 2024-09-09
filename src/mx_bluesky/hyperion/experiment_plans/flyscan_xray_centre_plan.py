@@ -43,7 +43,7 @@ from dodal.devices.zocalo.zocalo_results import (
     get_processing_result,
 )
 from dodal.plans.check_topup import check_topup_and_wait_if_necessary
-from ophyd_async.panda import HDFPanda
+from ophyd_async.fastcs.panda import HDFPanda
 from scanspec.core import AxesPoints, Axis
 
 from mx_bluesky.hyperion.device_setup_plans.manipulate_sample import move_x_y_z
@@ -138,7 +138,7 @@ def flyscan_xray_centre(
             "subplan_name": CONST.PLAN.GRIDSCAN_OUTER,
             CONST.TRIGGER.ZOCALO: CONST.PLAN.DO_FGS,
             "zocalo_environment": parameters.zocalo_environment,
-            "hyperion_parameters": parameters.json(),
+            "hyperion_parameters": parameters.model_dump_json(),
             "activate_callbacks": [
                 "GridscanNexusFileCallback",
             ],

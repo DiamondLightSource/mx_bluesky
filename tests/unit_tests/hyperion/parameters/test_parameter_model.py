@@ -51,7 +51,7 @@ def test_cant_do_panda_fgs_with_odd_y_steps(minimal_3d_gridscan_params):
 
 def test_serialise_deserialise(minimal_3d_gridscan_params):
     test_params = ThreeDGridScan(**minimal_3d_gridscan_params)
-    serialised = json.loads(test_params.json())
+    serialised = json.loads(test_params.model_dump_json())
     deserialised = ThreeDGridScan(**serialised)
     assert deserialised.demand_energy_ev is None
     assert deserialised.visit == "cm12345"

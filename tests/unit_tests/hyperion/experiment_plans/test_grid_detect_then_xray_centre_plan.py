@@ -217,7 +217,7 @@ def test_when_full_grid_scan_run_then_parameters_sent_to_fgs_as_expected(
         assert params.FGS_params.y_axis.end == pytest.approx(1.511, 0.001)
 
         # Parameters can be serialized
-        params.json()
+        params.model_dump_json()
 
 
 @patch(

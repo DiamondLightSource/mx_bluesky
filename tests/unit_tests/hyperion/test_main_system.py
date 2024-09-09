@@ -300,6 +300,21 @@ def test_start_with_json_file_gives_success(test_env: ClientAndRunEngine):
     check_status_in_response(response, Status.SUCCESS)
 
 
+def test_start_with_json_file_with_extras_gives_error(test_env: ClientAndRunEngine):
+    test_env.mock_run_engine.RE_takes_time = False
+
+    with open(
+        "tests/test_data/parameter_json_files/good_test_parameters.json"
+    ) as test_params_file:
+        test_params = test_params_file.read()
+
+    params = json.loads(test_params)
+    params["extra_param"] = "test"
+    test_params = json.dumps(params)
+    response = test_env.client.put(START_ENDPOINT, data=test_params)
+    check_status_in_response(response, Status.FAILED)
+
+
 test_argument_combinations = [
     (
         [

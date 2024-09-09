@@ -53,7 +53,7 @@ def ispyb_activation_wrapper(plan_generator: MsgGenerator, parameters):
         md={
             "activate_callbacks": ["GridscanISPyBCallback"],
             "subplan_name": CONST.PLAN.GRID_DETECT_AND_DO_GRIDSCAN,
-            "hyperion_parameters": parameters.json(),
+            "hyperion_parameters": parameters.model_dump_json(),
         },
     )
 
@@ -93,9 +93,7 @@ class GridscanISPyBCallback(BaseISPyBCallback):
                 "ISPyB callback received start document with experiment parameters and "
                 f"uid: {self.uid_to_finalize_on}"
             )
-            self.params = GridCommon.from_json(
-                doc.get("hyperion_parameters"), allow_extras=True
-            )
+            self.params = GridCommon.from_json(doc.get("hyperion_parameters"))
             self.ispyb = StoreInIspyb(self.ispyb_config)
             data_collection_group_info = populate_data_collection_group(self.params)
 
