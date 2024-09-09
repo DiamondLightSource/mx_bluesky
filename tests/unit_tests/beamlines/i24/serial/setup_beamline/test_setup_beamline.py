@@ -9,8 +9,9 @@ from dodal.devices.i24.i24_detector_motion import DetectorMotion
 from mx_bluesky.beamlines.i24.serial.setup_beamline import setup_beamline
 
 
+@patch("mx_bluesky.beamlines.i24.serial.setup_beamline.setup_beamline.bps.sleep")
 async def test_setup_beamline_for_collection_plan(
-    aperture: Aperture, backlight: DualBacklight, beamstop: Beamstop, RE
+    _, aperture: Aperture, backlight: DualBacklight, beamstop: Beamstop, RE
 ):
     RE(setup_beamline.setup_beamline_for_collection_plan(aperture, backlight, beamstop))
 
@@ -37,7 +38,8 @@ def test_pilatus_raises_error_if_fastchip_and_no_args_list(fake_caget, fake_capu
 
 @patch("mx_bluesky.beamlines.i24.serial.setup_beamline.setup_beamline.caput")
 @patch("mx_bluesky.beamlines.i24.serial.setup_beamline.setup_beamline.caget")
-def test_pilatus_quickshot(fake_caget, fake_caput):
+@patch("mx_bluesky.beamlines.i24.serial.setup_beamline.setup_beamline.sleep")
+def test_pilatus_quickshot(_, fake_caget, fake_caput):
     setup_beamline.pilatus("quickshot", ["", "", 1, 0.1])
     assert fake_caput.call_count == 12
     assert fake_caget.call_count == 2
@@ -52,6 +54,7 @@ def test_eiger_raises_error_if_quickshot_and_no_args_list(fake_caget, fake_caput
 
 @patch("mx_bluesky.beamlines.i24.serial.setup_beamline.setup_beamline.caput")
 @patch("mx_bluesky.beamlines.i24.serial.setup_beamline.setup_beamline.caget")
-def test_eiger_quickshot(fake_caget, fake_caput):
+@patch("mx_bluesky.beamlines.i24.serial.setup_beamline.setup_beamline.sleep")
+def test_eiger_quickshot(_, fake_caget, fake_caput):
     setup_beamline.eiger("quickshot", ["", "", "1", "0.1"])
     assert fake_caput.call_count == 32

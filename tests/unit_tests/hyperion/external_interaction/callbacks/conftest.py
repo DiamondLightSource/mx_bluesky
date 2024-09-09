@@ -1,4 +1,5 @@
 import pytest
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.synchrotron import SynchrotronMode
 from dodal.devices.zocalo.zocalo_results import ZOCALO_READING_PLAN_NAME
 from event_model.documents import Event, EventDescriptor, RunStart, RunStop
@@ -29,7 +30,7 @@ def test_rotation_start_outer_document(dummy_rotation_params):
     return {
         "uid": "d8bee3ee-f614-4e7a-a516-25d6b9e87ef3",
         "subplan_name": CONST.PLAN.ROTATION_OUTER,
-        "hyperion_parameters": dummy_rotation_params.json(),
+        "hyperion_parameters": dummy_rotation_params.model_dump_json(),
     }
 
 
@@ -46,7 +47,7 @@ class TestData(OavGridSnapshotTestEvents):
         "plan_name": CONST.PLAN.GRIDSCAN_OUTER,
         "subplan_name": CONST.PLAN.GRIDSCAN_OUTER,
         CONST.TRIGGER.ZOCALO: CONST.PLAN.DO_FGS,
-        "hyperion_parameters": dummy_params().json(),
+        "hyperion_parameters": dummy_params().model_dump_json(),
     }
     test_gridscan3d_start_document: RunStart = {  # type: ignore
         "uid": "d8bee3ee-f614-4e7a-a516-25d6b9e87ef3",
@@ -56,7 +57,7 @@ class TestData(OavGridSnapshotTestEvents):
         "plan_type": "generator",
         "plan_name": "test",
         "subplan_name": CONST.PLAN.GRID_DETECT_AND_DO_GRIDSCAN,
-        "hyperion_parameters": dummy_params().json(),
+        "hyperion_parameters": dummy_params().model_dump_json(),
     }
     test_gridscan2d_start_document = {
         "uid": "d8bee3ee-f614-4e7a-a516-25d6b9e87ef3",
@@ -66,7 +67,7 @@ class TestData(OavGridSnapshotTestEvents):
         "plan_type": "generator",
         "plan_name": "test",
         "subplan_name": CONST.PLAN.GRID_DETECT_AND_DO_GRIDSCAN,
-        "hyperion_parameters": dummy_params_2d().json(),
+        "hyperion_parameters": dummy_params_2d().model_dump_json(),
     }
     test_rotation_start_main_document = {
         "uid": "2093c941-ded1-42c4-ab74-ea99980fbbfd",
@@ -83,18 +84,19 @@ class TestData(OavGridSnapshotTestEvents):
         "subplan_name": CONST.PLAN.GRIDSCAN_OUTER,
         "zocalo_environment": "dev_artemis",
         CONST.TRIGGER.ZOCALO: CONST.PLAN.DO_FGS,
-        "hyperion_parameters": dummy_params().json(),
+        "hyperion_parameters": dummy_params().model_dump_json(),
     }
     test_rotation_event_document_during_data_collection: Event = {
         "descriptor": "bd45c2e5-2b85-4280-95d7-a9a15800a78b",
         "time": 2666604299.928203,
         "data": {
-            "aperture_scatterguard-selected_aperture": {
-                "name": "Medium",
-                "GDA_name": "MEDIUM",
-                "radius_microns": 50,
-                "location": (15, 16, 2, 18, 19),
-            },
+            "aperture_scatterguard-aperture-x": 15,
+            "aperture_scatterguard-aperture-y": 16,
+            "aperture_scatterguard-aperture-z": 2,
+            "aperture_scatterguard-scatterguard-x": 18,
+            "aperture_scatterguard-scatterguard-y": 19,
+            "aperture_scatterguard-selected_aperture": ApertureValue.MEDIUM,
+            "aperture_scatterguard-radius": 50,
             "attenuator-actual_transmission": 0.98,
             "flux_flux_reading": 9.81,
             "dcm-energy_in_kev": 11.105,
@@ -180,12 +182,13 @@ class TestData(OavGridSnapshotTestEvents):
         "descriptor": "bd45c2e5-2b85-4280-95d7-a9a15800a78b",
         "time": 2666604299.928203,
         "data": {
-            "aperture_scatterguard-selected_aperture": {
-                "name": "Medium",
-                "GDA_name": "MEDIUM",
-                "radius_microns": 50,
-                "location": (15, 16, 2, 18, 19),
-            },
+            "aperture_scatterguard-aperture-x": 15,
+            "aperture_scatterguard-aperture-y": 16,
+            "aperture_scatterguard-aperture-z": 2,
+            "aperture_scatterguard-scatterguard-x": 18,
+            "aperture_scatterguard-scatterguard-y": 19,
+            "aperture_scatterguard-selected_aperture": ApertureValue.MEDIUM,
+            "aperture_scatterguard-radius": 50,
             "attenuator-actual_transmission": 1,
             "flux_flux_reading": 10,
             "dcm-energy_in_kev": 11.105,

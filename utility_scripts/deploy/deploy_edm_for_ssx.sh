@@ -4,7 +4,7 @@
 # Make a copy of them in edm/ and replace paths
 
 current=$( realpath "$( dirname "$0" )" )
-base=$(dirname $current)
+base=$(dirname $(dirname $current))
 
 edm_build="$base/edm_serial"
 
@@ -24,7 +24,7 @@ mkdir $ex_edm
 mkdir $ft_edm
 
 scripts_placeholder="SCRIPTS_LOCATION"
-scripts_loc="$base/src/mx_bluesky/i24/serial"
+scripts_loc="$base/src/mx_bluesky/beamlines/i24/serial"
 
 # Add blueapi configuration file to get stomp
 # See https://github.com/DiamondLightSource/blueapi/issues/485

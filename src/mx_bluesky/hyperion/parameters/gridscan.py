@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import os
 
-from dodal.devices.aperturescatterguard import AperturePositionGDANames
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import (
-    DetectorDistanceToBeamXYConverter,
     DetectorParams,
 )
 from dodal.devices.fast_grid_scan import (
@@ -15,9 +14,6 @@ from pydantic import Field, PrivateAttr
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line, Static
 
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import (
-    GridscanIspybParams,
-)
 from mx_bluesky.hyperion.parameters.components import (
     DiffractionExperimentWithSample,
     IspybExperimentType,
@@ -44,19 +40,7 @@ class GridCommon(
     ispyb_experiment_type: IspybExperimentType = Field(
         default=IspybExperimentType.GRIDSCAN_3D
     )
-    selected_aperture: AperturePositionGDANames | None = Field(
-        default=AperturePositionGDANames.SMALL_APERTURE
-    )
-
-    @property
-    def ispyb_params(self):
-        return GridscanIspybParams(
-            visit_path=str(self.visit_directory),
-            comment=self.comment,
-            sample_id=self.sample_id,
-            ispyb_experiment_type=self.ispyb_experiment_type,
-            position=None,
-        )
+    selected_aperture: ApertureValue | None = Field(default=ApertureValue.SMALL)
 
     @property
     def detector_params(self):
@@ -85,9 +69,6 @@ class GridCommon(
             use_roi_mode=self.use_roi_mode,
             det_dist_to_beam_converter_path=self.det_dist_to_beam_converter_path,
             trigger_mode=self.trigger_mode,
-            beam_xy_converter=DetectorDistanceToBeamXYConverter(
-                self.det_dist_to_beam_converter_path
-            ),
             enable_dev_shm=self.use_gpu,
             **optional_args,
         )
@@ -104,7 +85,7 @@ class RobotLoadThenCentre(GridCommon):
     thawing_time: float = Field(default=CONST.I03.THAWING_TIME)
 
     def pin_centre_then_xray_centre_params(self):
-        my_params = self.dict()
+        my_params = self.model_dump()
         del my_params["thawing_time"]
         return PinTipCentreThenXrayCentre(**my_params)
 

@@ -62,7 +62,7 @@ def fake_rotation_scan(
     @bpp.run_decorator(  # attach experiment metadata to the start document
         md={
             "subplan_name": CONST.PLAN.ROTATION_OUTER,
-            "hyperion_parameters": parameters.json(),
+            "hyperion_parameters": parameters.model_dump_json(),
             "activate_callbacks": "RotationNexusFileCallback",
         }
     )
@@ -118,6 +118,7 @@ def fake_create_rotation_devices():
         zebra=zebra,
         robot=robot,
         oav=oav,
+        sample_shutter=i03.sample_shutter(fake_with_ophyd_sim=True),
     )
 
 

@@ -256,24 +256,18 @@ def save_screen_map() -> MsgGenerator:
 
 
 @log.log_on_entry
-def upload_parameters(
-    chipid: str = "oxford", pmac: PMAC = inject("pmac"), width: int | None = None
-) -> MsgGenerator:
+def upload_parameters(pmac: PMAC = inject("pmac")) -> MsgGenerator:
     setup_logging()
-    logger.info("Uploading Parameters to the GeoBrick")
-    if chipid == "oxford":
-        caput(CHIPTYPE_PV, 0)
-        width = 8
-    else:
-        if width is None:
-            raise Exception("Supply a width if chipid is not oxford")
+    logger.info("Uploading Parameters for Oxford Chip to the GeoBrick")
+    caput(CHIPTYPE_PV, 0)
+    width = 8
 
     map_file: Path = LITEMAP_PATH / "currentchip.map"
     if not map_file.exists():
         raise FileNotFoundError(f"The file {map_file} has not yet been created")
 
     with open(map_file) as f:
-        logger.info(f"Chipid {chipid}")
+        logger.info(f"Chipid {ChipType.Oxford}")
         logger.info(f"width {width}")
         x = 1
         for line in f.readlines()[: width**2]:

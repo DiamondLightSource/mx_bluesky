@@ -8,20 +8,23 @@ from enum import StrEnum
 from pathlib import Path
 from typing import SupportsInt, TypeVar
 
-from dodal.devices.aperturescatterguard import AperturePositionGDANames
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import (
     DetectorParams,
     TriggerMode,
 )
-from numpy.typing import NDArray
-from pydantic import BaseModel, Extra, Field, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 from scanspec.core import AxesPoints
 from semver import Version
 
 from mx_bluesky.hyperion.external_interaction.config_server import FeatureFlags
-from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_dataclass import (
-    IspybParams,
-)
 from mx_bluesky.hyperion.parameters.constants import CONST
 
 T = TypeVar("T")
@@ -33,16 +36,6 @@ class ParameterVersion(Version):
         if isinstance(version, cls):
             return version
         return cls.parse(version)
-
-    @classmethod
-    def __get_validators__(cls):
-        """Return a list of validator methods for pydantic models."""
-        yield cls._parse
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        """Inject/mutate the pydantic field schema in-place."""
-        field_schema.update(examples=["1.0.2", "2.15.3-alpha", "21.3.15-beta+12345"])
 
 
 PARAMETER_VERSION = ParameterVersion.parse("5.0.0")
@@ -107,13 +100,10 @@ class IspybExperimentType(StrEnum):
 
 
 class HyperionParameters(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-        extra = Extra.forbid
-        json_encoders = {
-            ParameterVersion: lambda pv: str(pv),
-            NDArray: lambda a: a.tolist(),
-        }
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        extra="allow",
+    )
 
     def __hash__(self) -> int:
         return self.json().__hash__()
@@ -121,8 +111,14 @@ class HyperionParameters(BaseModel):
     features: FeatureFlags = Field(default=FeatureFlags())
     parameter_model_version: ParameterVersion
 
-    @validator("parameter_model_version")
-    def _validate_version(cls, version: ParameterVersion):
+    @field_serializer("parameter_model_version")
+    def serialize_parameter_version(self, version: ParameterVersion):
+        return str(version)
+
+    @field_validator("parameter_model_version", mode="before")
+    @classmethod
+    def _validate_version(cls, version_str: str):
+        version = ParameterVersion.parse(version_str)
         assert (
             version >= ParameterVersion(major=PARAMETER_VERSION.major)
         ), f"Parameter version too old! This version of hyperion uses {PARAMETER_VERSION}"
@@ -132,18 +128,14 @@ class HyperionParameters(BaseModel):
         return version
 
     @classmethod
-    def from_json(cls, input: str | None, *, allow_extras: bool = False):
+    def from_json(cls, input: str | None):
         assert input is not None
-        if allow_extras:
-            cls.Config.extra = Extra.ignore  # type: ignore
-        params = cls(**json.loads(input))
-        cls.Config.extra = Extra.forbid
-        return params
+        return cls(**json.loads(input))
 
 
 class WithSnapshot(BaseModel):
     snapshot_directory: Path
-    snapshot_omegas_deg: list[float] | None
+    snapshot_omegas_deg: list[float] | None = None
 
     @property
     def take_snapshots(self) -> bool:
@@ -154,7 +146,7 @@ class DiffractionExperiment(HyperionParameters, WithSnapshot):
     """For all experiments which use beam"""
 
     visit: str = Field(min_length=1)
-    file_name: str = Field(pattern=r"[\w]{2}[\d]+-[\d]+")
+    file_name: str
     exposure_time_s: float = Field(gt=0)
     comment: str = Field(default="")
     beamline: str = Field(default=CONST.I03.BEAMLINE, pattern=r"BL\d{2}[BIJS]")
@@ -169,12 +161,13 @@ class DiffractionExperiment(HyperionParameters, WithSnapshot):
     detector_distance_mm: float | None = Field(default=None, gt=0)
     demand_energy_ev: float | None = Field(default=None, gt=0)
     run_number: int | None = Field(default=None, ge=0)
-    selected_aperture: AperturePositionGDANames | None = Field(default=None)
+    selected_aperture: ApertureValue | None = Field(default=None)
     transmission_frac: float = Field(default=0.1)
     ispyb_experiment_type: IspybExperimentType
     storage_directory: str
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def validate_snapshot_directory(cls, values):
         snapshot_dir = values.get(
             "snapshot_directory", Path(values["storage_directory"], "snapshots")
@@ -197,11 +190,6 @@ class DiffractionExperiment(HyperionParameters, WithSnapshot):
     @property
     @abstractmethod
     def detector_params(self) -> DetectorParams: ...
-
-    @property
-    @abstractmethod
-    def ispyb_params(self) -> IspybParams:  # Soon to remove
-        ...
 
 
 class WithScan(BaseModel):
@@ -266,9 +254,6 @@ class OptionalGonioAngleStarts(BaseModel):
 
 
 class TemporaryIspybExtras(BaseModel):
-    # for while we still need ISpyB params - to be removed in #1277 and/or #43
-    class Config:
-        arbitrary_types_allowed = True
-        extra = Extra.forbid
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
 
     xtal_snapshots_omega_start: list[str] | None = None

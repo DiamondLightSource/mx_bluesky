@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, validator
+from pydantic import BaseModel, field_validator
 
 from mx_bluesky.beamlines.i24.serial.fixed_target.ft_utils import (
     ChipType,
@@ -21,7 +21,8 @@ class SerialExperiment(BaseModel):
     detector_distance_mm: float
     detector_name: Literal["eiger", "pilatus"]
 
-    @validator("visit", pre=True)
+    @field_validator("visit", mode="before")
+    @classmethod
     def _parse_visit(cls, visit: str | Path):
         if isinstance(visit, str):
             return Path(visit)
@@ -56,8 +57,6 @@ class ExtruderParameters(SerialExperiment, LaserExperiment):
 class ChipDescription(BaseModel):
     """Parameters defining the chip in use for FT collection."""
 
-    model_config = ConfigDict(use_enum_values=True)
-
     chip_type: ChipType
     x_num_steps: int
     y_num_steps: int
@@ -67,13 +66,6 @@ class ChipDescription(BaseModel):
     y_blocks: int
     b2b_horz: float
     b2b_vert: float
-
-    @validator("chip_type", pre=True)
-    def _parse_chip(cls, chip_type: str | int):
-        if isinstance(chip_type, str):
-            return ChipType[chip_type]
-        else:
-            return ChipType(chip_type)
 
     @property
     def chip_format(self) -> list[int]:
@@ -97,25 +89,12 @@ class ChipDescription(BaseModel):
 class FixedTargetParameters(SerialExperiment, LaserExperiment):
     """Fixed target parameter model."""
 
-    model_config = ConfigDict(use_enum_values=True)
-
     num_exposures: int
     chip: ChipDescription
     map_type: MappingType
     pump_repeat: PumpProbeSetting
     checker_pattern: bool = False
     total_num_images: int = 0  # Calculated in the code for now
-
-    @validator("map_type", pre=True)
-    def _parse_map(cls, map_type: str | int):
-        if isinstance(map_type, str):
-            return MappingType[map_type]
-        else:
-            return MappingType(map_type)
-
-    @validator("pump_repeat", pre=True)
-    def _parse_pump(cls, pump_repeat: int):
-        return PumpProbeSetting(pump_repeat)
 
     @classmethod
     def from_file(cls, filename: str | Path):

@@ -22,11 +22,9 @@ from dodal.common.beamlines.beamline_parameters import (
 )
 from dodal.common.beamlines.beamline_utils import clear_devices
 from dodal.devices.aperturescatterguard import (
-    ApertureFiveDimensionalLocation,
     AperturePosition,
     ApertureScatterguard,
-    ApertureScatterguardTolerances,
-    SingleAperturePosition,
+    ApertureValue,
 )
 from dodal.devices.attenuator import Attenuator
 from dodal.devices.backlight import Backlight
@@ -46,14 +44,20 @@ from dodal.devices.undulator import Undulator
 from dodal.devices.util.test_utils import patch_motor as oa_patch_motor
 from dodal.devices.webcam import Webcam
 from dodal.devices.zebra import Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.log import LOGGER as dodal_logger
 from dodal.log import set_up_all_logging_handlers
 from ophyd.sim import NullStatus
-from ophyd_async.core import Device, DeviceVector, callback_on_mock_put, set_mock_value
-from ophyd_async.core.async_status import AsyncStatus
-from ophyd_async.epics.motion.motor import Motor
+from ophyd_async.core import (
+    AsyncStatus,
+    Device,
+    DeviceVector,
+    callback_on_mock_put,
+    set_mock_value,
+)
+from ophyd_async.epics.motor import Motor
 from ophyd_async.epics.signal import epics_signal_rw
-from ophyd_async.panda._common_blocks import DatasetTable
+from ophyd_async.fastcs.panda import DatasetTable
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
 
@@ -457,31 +461,44 @@ def thawer(RE) -> Generator[Thawer, Any, Any]:
 
 
 @pytest.fixture
+def sample_shutter(RE) -> Generator[ZebraShutter, Any, Any]:
+    yield i03.sample_shutter(fake_with_ophyd_sim=True)
+
+
+@pytest.fixture
 def aperture_scatterguard(RE):
     positions = {
-        AperturePosition.LARGE: SingleAperturePosition(
-            location=ApertureFiveDimensionalLocation(0, 1, 2, 3, 4),
-            name="Large",
-            GDA_name="LARGE_APERTURE",
-            radius_microns=100,
+        ApertureValue.LARGE: AperturePosition(
+            aperture_x=0,
+            aperture_y=1,
+            aperture_z=2,
+            scatterguard_x=3,
+            scatterguard_y=4,
+            radius=100,
         ),
-        AperturePosition.MEDIUM: SingleAperturePosition(
-            location=ApertureFiveDimensionalLocation(5, 6, 2, 8, 9),
-            name="Medium",
-            GDA_name="MEDIUM_APERTURE",
-            radius_microns=50,
+        ApertureValue.MEDIUM: AperturePosition(
+            aperture_x=5,
+            aperture_y=6,
+            aperture_z=2,
+            scatterguard_x=8,
+            scatterguard_y=9,
+            radius=50,
         ),
-        AperturePosition.SMALL: SingleAperturePosition(
-            location=ApertureFiveDimensionalLocation(10, 11, 2, 13, 14),
-            name="Small",
-            GDA_name="SMALL_APERTURE",
-            radius_microns=20,
+        ApertureValue.SMALL: AperturePosition(
+            aperture_x=10,
+            aperture_y=11,
+            aperture_z=2,
+            scatterguard_x=13,
+            scatterguard_y=14,
+            radius=20,
         ),
-        AperturePosition.ROBOT_LOAD: SingleAperturePosition(
-            location=ApertureFiveDimensionalLocation(15, 16, 2, 18, 19),
-            name="Robot_load",
-            GDA_name="ROBOT_LOAD",
-            radius_microns=None,
+        ApertureValue.ROBOT_LOAD: AperturePosition(
+            aperture_x=15,
+            aperture_y=16,
+            aperture_z=2,
+            scatterguard_x=18,
+            scatterguard_y=19,
+            radius=None,
         ),
     }
     with (
@@ -490,21 +507,27 @@ def aperture_scatterguard(RE):
             return_value=positions,
         ),
         patch(
-            "dodal.beamlines.i03.load_tolerances_from_beamline_params",
-            return_value=ApertureScatterguardTolerances(0.1, 0.1, 0.1, 0.1, 0.1),
+            "dodal.beamlines.i03.AperturePosition.tolerances_from_gda_params",
+            return_value=AperturePosition(
+                aperture_x=0.1,
+                aperture_y=0.1,
+                aperture_z=0.1,
+                scatterguard_x=0.1,
+                scatterguard_y=0.1,
+            ),
         ),
     ):
         ap_sg = i03.aperture_scatterguard(fake_with_ophyd_sim=True)
     with (
-        patch_async_motor(ap_sg._aperture.x),
-        patch_async_motor(ap_sg._aperture.y),
-        patch_async_motor(ap_sg._aperture.z, 2),
-        patch_async_motor(ap_sg._scatterguard.x),
-        patch_async_motor(ap_sg._scatterguard.y),
+        patch_async_motor(ap_sg.aperture.x),
+        patch_async_motor(ap_sg.aperture.y),
+        patch_async_motor(ap_sg.aperture.z, 2),
+        patch_async_motor(ap_sg.scatterguard.x),
+        patch_async_motor(ap_sg.scatterguard.y),
     ):
-        RE(bps.abs_set(ap_sg, AperturePosition.SMALL))
+        RE(bps.abs_set(ap_sg, ApertureValue.SMALL))
 
-        set_mock_value(ap_sg._aperture.small, 1)
+        set_mock_value(ap_sg.aperture.small, 1)
         yield ap_sg
 
 
@@ -565,6 +588,7 @@ def fake_create_rotation_devices(
     dcm: DCM,
     robot: BartRobot,
     oav: OAV,
+    sample_shutter: ZebraShutter,
 ):
     set_mock_value(smargon.omega.max_velocity, 131)
     oav.zoom_controller.onst.sim_put("1.0x")  # type: ignore
@@ -585,6 +609,7 @@ def fake_create_rotation_devices(
         zebra=zebra,
         robot=robot,
         oav=oav,
+        sample_shutter=sample_shutter,
     )
 
 
@@ -699,6 +724,7 @@ async def fake_fgs_composite(
         panda=panda,
         panda_fast_grid_scan=i03.panda_fast_grid_scan(fake_with_ophyd_sim=True),
         robot=i03.robot(fake_with_ophyd_sim=True),
+        sample_shutter=i03.sample_shutter(fake_with_ophyd_sim=True),
     )
 
     fake_composite.eiger.stage = MagicMock(return_value=done_status)
@@ -860,5 +886,5 @@ class DocumentCapturer:
 @pytest.fixture
 def feature_flags():
     return FeatureFlags(
-        **{field_name: False for field_name in FeatureFlags.__fields__.keys()}
+        **{field_name: False for field_name in FeatureFlags.model_fields.keys()}
     )
