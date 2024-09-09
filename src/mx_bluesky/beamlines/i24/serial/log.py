@@ -53,7 +53,7 @@ logging_config = {
         "I24ssx": {
             "handlers": ["console"],
             "level": "DEBUG",
-            "propagate": True,
+            "propagate": False,
         }
     },
 }
