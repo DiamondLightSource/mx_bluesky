@@ -38,12 +38,6 @@ def _calculate_zoom_calibrator(oav: OAV):
     return zoomcalibrator
 
 
-def _move_to_position(pmac: PMAC, xmove: str, ymove: str):
-    """Trigger pmac move to clicked position coordinates."""
-    yield from bps.abs_set(pmac.pmac_string, xmove, wait=True)
-    yield from bps.abs_set(pmac.pmac_string, ymove, wait=True)
-
-
 def _move_on_mouse_click_plan(
     oav: OAV, pmac: PMAC, beam_centre: Sequence[int], clicked_position: Sequence[int]
 ):
