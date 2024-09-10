@@ -176,6 +176,8 @@ module load helm
 
 helm package $HELMCHART_DIR --app-version $APP_VERSION
 # Helm package generates a file suffixed with the chart version
-module load $CLUSTER
-kubectl config set-context --current --namespace=$NAMESPACE
+if [[ $LOGIN = true ]]; then
+  module load $CLUSTER
+  kubectl config set-context --current --namespace=$NAMESPACE
+fi
 helm upgrade --install $HELM_OPTIONS $RELEASE hyperion-0.0.1.tgz
