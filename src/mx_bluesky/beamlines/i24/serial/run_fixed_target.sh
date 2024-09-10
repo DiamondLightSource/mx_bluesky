@@ -10,7 +10,7 @@ export EDMDATAFILES="/dls_sw/prod/R3.14.12.3/support/motor/6-7-1dls14/motorApp/o
 current=$( realpath "$( dirname "$0" )" )
 
 # Run script to start blueapi serve
-. $current/start_blueapi.sh
+. $current/start_blueapi.sh     # NOTE To run with procserv on ws002 comment this out
 
 # Open the edm screen for a fixed target serial collection
 echo "Starting fixed target edm screen."
