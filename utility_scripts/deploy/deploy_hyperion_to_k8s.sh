@@ -165,7 +165,7 @@ hyperion.externalHostname=test-hyperion.diamond.ac.uk "
   mkdir -p $PROJECTDIR/tmp
   DEPLOYMENT_DIR=$PROJECTDIR
 else
-  DEPLOYMENT_DIR=/dls_sw/i03/software/bluesky/mx_bluesky_v${APP_VERSION}/hyperion
+  DEPLOYMENT_DIR=/dls_sw/i03/software/bluesky/mx_bluesky_${APP_VERSION}/hyperion
 fi
 
 HELM_OPTIONS+="--set hyperion.appVersion=$APP_VERSION,\
