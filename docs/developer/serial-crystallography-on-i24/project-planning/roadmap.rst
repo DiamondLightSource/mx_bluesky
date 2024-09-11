@@ -48,9 +48,21 @@ Ongoing list of TODOs:
    * - Work Ongoing
      - Rough Timeline
      - Completed
+   * - Fix permissions and allow for user collections
+     - Dec. 24
+     - :material-regular:`pending;2em`
+   * - Use Eiger device and bluesky plans for detector setup
+     - Dec. 24 / Jan. 25
+     - :material-regular:`pending;2em`
+   * - Set up callbacks for file writing
+     - Nov. 24
+     - :material-regular:`pending;2em`
+   * - Refactor logger
+     - Nov. 24
+     - :material-regular:`pending;2em`
    * - Improve alignment
      - Nov. 24
-     - :material-regular:`pending;2em` 
+     - :material-regular:`pending;2em`
 
 
 Experiment types required
