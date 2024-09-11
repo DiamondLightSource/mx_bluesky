@@ -47,25 +47,14 @@ spec:
           hostPath:
             path: "{{ .Values.dodal.projectDir | clean }}"
             type: Directory
-        {{- if .Values.hyperion.dev }}
         - name: logs
           hostPath:
             type: Directory
-            path: "{{ .Values.hyperion.projectDir }}/tmp"
+            path: "{{ .Values.hyperion.logDir }}"
         - name: data
           hostPath:
             type: Directory
-            path: "{{ .Values.hyperion.projectDir }}/tmp/data"
-        {{- else }}
-        - name: logs
-          hostPath:
-            type: Directory
-            path: "/dls_sw/{{ .Values.hyperion.beamline }}/logs"
-        - name: data
-          hostPath:
-            type: Directory
-            path: "/dls/{{ .Values.hyperion.beamline }}/data"
-        {{- end }}
+            path: "{{ .Values.hyperion.dataDir }}"
       containers:
       - name: hyperion
         image: {{ .Values.hyperion.imageRepository}}/hyperion:{{ .Values.hyperion.appVersion }}

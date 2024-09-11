@@ -160,9 +160,10 @@ hyperion.dev=true,\
 hyperion.runAsUser=$EUID,\
 hyperion.runAsGroup=$GID,\
 hyperion.supplementalGroups=[$SUPPLEMENTAL_GIDS],\
-hyperion.logDir=/app/hyperion/tmp,\
+hyperion.logDir=$PROJECTDIR/tmp,\
+hyperion.dataDir=$PROJECTDIR/tmp/data,\
 hyperion.externalHostname=test-hyperion.diamond.ac.uk "
-  mkdir -p $PROJECTDIR/tmp
+  mkdir -p $PROJECTDIR/tmp/data
   DEPLOYMENT_DIR=$PROJECTDIR
 else
   DEPLOYMENT_DIR=/dls_sw/i03/software/bluesky/mx_bluesky_${APP_VERSION}/hyperion
