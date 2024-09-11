@@ -26,7 +26,7 @@ Ongoing list of things needed:
 +---------------------------------------+----------------+---------------------------------+
 |             Work Ongoing              | Rough Timeline |            Completed            |
 +=======================================+================+=================================+
-| Document how to set up the current    | Ongoing        | :material-regular:`pending;2em` |
+| Document how to set up the current    | Ongoing        | :material-regular:`check;2em`   |
 | visit, deploy the edm screens and run |                |                                 |
 | a simple collection                   |                |                                 |
 +---------------------------------------+----------------+---------------------------------+
