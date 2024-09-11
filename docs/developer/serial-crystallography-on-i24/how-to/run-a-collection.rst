@@ -155,7 +155,7 @@ Once all parameters have been set, press ``Start`` to run the
 collection. A stream log will show what is going on in the terminal.
 
 
-**NOTE** As of version `1.0.0`, the ``Set parameters`` button has been removed and
+**NOTE** As of version ``1.0.0``, the ``Set parameters`` button has been removed and
 the parameters will now be read from the edm and applied to the collection directly
 once the ``Start`` button is pressed. For previous versions however, the button must
 still be pressed before starting the collection. A copy of the parameter file and chip
