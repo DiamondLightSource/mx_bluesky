@@ -10,7 +10,8 @@ Ongoing list of TODOs:
    zooms.
    - Close to being completed (see issue #44)
 2. Refactor and fix the logger.
-3. Solution for enabling users to run mx-bluesky instead of old scripts:
+3. Use callbacks for file IO eg. to write parameter and map files.
+4. Solution for enabling users to run mx-bluesky instead of old scripts:
    blocked by permission issues.
    - This should also allow us to stop using the Pilatus to make directories
      during an Eiger collection.
@@ -23,14 +24,21 @@ Ongoing list of TODOs:
    - A temporary workaround in place for beamline staff, who should be
      starting to run this for testing/in house beamtimes. Staff have started
      using this set up in September 24.
-4. Convert detector set up to use bluesky plans and ophyd_async devices.
+5. Convert detector set up to use bluesky plans and ophyd_async devices.
    - Eiger device in dodal needs to be converted to ophyd_async and updated
      to work with different Eigers on several beamlines.
    - Investigate using the existing Pilatus in ophyd_async which writes
      HDF5 instead of CBFs, but we may want to make a CBF-writing Pilatus.
      However, the Pilatus detector is due to be removed soon.
-5. Start looking into moving away from edm screens towards a web-based
+6. Start looking into moving away from edm screens towards a web-based
    GUI.
+   - Prepare generic react components to match the features in the edms.
+   - Components for things currently managed by general purpose PVs (eg. map)
+   - OAV viewer
+7. Implementation of serial tools to be used at XFELS.
+   - Reinstate removed code from sacla and move it to bluesky.
+   - Add any plans/devices that might be needed for other locations.
+8. Reinstate full mapping code using bluesky.
 
 (TBC…)
 
