@@ -4,24 +4,72 @@ Roadmap
 For a closer look at the ongoing work: `I24ssx
 board <https://github.com/orgs/DiamondLightSource/projects/10/views/2>`__
 
-Ongoing list of things needed:
+Ongoing list of TODOs:
 
-1. Solution for enabling users to run mx-bluesky instead of old scripts:
-   blocked by permission issues. Preferred solution would be run on
-   beamline kubernetes cluster - in the meantime also loooking into
-   procserv as a possibility. (Fixing this should also allow us to stop
-   using the Pilatus to make directories during an Eiger collection.)
-   Temporary workaround in place for beamline staff, who should be
-   starting to run this for testing/in house beamtimes.
-2. Convert detector set up to use bluesky plans and ophyd_async devices.
-   Investigate using the existing Pilatus in ophyd_async which writes
-   HDF5 instead of CBFs (may want to make a CBF-writing Pilatus).
-3. Start looking into moving away from edm screens towards a web-based
-   GUI.
-4. Improve alignment of chip: get it to work correctly for multiple
+1. Improve alignment of chip: get it to work correctly for multiple
    zooms.
+   - Close to being completed (see issue #44)
+2. Refactor and fix the logger.
+3. Solution for enabling users to run mx-bluesky instead of old scripts:
+   blocked by permission issues.
+   - This should also allow us to stop using the Pilatus to make directories
+     during an Eiger collection.
+   - The preferred permanent solution is to run mx-bluesky on the
+     beamline kubernetes cluster - I24 should be due to get on in 
+     shutdown 4 2024.
+   - Other possibility is to run the ```blueapi`` server on procServ. An
+     example of this has now been set up on ws002 on the beamline and 
+     is being tested.
+   - A temporary workaround in place for beamline staff, who should be
+     starting to run this for testing/in house beamtimes. Staff have started
+     using this set up in September 24.
+4. Convert detector set up to use bluesky plans and ophyd_async devices.
+   - Eiger device in dodal needs to be converted to ophyd_async and updated
+     to work with different Eigers on several beamlines.
+   - Investigate using the existing Pilatus in ophyd_async which writes
+     HDF5 instead of CBFs, but we may want to make a CBF-writing Pilatus.
+     However, the Pilatus detector is due to be removed soon.
+5. Start looking into moving away from edm screens towards a web-based
+   GUI.
 
 (TBC…)
+
+
+Experiment types required
+=========================
+
+-  Extruder
+
+   -  Standard
+   -  Pump probe
+
+-  Fixed target (probably about 80-85% of serial on I24)
+
+   -  Standard chip collection – option for multiple exposures in each
+      spot
+   -  Pump probe - see for short description
+      https://confluence.diamond.ac.uk/display/MXTech/Dynamics+and+fixed+targets
+
+      -  Short delays
+      -  Excite and visit again
+      -  Long delays with fast shutter opening/closing
+
+-  (Future) Fixed target with rotation at each “window” (Preliminary
+   work done by beamline staff on the PMAC program
+   https://confluence.diamond.ac.uk/display/MXTech/Grids+with+rotations)
+
+Details of zebra settings for each type:
+https://confluence.diamond.ac.uk/display/MXTech/Zebra+settings+I24
+
+Note that most of the set up for the fixed target is actually done by
+the PMAC via PMAC strings.
+
+
+
+--------------
+
+Old roadmap for reference
+
 
 +---------------------------------------+----------------+---------------------------------+
 |             Work Ongoing              | Rough Timeline |            Completed            |
@@ -71,34 +119,3 @@ Ongoing list of things needed:
 | Tidy up original code and add some    | Summer 23      | :material-regular:`check;2em`   |
 | tests                                 |                |                                 |
 +---------------------------------------+----------------+---------------------------------+
-
---------------
-
-Experiment types required
-=========================
-
--  Extruder
-
-   -  Standard
-   -  Pump probe
-
--  Fixed target (probably about 80-85% of serial on I24)
-
-   -  Standard chip collection – option for multiple exposures in each
-      spot
-   -  Pump probe - see for short description
-      https://confluence.diamond.ac.uk/display/MXTech/Dynamics+and+fixed+targets
-
-      -  Short delays
-      -  Excite and visit again
-      -  Long delays with fs opening/closing
-
--  (Future) Fixed target with rotation at each “window” (Preliminary
-   work done by beamline staff on the PMAC program
-   https://confluence.diamond.ac.uk/display/MXTech/Grids+with+rotations)
-
-Details of zebra settings for each type:
-https://confluence.diamond.ac.uk/display/MXTech/Zebra+settings+I24
-
-Note that most of the set up for the fixed target is actually done by
-the PMAC via PMAC strings.
