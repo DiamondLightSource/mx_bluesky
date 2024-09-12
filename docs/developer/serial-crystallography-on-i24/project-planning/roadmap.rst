@@ -48,6 +48,9 @@ Ongoing list of TODOs:
    * - Work Ongoing
      - Rough Timeline
      - Completed
+   * - Fully test extruder collections
+     - Nov. 24
+     - :material-regular:`pending;2em`
    * - Fix permissions and allow for user collections
      - Dec. 24 / Jan. 25
      - :material-regular:`pending;2em`
