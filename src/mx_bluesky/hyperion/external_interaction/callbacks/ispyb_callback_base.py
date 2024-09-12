@@ -184,7 +184,7 @@ class BaseISPyBCallback(PlanReactiveCallback):
         return self._tag_doc(doc)
 
     def _append_to_comment(self, id: int, comment: str) -> None:
-        assert isinstance(self.ispyb, StoreInIspyb)
+        assert self.ispyb is not None
         try:
             self.ispyb.append_to_comment(id, comment)
         except TypeError:

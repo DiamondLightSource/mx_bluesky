@@ -31,6 +31,10 @@ from mx_bluesky.hyperion.experiment_plans.rotation_scan_plan import (
 from mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback import (
     RotationISPyBCallback,
 )
+from mx_bluesky.hyperion.external_interaction.callbacks.zocalo_callback import (
+    ZocaloCallback,
+)
+from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_store import IspybIds
 from mx_bluesky.hyperion.parameters.constants import CONST, DocDescriptorNames
 from mx_bluesky.hyperion.parameters.rotation import RotationScan
 
@@ -624,3 +628,40 @@ def test_rotation_scan_correctly_triggers_ispyb_callback(
             ),
         )
     mock_store_in_ispyb.assert_called()
+
+
+@patch(
+    "mx_bluesky.hyperion.external_interaction.callbacks.zocalo_callback.ZocaloTrigger"
+)
+@patch(
+    "mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback.StoreInIspyb"
+)
+def test_rotation_scan_correctly_triggers_zocalo_callback(
+    mock_store_in_ispyb,
+    mock_zocalo_interactor,
+    RE: RunEngine,
+    test_rotation_params: RotationScan,
+    fake_create_rotation_devices: RotationScanComposite,
+    oav_parameters_for_rotation: OAVParameters,
+):
+    mock_zocalo_callback = ZocaloCallback()
+    mock_ispyb_callback = RotationISPyBCallback(emit=mock_zocalo_callback)
+    mock_store_in_ispyb.return_value.update_deposition.return_value = IspybIds(
+        data_collection_ids=(0, 1)
+    )
+    RE.subscribe(mock_ispyb_callback)
+    with (
+        patch("bluesky.plan_stubs.wait", autospec=True),
+        patch(
+            "bluesky.preprocessors.__read_and_stash_a_motor",
+            fake_read,
+        ),
+    ):
+        RE(
+            rotation_scan(
+                fake_create_rotation_devices,
+                test_rotation_params,
+                oav_parameters_for_rotation,
+            ),
+        )
+    mock_zocalo_interactor.return_value.run_start.assert_called_once()
