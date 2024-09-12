@@ -42,7 +42,7 @@ Ongoing list of TODOs:
 
 
 .. list-table:: Rough Roadmap
-   :widths: 25 25 25
+   :widths: 30 30 15
    :header-rows: 1
 
    * - Work Ongoing
