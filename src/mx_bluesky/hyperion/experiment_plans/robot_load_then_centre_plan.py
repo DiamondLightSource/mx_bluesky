@@ -124,7 +124,7 @@ def take_robot_snapshots(oav: OAV, webcam: Webcam, directory: Path):
         )
         yield from bps.abs_set(device.directory, str(directory))
         yield from bps.trigger(device, group="snapshots")
-    yield from bps.wait("snapshots")
+        yield from bps.wait("snapshots")
 
 
 def prepare_for_robot_load(composite: RobotLoadThenCentreComposite):
