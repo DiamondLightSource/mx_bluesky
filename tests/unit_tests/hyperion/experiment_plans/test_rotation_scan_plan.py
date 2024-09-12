@@ -28,6 +28,9 @@ from mx_bluesky.hyperion.experiment_plans.rotation_scan_plan import (
     rotation_scan,
     rotation_scan_plan,
 )
+from mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback import (
+    RotationISPyBCallback,
+)
 from mx_bluesky.hyperion.parameters.constants import CONST, DocDescriptorNames
 from mx_bluesky.hyperion.parameters.rotation import RotationScan
 
@@ -592,3 +595,32 @@ def test_rotation_scan_arms_detector_and_takes_snapshots_whilst_arming(
         lambda msg: msg.command == "wait"
         and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
     )
+
+
+@patch(
+    "mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback.StoreInIspyb"
+)
+def test_rotation_scan_correctly_triggers_ispyb_callback(
+    mock_store_in_ispyb,
+    RE: RunEngine,
+    test_rotation_params: RotationScan,
+    fake_create_rotation_devices: RotationScanComposite,
+    oav_parameters_for_rotation: OAVParameters,
+):
+    mock_ispyb_callback = RotationISPyBCallback()
+    RE.subscribe(mock_ispyb_callback)
+    with (
+        patch("bluesky.plan_stubs.wait", autospec=True),
+        patch(
+            "bluesky.preprocessors.__read_and_stash_a_motor",
+            fake_read,
+        ),
+    ):
+        RE(
+            rotation_scan(
+                fake_create_rotation_devices,
+                test_rotation_params,
+                oav_parameters_for_rotation,
+            ),
+        )
+    mock_store_in_ispyb.assert_called()
