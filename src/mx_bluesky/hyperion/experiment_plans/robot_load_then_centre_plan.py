@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from typing import cast
@@ -8,6 +9,7 @@ from typing import cast
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
 from blueapi.core import BlueskyContext, MsgGenerator
+from bluesky.utils import Msg
 from dodal.devices.aperturescatterguard import ApertureScatterguard, ApertureValue
 from dodal.devices.attenuator import Attenuator
 from dodal.devices.backlight import Backlight
@@ -185,11 +187,21 @@ def raise_exception_if_moved_out_of_cryojet(exception):
         )
 
 
+def pin_already_loaded(
+    robot: BartRobot, pin_to_load: int, puck_to_load: int
+) -> Generator[Msg, None, bool]:
+    current_puck = yield from bps.rd(robot.current_puck)
+    current_pin = yield from bps.rd(robot.current_pin)
+    return int(current_puck) == puck_to_load and int(current_pin) == pin_to_load
+
+
 def robot_load_then_centre_plan(
     composite: RobotLoadThenCentreComposite,
     params: RobotLoadThenCentre,
 ):
-    yield from prepare_for_robot_load(composite)
+    # TODO: get these from one source of truth #1347
+    assert params.sample_puck is not None
+    assert params.sample_pin is not None
 
     @bpp.run_decorator(
         md={
@@ -245,8 +257,17 @@ def robot_load_then_centre_plan(
 
         yield from bps.wait("reset-lower_gonio")
 
-    yield from robot_load_and_snapshots()
-
+    if not (
+        yield from pin_already_loaded(
+            composite.robot, params.sample_pin, params.sample_puck
+        )
+    ):
+        yield from prepare_for_robot_load(composite)
+        yield from robot_load_and_snapshots()
+    else:
+        LOGGER.info(
+            f"Pin/puck {params.sample_pin}/{params.sample_puck} already loaded, will not reload."
+        )
     yield from pin_centre_then_xray_centre_plan(
         cast(GridDetectThenXRayCentreComposite, composite),
         params.pin_centre_then_xray_centre_params(),
