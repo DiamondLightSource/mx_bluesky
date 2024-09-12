@@ -19,12 +19,12 @@ from dodal.devices.s4_slit_gaps import S4SlitGaps
 from dodal.devices.smargon import Smargon
 from dodal.devices.synchrotron import Synchrotron
 from dodal.devices.undulator import Undulator
+from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import RotationDirection, Zebra
 from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.plans.check_topup import check_topup_and_wait_if_necessary
 
 from mx_bluesky.hyperion.device_setup_plans.manipulate_sample import (
-    begin_sample_environment_setup,
     cleanup_sample_environment,
     move_phi_chi_omega,
     move_x_y_z,
@@ -42,6 +42,9 @@ from mx_bluesky.hyperion.device_setup_plans.setup_zebra import (
 )
 from mx_bluesky.hyperion.device_setup_plans.utils import (
     start_preparing_data_collection_then_do_plan,
+)
+from mx_bluesky.hyperion.device_setup_plans.xbpm_feedback import (
+    transmission_and_xbpm_feedback_for_collection_decorator,
 )
 from mx_bluesky.hyperion.experiment_plans.oav_snapshot_plan import (
     OavSnapshotComposite,
@@ -76,6 +79,7 @@ class RotationScanComposite(OavSnapshotComposite):
     sample_shutter: ZebraShutter
     zebra: Zebra
     oav: OAV
+    xbpm_feedback: XBPMFeedback
 
 
 def create_devices(context: BlueskyContext) -> RotationScanComposite:
@@ -200,6 +204,11 @@ def rotation_scan_plan(
             "subplan_name": CONST.PLAN.ROTATION_MAIN,
             "scan_points": [params.scan_points],
         }
+    )
+    @transmission_and_xbpm_feedback_for_collection_decorator(
+        composite.xbpm_feedback,
+        composite.attenuator,
+        params.transmission_frac,
     )
     def _rotation_scan_plan(
         motion_values: RotationMotionProfile,
@@ -359,13 +368,6 @@ def rotation_scan(
 
         @bpp.finalize_decorator(lambda: _cleanup_plan(composite))
         def rotation_with_cleanup_and_stage(params: RotationScan):
-            LOGGER.info("setting up sample environment...")
-            yield from begin_sample_environment_setup(
-                composite.attenuator,
-                params.transmission_frac,
-                group=CONST.WAIT.ROTATION_READY_FOR_DC,
-            )
-
             yield from _move_and_rotation(composite, params, oav_params)
 
         LOGGER.info("setting up and staging eiger...")
@@ -390,12 +392,6 @@ def multi_rotation_scan(
         oav_params = OAVParameters(context="xrayCentring")
     eiger: EigerDetector = composite.eiger
     eiger.set_detector_parameters(parameters.detector_params)
-    LOGGER.info("setting up sample environment...")
-    yield from begin_sample_environment_setup(
-        composite.attenuator,
-        parameters.transmission_frac,
-        group=CONST.WAIT.ROTATION_READY_FOR_DC,
-    )
 
     @bpp.set_run_key_decorator("multi_rotation_scan")
     @bpp.run_decorator(
