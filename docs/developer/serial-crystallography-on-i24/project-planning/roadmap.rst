@@ -41,7 +41,7 @@ Ongoing list of TODOs:
 (TBC…)
 
 
-.. list-table:: Roadmap
+.. list-table:: Rough Roadmap
    :widths: 25 25 25
    :header-rows: 1
 
@@ -49,13 +49,16 @@ Ongoing list of TODOs:
      - Rough Timeline
      - Completed
    * - Fix permissions and allow for user collections
-     - Dec. 24
-     - :material-regular:`pending;2em`
-   * - Use Eiger device and bluesky plans for detector setup
      - Dec. 24 / Jan. 25
      - :material-regular:`pending;2em`
+   * - Use Eiger device and bluesky plans for detector setup
+     - Jan. 25
+     - :material-regular:`pending;2em`
+   * - Start moving from edm to web GUI
+     - 
+     - :material-regular:`pending;2em`
    * - Set up callbacks for file writing
-     - Nov. 24
+     - Dec. 24
      - :material-regular:`pending;2em`
    * - Refactor logger
      - Nov. 24
