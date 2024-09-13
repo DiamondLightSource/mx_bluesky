@@ -45,7 +45,7 @@ dependencies = [
     "ophyd == 1.9.0",
     "ophyd-async >= 0.3a5",
     "bluesky >= 1.13.0a4",
-    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@74e0fdc72edcabc0c3811a3c4549ac8db29a8b0a",
+    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@040a72885deaca1055a930f09eccef4acca812f5",
 ]
 
 
@@ -136,6 +136,8 @@ filterwarnings = [
     "ignore:(.*)unclosed event loop(.*):ResourceWarning",
     # Ignore pydantic 2 issues from blueapi, see https://github.com/DiamondLightSource/blueapi/issues/622
     "ignore::DeprecationWarning:blueapi",
+    # Ignore deprecation warning from python-workflows https://github.com/DiamondLightSource/python-workflows/issues/180
+    "ignore:.*pkg_resources.*:DeprecationWarning",
 ]
 # Doctest python code in docs, python code in src docstrings, test functions in tests
 testpaths = "docs src tests/unit_tests"

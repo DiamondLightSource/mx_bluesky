@@ -209,18 +209,11 @@ def test_finish_i24(
 
 
 @patch("mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.DCID")
-@patch(
-    "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.bps.sleep"
-)
-def test_run_aborted_plan(mock_sleep, fake_dcid: MagicMock, pmac: PMAC, RE):
+def test_run_aborted_plan(fake_dcid: MagicMock, pmac: PMAC, RE, done_status):
+    pmac.abort_program.trigger = MagicMock(return_value=done_status)
     RE(run_aborted_plan(pmac, fake_dcid))
 
-    mock_pmac_string = get_mock_put(pmac.pmac_string)
-    pmac_string_calls = [
-        call("A", wait=True, timeout=ANY),
-        call("P2401=0", wait=True, timeout=ANY),
-    ]
-    mock_pmac_string.assert_has_calls(pmac_string_calls)
+    pmac.abort_program.trigger.assert_called_once()
     fake_dcid.collection_complete.assert_called_once_with(ANY, aborted=True)
 
 
