@@ -123,8 +123,9 @@ def take_robot_snapshots(oav: OAV, webcam: Webcam, directory: Path):
             device.filename, snapshot_format.format(device=device.name)
         )
         yield from bps.abs_set(device.directory, str(directory))
+        # Note: should be able to use `wait=True` after https://github.com/bluesky/bluesky/issues/1795
         yield from bps.trigger(device, group="snapshots")
-    yield from bps.wait("snapshots")
+        yield from bps.wait("snapshots")
 
 
 def prepare_for_robot_load(composite: RobotLoadThenCentreComposite):
