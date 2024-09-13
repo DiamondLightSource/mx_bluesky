@@ -56,7 +56,7 @@ For a pump-probe experiment, select ``True`` on the dropdown menu in
 ``Data Collection Setup`` and then set the laser dwell and delay times
 in the ``Pump Probe`` panel. 
 
-**WARNING** This setting requires an
+**WARNING** This setting requires a
 hardware change, as there are only 4 outputs on the zebra and they are
 all in use. When using the Eiger the Pilatus trigger cable should be
 used to trigger the light source. When using the pilatus the eiger
