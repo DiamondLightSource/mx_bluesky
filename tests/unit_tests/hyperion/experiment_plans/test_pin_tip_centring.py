@@ -318,20 +318,15 @@ def test_given_pin_tip_detect_using_ophyd_when_pin_tip_centre_plan_called_then_e
     mock_move_into_view,
     get_move: MagicMock,
     smargon: Smargon,
+    oav: OAV,
     test_config_files: dict[str, str],
     RE: RunEngine,
 ):
     set_mock_value(smargon.omega.user_readback, 0)
-    mock_oav: OAV = MagicMock(spec=OAV)
-    mock_oav.parameters = OAVConfigParams(
-        test_config_files["zoom_params_file"], test_config_files["display_config"]
-    )
-    mock_oav.parameters.micronsPerXPixel = 2.87
-    mock_oav.parameters.micronsPerYPixel = 2.87
     mock_ophyd_pin_tip_detection = MagicMock()
     composite = PinTipCentringComposite(
         backlight=MagicMock(),
-        oav=mock_oav,
+        oav=oav,
         smargon=smargon,
         pin_tip_detection=mock_ophyd_pin_tip_detection,
     )
