@@ -365,24 +365,32 @@ def test_rotation_scan_initialises_detector_distance_shutter_and_tx_fraction(
         and msg.obj.name == "detector_motion-shutter"
         and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
     )
-    msgs = assert_message_and_return_remaining(
-        msgs,
-        lambda msg: msg.command == "set"
-        and msg.obj.name == "attenuator"
-        and msg.args[0] == test_rotation_params.transmission_frac
-        and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
-    )
-    msgs = assert_message_and_return_remaining(
-        msgs,
-        lambda msg: msg.command == "set"
-        and msg.obj.name == "attenuator"
-        and msg.args[0] == test_rotation_params.transmission_frac
-        and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
-    )
     assert_message_and_return_remaining(
         msgs,
         lambda msg: msg.command == "wait"
         and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
+    )
+
+
+def test_rotation_scan_triggers_xbpm_then_pauses_xbpm_and_sets_transmission(
+    rotation_scan_simulated_messages,
+    test_rotation_params: RotationScan,
+):
+    msgs = assert_message_and_return_remaining(
+        rotation_scan_simulated_messages,
+        lambda msg: msg.command == "trigger" and msg.obj.name == "xbpm_feedback",
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "xbpm_feedback-pause_feedback"
+        and msg.args[0] == "Paused",
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "attenuator"
+        and msg.args[0] == test_rotation_params.transmission_frac,
     )
 
 
