@@ -17,7 +17,7 @@ Ongoing list of TODOs:
 
    - This should also allow us to stop using the Pilatus to make directories during an Eiger collection.
    - The preferred permanent solution is to run mx-bluesky on the beamline kubernetes cluster. I24 should be due to get on in shutdown 4 2024.
-   - Other possibility is to run the ```blueapi`` server on procServ. An example of this has now been set up on ws002 on the beamline and is being tested.
+   - Other possibility is to run the ``blueapi`` server on procServ. An example of this has now been set up on ws002 on the beamline and is being tested.
    - A temporary workaround in place for beamline staff, who should be starting to run this for testing/in house beamtimes. Staff have started using this set up in September 24.
 
 5. Convert detector set up to use bluesky plans and ophyd_async devices.
