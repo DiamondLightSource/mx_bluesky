@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from typing import cast
@@ -8,6 +9,7 @@ from typing import cast
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
 from blueapi.core import BlueskyContext, MsgGenerator
+from bluesky.utils import Msg
 from dodal.devices.aperturescatterguard import ApertureScatterguard, ApertureValue
 from dodal.devices.attenuator import Attenuator
 from dodal.devices.backlight import Backlight
@@ -185,68 +187,90 @@ def raise_exception_if_moved_out_of_cryojet(exception):
         )
 
 
+def _pin_already_loaded(
+    robot: BartRobot, pin_to_load: int, puck_to_load: int
+) -> Generator[Msg, None, bool]:
+    current_puck = yield from bps.rd(robot.current_puck)
+    current_pin = yield from bps.rd(robot.current_pin)
+    return int(current_puck) == puck_to_load and int(current_pin) == pin_to_load
+
+
+def robot_load_and_snapshots(
+    composite: RobotLoadThenCentreComposite,
+    params: RobotLoadThenCentre,
+    location: SampleLocation,
+):
+    robot_load_plan = do_robot_load(
+        composite,
+        location,
+        params.demand_energy_ev,
+        params.thawing_time,
+    )
+
+    # The lower gonio must be in the correct position for the robot load and we
+    # want to put it back afterwards. Note we don't wait the robot is interlocked
+    # to the lower gonio and the  move is quicker than the robot takes to get to the
+    # load position.
+    yield from bpp.contingency_wrapper(
+        home_and_reset_wrapper(
+            robot_load_plan,
+            composite.lower_gonio,
+            BartRobot.LOAD_TOLERANCE_MM,
+            CONST.HARDWARE.CRYOJET_MARGIN_MM,
+            "lower_gonio",
+            wait_for_all=False,
+        ),
+        except_plan=raise_exception_if_moved_out_of_cryojet,
+    )
+
+    yield from take_robot_snapshots(
+        composite.oav, composite.webcam, params.snapshot_directory
+    )
+
+    yield from bps.create(name=CONST.DESCRIPTORS.ROBOT_LOAD)
+    yield from bps.read(composite.robot.barcode)
+    yield from bps.read(composite.oav.snapshot)
+    yield from bps.read(composite.webcam)
+    yield from bps.save()
+
+    yield from bps.wait("reset-lower_gonio")
+
+
 def robot_load_then_centre_plan(
     composite: RobotLoadThenCentreComposite,
     params: RobotLoadThenCentre,
 ):
-    yield from prepare_for_robot_load(composite)
+    # TODO: get these from one source of truth #254
+    assert params.sample_puck is not None
+    assert params.sample_pin is not None
 
-    @bpp.run_decorator(
-        md={
-            "subplan_name": CONST.PLAN.ROBOT_LOAD,
-            "metadata": {
-                "visit_path": str(params.visit_directory),
-                "sample_id": params.sample_id,
-                "sample_puck": params.sample_puck,
-                "sample_pin": params.sample_pin,
-            },
-            "activate_callbacks": [
-                "RobotLoadISPyBCallback",
-            ],
-        }
-    )
-    def robot_load_and_snapshots():
-        # TODO: get these from one source of truth #1347
-        assert params.sample_puck is not None
-        assert params.sample_pin is not None
-
-        robot_load_plan = do_robot_load(
-            composite,
-            SampleLocation(params.sample_puck, params.sample_pin),
-            params.demand_energy_ev,
-            params.thawing_time,
+    if not (
+        yield from _pin_already_loaded(
+            composite.robot, params.sample_pin, params.sample_puck
         )
-
-        # The lower gonio must be in the correct position for the robot load and we
-        # want to put it back afterwards. Note we don't wait the robot is interlocked
-        # to the lower gonio and the  move is quicker than the robot takes to get to the
-        # load position.
-        yield from bpp.contingency_wrapper(
-            home_and_reset_wrapper(
-                robot_load_plan,
-                composite.lower_gonio,
-                BartRobot.LOAD_TOLERANCE_MM,
-                CONST.HARDWARE.CRYOJET_MARGIN_MM,
-                "lower_gonio",
-                wait_for_all=False,
+    ):
+        yield from prepare_for_robot_load(composite)
+        yield from bpp.run_wrapper(
+            robot_load_and_snapshots(
+                composite, params, SampleLocation(params.sample_puck, params.sample_pin)
             ),
-            except_plan=raise_exception_if_moved_out_of_cryojet,
+            md={
+                "subplan_name": CONST.PLAN.ROBOT_LOAD,
+                "metadata": {
+                    "visit_path": str(params.visit_directory),
+                    "sample_id": params.sample_id,
+                    "sample_puck": params.sample_puck,
+                    "sample_pin": params.sample_pin,
+                },
+                "activate_callbacks": [
+                    "RobotLoadISPyBCallback",
+                ],
+            },
         )
-
-        yield from take_robot_snapshots(
-            composite.oav, composite.webcam, params.snapshot_directory
+    else:
+        LOGGER.info(
+            f"Pin/puck {params.sample_pin}/{params.sample_puck} already loaded, will not reload."
         )
-
-        yield from bps.create(name=CONST.DESCRIPTORS.ROBOT_LOAD)
-        yield from bps.read(composite.robot.barcode)
-        yield from bps.read(composite.oav.snapshot)
-        yield from bps.read(composite.webcam)
-        yield from bps.save()
-
-        yield from bps.wait("reset-lower_gonio")
-
-    yield from robot_load_and_snapshots()
-
     yield from pin_centre_then_xray_centre_plan(
         cast(GridDetectThenXRayCentreComposite, composite),
         params.pin_centre_then_xray_centre_params(),
