@@ -12,7 +12,7 @@ Ongoing list of TODOs:
    - Close to being completed (see issue #44)
 
 2. Refactor and fix the logger.
-3. Use callbacks for file IO eg. to write parameter and map files.
+3. Use callbacks for file IO, eg. to write parameter and map files, nexus writer and ispyb deposition.
 4. Solution for enabling users to run mx-bluesky instead of old scripts: blocked by permission issues.
 
    - This should also allow us to stop using the Pilatus to make directories during an Eiger collection.
