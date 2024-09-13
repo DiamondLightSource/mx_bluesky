@@ -42,6 +42,7 @@ class PlanGroupCheckpointConstants:
     GRID_READY_FOR_DC = "grid_ready_for_data_collection"
     ROTATION_READY_FOR_DC = "rotation_ready_for_data_collection"
     MOVE_GONIO_TO_START = "move_gonio_to_start"
+    READY_FOR_OAV = "ready_for_oav"
 
 
 @dataclass(frozen=True)

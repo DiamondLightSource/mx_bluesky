@@ -13,6 +13,9 @@ from mx_bluesky.hyperion.experiment_plans.grid_detect_then_xray_centre_plan impo
     GridDetectThenXRayCentreComposite,
     detect_grid_and_do_gridscan,
 )
+from mx_bluesky.hyperion.experiment_plans.oav_snapshot_plan import (
+    setup_beamline_for_OAV,
+)
 from mx_bluesky.hyperion.experiment_plans.pin_tip_centring_plan import (
     PinTipCentringComposite,
     pin_tip_centre_plan,
@@ -65,6 +68,10 @@ def pin_centre_then_xray_centre_plan(
     )
 
     def _pin_centre_then_xray_centre_plan():
+        yield from setup_beamline_for_OAV(
+            composite.smargon, composite.backlight, composite.aperture_scatterguard
+        )
+
         yield from pin_tip_centre_plan(
             pin_tip_centring_composite,
             parameters.tip_offset_um,

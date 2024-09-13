@@ -7,9 +7,10 @@ from dodal.devices.oav.oav_parameters import OAVParameters
 from dodal.devices.oav.pin_image_recognition import PinTipDetection
 from dodal.devices.oav.utils import ColorMode
 
-oav_group = "oav_setup"
+from mx_bluesky.hyperion.parameters.constants import CONST
+
 # Helper function to make sure we set the waiting groups correctly
-set_using_group = partial(bps.abs_set, group=oav_group)
+set_using_group = partial(bps.abs_set, group=CONST.WAIT.READY_FOR_OAV)
 
 
 def setup_pin_tip_detection_params(
@@ -83,8 +84,4 @@ def pre_centring_setup_oav(
     """
     yield from setup_general_oav_params(oav, parameters)
     yield from setup_pin_tip_detection_params(pin_tip_detection_device, parameters)
-    yield from bps.wait(oav_group)
-
-    """
-    TODO: We require setting the backlight brightness to that in the json, we can't do this currently without a PV.
-    """
+    yield from bps.wait(CONST.WAIT.READY_FOR_OAV)
