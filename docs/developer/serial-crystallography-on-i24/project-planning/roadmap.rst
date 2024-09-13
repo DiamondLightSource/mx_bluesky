@@ -54,11 +54,8 @@ Ongoing list of TODOs:
    * - Fix permissions and allow for user collections
      - Dec. 24 / Jan. 25
      - :material-regular:`pending;2em`
-   * - Convert the current detector set up code to bluesky plans using the device.
-     - Dependent on `FastCS Eiger issues <https://github.com/bluesky/ophyd-async/issues?q=is%3Aissue+is%3Aopen+eiger>`__
-     - :material-regular:`pending;2em`
-   * - Start moving from edm to web GUI
-     - 
+   * - Convert the current detector set up code to bluesky plans using the device
+     - Dependent on `FastCS Eiger issues <https://github.com/bluesky/ophyd-async/issues?q=is%3Aissue+is%3Aopen+eiger>`__ being completed
      - :material-regular:`pending;2em`
    * - Set up callback for nexus writing
      - Dec. 24
@@ -74,6 +71,15 @@ Ongoing list of TODOs:
      - :material-regular:`pending;2em`
    * - Improve current alignment (moveonclick)
      - Nov. 24
+     - :material-regular:`pending;2em`
+   * - Set up `coniql <https://github.com/DiamondLightSource/coniql>`__ on the beamline
+     - Jan. 25
+     - :material-regular:`pending;2em`
+   * - Prepare React components to switch from EDM to a web GUI
+     - Dec. 24 / Jan. 25
+     - :material-regular:`pending;2em`
+   * - Move the OAV viewer to a web GUI
+     - Jan. 25 / Feb. 25
      - :material-regular:`pending;2em`
 
 
