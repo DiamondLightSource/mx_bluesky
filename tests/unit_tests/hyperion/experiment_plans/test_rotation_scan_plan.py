@@ -372,7 +372,7 @@ def test_rotation_scan_initialises_detector_distance_shutter_and_tx_fraction(
     )
 
 
-def test_rotation_scan_triggers_xbpm_then_pauses_xbpm_and_sets_tranmission(
+def test_rotation_scan_triggers_xbpm_then_pauses_xbpm_and_sets_transmission(
     rotation_scan_simulated_messages,
     test_rotation_params: RotationScan,
 ):
