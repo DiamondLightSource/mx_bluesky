@@ -22,7 +22,7 @@ Ongoing list of TODOs:
 
 5. Convert detector set up to use bluesky plans and ophyd_async devices.
 
-   - Eiger device in dodal needs to be converted to ophyd_async and updated to work with different Eigers on several beamlines.
+   - Eiger device in dodal needs to be converted to ophyd_async and updated to work with different Eigers on several beamlines. This work is dependent on other work out of the scope of this project, see `Dodal#700 <https://github.com/DiamondLightSource/dodal/issues/700>`__ and linked issues.
    - Investigate using the existing Pilatus in ophyd_async which writes HDF5 instead of CBFs, but we may want to make a CBF-writing Pilatus. However, the Pilatus detector is due to be removed soon.
 
 6. Start looking into moving away from edm screens towards a web-based GUI.
@@ -54,19 +54,25 @@ Ongoing list of TODOs:
    * - Fix permissions and allow for user collections
      - Dec. 24 / Jan. 25
      - :material-regular:`pending;2em`
-   * - Use Eiger device and bluesky plans for detector setup
-     - Jan. 25
+   * - Convert the current detector set up code to bluesky plans using the device.
+     - Dependent on `FastCS Eiger issues <https://github.com/bluesky/ophyd-async/issues?q=is%3Aissue+is%3Aopen+eiger>`__
      - :material-regular:`pending;2em`
    * - Start moving from edm to web GUI
      - 
      - :material-regular:`pending;2em`
-   * - Set up callbacks for file writing
+   * - Set up callback for nexus writing
+     - Dec. 24
+     - :material-regular:`pending;2em`
+   * - Set up callback for ispyb deposition
+     - Dec. 24
+     - :material-regular:`pending;2em`
+   * - Set up callback for parameter and map file I/O
      - Dec. 24
      - :material-regular:`pending;2em`
    * - Refactor logger
      - Nov. 24
      - :material-regular:`pending;2em`
-   * - Improve alignment
+   * - Improve current alignment (moveonclick)
      - Nov. 24
      - :material-regular:`pending;2em`
 
