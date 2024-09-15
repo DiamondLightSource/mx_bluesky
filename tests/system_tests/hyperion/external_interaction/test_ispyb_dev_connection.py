@@ -286,10 +286,10 @@ def grid_detect_then_xray_centre_composite(
         sample_shutter=sample_shutter,
     )
     oav.zoom_controller.zrst.set("1.0x")
-    oav.cam.array_size.array_size_x.sim_put(1024)
-    oav.cam.array_size.array_size_y.sim_put(768)
-    oav.grid_snapshot.x_size.sim_put(1024)
-    oav.grid_snapshot.y_size.sim_put(768)
+    oav.cam.array_size.array_size_x.sim_put(1024)  # type: ignore
+    oav.cam.array_size.array_size_y.sim_put(768)  # type: ignore
+    oav.grid_snapshot.x_size.sim_put(1024)  # type: ignore
+    oav.grid_snapshot.y_size.sim_put(768)  # type: ignore
     oav.grid_snapshot.top_left_x.set(50)
     oav.grid_snapshot.top_left_y.set(100)
     oav.grid_snapshot.box_width.set(0.1 * 1000 / 1.25)  # size in pixels
