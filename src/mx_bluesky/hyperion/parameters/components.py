@@ -142,10 +142,19 @@ class WithSnapshot(BaseModel):
         return bool(self.snapshot_omegas_deg)
 
 
-class DiffractionExperiment(HyperionParameters, WithSnapshot):
+class WithOptionalEnergyChange(BaseModel):
+    demand_energy_ev: float | None = Field(default=None, gt=0)
+
+
+class WithVisit(BaseModel):
+    visit: str = Field(min_length=1)
+
+
+class DiffractionExperiment(
+    HyperionParameters, WithSnapshot, WithOptionalEnergyChange, WithVisit
+):
     """For all experiments which use beam"""
 
-    visit: str = Field(min_length=1)
     file_name: str
     exposure_time_s: float = Field(gt=0)
     comment: str = Field(default="")
@@ -159,7 +168,6 @@ class DiffractionExperiment(HyperionParameters, WithSnapshot):
     zocalo_environment: str = Field(default=CONST.ZOCALO_ENV)
     trigger_mode: TriggerMode = Field(default=TriggerMode.FREE_RUN)
     detector_distance_mm: float | None = Field(default=None, gt=0)
-    demand_energy_ev: float | None = Field(default=None, gt=0)
     run_number: int | None = Field(default=None, ge=0)
     selected_aperture: ApertureValue | None = Field(default=None)
     transmission_frac: float = Field(default=0.1)
