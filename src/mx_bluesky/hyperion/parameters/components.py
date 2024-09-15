@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 import json
 from abc import abstractmethod
 from collections.abc import Sequence
@@ -184,12 +183,6 @@ class DiffractionExperiment(
             snapshot_dir if isinstance(snapshot_dir, Path) else Path(snapshot_dir)
         )
         return values
-
-    @property
-    def visit_directory(self) -> Path:
-        return (
-            Path(CONST.I03.BASE_DATA_DIR) / str(datetime.date.today().year) / self.visit
-        )
 
     @property
     def num_images(self) -> int:
