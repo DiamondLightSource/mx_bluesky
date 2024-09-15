@@ -38,7 +38,7 @@ class ParameterVersion(Version):
         return cls.parse(version)
 
 
-PARAMETER_VERSION = ParameterVersion.parse("5.0.0")
+PARAMETER_VERSION = ParameterVersion.parse("5.1.0")
 
 
 class RotationAxis(StrEnum):
