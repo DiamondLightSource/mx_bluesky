@@ -348,6 +348,7 @@ def oav(test_config_files):
     )
     oav = i03.oav(fake_with_ophyd_sim=True, params=parameters)
     oav.snapshot.trigger = MagicMock(return_value=NullStatus())
+    oav.grid_snapshot.trigger = MagicMock(return_value=NullStatus())
     return oav
 
 

@@ -353,7 +353,7 @@ def rotation_scan(
         md={
             "subplan_name": CONST.PLAN.ROTATION_OUTER,
             CONST.TRIGGER.ZOCALO: CONST.PLAN.ROTATION_MAIN,
-            "hyperion_parameters": parameters.model_dump_json,
+            "hyperion_parameters": parameters.model_dump_json(),
             "activate_callbacks": [
                 "RotationISPyBCallback",
                 "RotationNexusFileCallback",

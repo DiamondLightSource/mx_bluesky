@@ -251,9 +251,3 @@ class OptionalGonioAngleStarts(BaseModel):
     phi_start_deg: float | None = None
     chi_start_deg: float | None = None
     kappa_start_deg: float | None = None
-
-
-class TemporaryIspybExtras(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-
-    xtal_snapshots_omega_start: list[str] | None = None
