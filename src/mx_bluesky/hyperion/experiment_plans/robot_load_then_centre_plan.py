@@ -37,6 +37,7 @@ from dodal.plans.motor_util_plans import MoveTooLarge, home_and_reset_wrapper
 from ophyd_async.fastcs.panda import HDFPanda
 
 from mx_bluesky.hyperion.device_setup_plans.utils import (
+    fill_in_energy_if_not_supplied,
     start_preparing_data_collection_then_do_plan,
 )
 from mx_bluesky.hyperion.experiment_plans.grid_detect_then_xray_centre_plan import (
@@ -47,7 +48,6 @@ from mx_bluesky.hyperion.experiment_plans.pin_centre_then_xray_centre_plan impor
 )
 from mx_bluesky.hyperion.experiment_plans.set_energy_plan import (
     SetEnergyComposite,
-    read_energy,
     set_energy_plan,
 )
 from mx_bluesky.hyperion.log import LOGGER
@@ -283,13 +283,8 @@ def robot_load_then_centre(
 ) -> MsgGenerator:
     eiger: EigerDetector = composite.eiger
 
-    detector_params = parameters.detector_params
-    if not detector_params.expected_energy_ev:
-        actual_energy_ev = 1000 * (
-            yield from read_energy(cast(SetEnergyComposite, composite))
-        )
-        detector_params.expected_energy_ev = actual_energy_ev
-    eiger.set_detector_parameters(detector_params)
+    fill_in_energy_if_not_supplied(composite.dcm, parameters.detector_params)
+    eiger.set_detector_parameters(parameters.detector_params)
 
     yield from start_preparing_data_collection_then_do_plan(
         eiger,
