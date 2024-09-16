@@ -609,9 +609,7 @@ def run_aborted_plan(pmac: PMAC, dcid: DCID):
         P variable.
     """
     logger.warning("Data Collection Aborted")
-    yield from bps.abs_set(pmac.pmac_string, "A", wait=True)
-    yield from bps.sleep(1.0)
-    yield from bps.abs_set(pmac.pmac_string, "P2401=0", wait=True)
+    yield from bps.trigger(pmac.abort_program, wait=True)
 
     end_time = datetime.now()
     dcid.collection_complete(end_time, aborted=True)

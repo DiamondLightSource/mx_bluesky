@@ -1,6 +1,7 @@
 import os
 from enum import Enum
 
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import EIGER2_X_16M_SIZE
 from pydantic.dataclasses import dataclass
 
@@ -78,6 +79,11 @@ class GridscanParamConstants:
 
 
 @dataclass(frozen=True)
+class RotationParamConstants:
+    DEFAULT_APERTURE_POSITION = ApertureValue.LARGE
+
+
+@dataclass(frozen=True)
 class DetectorParamConstants:
     BEAM_XY_LUT_PATH = (
         "tests/test_data/test_det_dist_converter.txt"
@@ -90,6 +96,7 @@ class DetectorParamConstants:
 class ExperimentParamConstants:
     DETECTOR = DetectorParamConstants()
     GRIDSCAN = GridscanParamConstants()
+    ROTATION = RotationParamConstants()
 
 
 _test_oav_file = "tests/test_data/test_OAVCentring.json"
