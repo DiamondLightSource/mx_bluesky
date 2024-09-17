@@ -349,6 +349,7 @@ def wait_for_gridscan_valid(fgs_motors: FastGridScanCommon, timeout=0.5):
     LOGGER.info("Waiting for valid fgs_params")
     SLEEP_PER_CHECK = 0.1
     times_to_check = int(timeout / SLEEP_PER_CHECK)
+    yield from bps.sleep(0.1)
     for _ in range(times_to_check):
         scan_invalid = yield from bps.rd(fgs_motors.scan_invalid)
         pos_counter = yield from bps.rd(fgs_motors.position_counter)

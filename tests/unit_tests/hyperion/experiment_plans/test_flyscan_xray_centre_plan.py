@@ -828,7 +828,7 @@ class TestFlyscanXrayCentrePlan:
         "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.bps.sleep",
         autospec=True,
     )
-    def test_GIVEN_scan_already_valid_THEN_wait_for_GRIDSCAN_returns_immediately(
+    def test_GIVEN_scan_already_valid_THEN_wait_for_GRIDSCAN_returns_after_short_sleep(
         self, patch_sleep: MagicMock, RE: RunEngine
     ):
         test_fgs: ZebraFastGridScan = i03.zebra_fast_grid_scan(fake_with_ophyd_sim=True)
@@ -838,7 +838,7 @@ class TestFlyscanXrayCentrePlan:
 
         RE(wait_for_gridscan_valid(test_fgs))
 
-        patch_sleep.assert_not_called()
+        patch_sleep.assert_called_once_with(0.1)
 
     @patch(
         "mx_bluesky.hyperion.experiment_plans.flyscan_xray_centre_plan.bps.sleep",
