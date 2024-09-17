@@ -1,11 +1,13 @@
+import asyncio
 from unittest.mock import ANY, MagicMock, call, mock_open, patch
 
 import bluesky.plan_stubs as bps
 import pytest
+from bluesky.utils import FailedStatus
 from dodal.devices.hutch_shutter import HutchShutter
 from dodal.devices.i24.pmac import PMAC
 from dodal.devices.zebra import Zebra
-from ophyd_async.core import get_mock_put
+from ophyd_async.core import callback_on_mock_put, get_mock_put, set_mock_value
 
 from mx_bluesky.beamlines.i24.serial.fixed_target.ft_utils import MappingType
 from mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Collect_py3v1 import (
@@ -13,6 +15,7 @@ from mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Collect_py3v1 impo
     finish_i24,
     get_chip_prog_values,
     get_prog_num,
+    kickoff_and_complete_collection,
     load_motion_program_data,
     run_aborted_plan,
     start_i24,
@@ -247,3 +250,46 @@ async def test_tidy_up_after_collection_plan(
     fake_caput.assert_has_calls([call(ANY, 0), call(ANY, "Done")])
 
     mock_finish.assert_called_once()
+
+
+@patch(
+    "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.calculate_collection_timeout"
+)
+async def test_kick_off_and_complete_collection(
+    fake_collection_time, pmac, dummy_params_with_pp, RE, done_status
+):
+    pmac.run_program.kickoff = MagicMock(return_value=done_status)
+    pmac.run_program.complete = MagicMock(return_value=done_status)
+
+    async def go_high_then_low():
+        set_mock_value(pmac.scanstatus, 1)
+        await asyncio.sleep(0.1)
+        set_mock_value(pmac.scanstatus, 0)
+
+    callback_on_mock_put(
+        pmac.pmac_string,
+        lambda *args, **kwargs: asyncio.create_task(go_high_then_low()),  # type: ignore
+    )
+    fake_collection_time.return_value = 2.0
+    res = RE(kickoff_and_complete_collection(pmac, dummy_params_with_pp))
+
+    assert await pmac.program_number.get_value() == 14
+    assert await pmac.collection_time.get_value() == 2.0
+
+    pmac.run_program.kickoff.assert_called_once()
+    pmac.run_program.complete.assert_called_once()
+
+    assert res.exit_status == "success"
+
+
+@patch(
+    "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Collect_py3v1.calculate_collection_timeout"
+)
+async def test_kickoff_and_complete_fails_if_scan_status_pv_does_not_change(
+    fake_collection_time, pmac, dummy_params_without_pp, RE
+):
+    fake_collection_time.return_value = 1.0
+    pmac.run_program.KICKOFF_TIMEOUT = 0.1
+    set_mock_value(pmac.scanstatus, 0)
+    with pytest.raises(FailedStatus):
+        RE(kickoff_and_complete_collection(pmac, dummy_params_without_pp))

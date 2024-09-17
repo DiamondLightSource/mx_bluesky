@@ -680,26 +680,31 @@ def main_fixed_target_plan(
             wavelength,
         )
 
+    yield from kickoff_and_complete_collection(pmac, parameters)
+
+
+def kickoff_and_complete_collection(pmac: PMAC, parameters: FixedTargetParameters):
+    # Get program number
+    prog_num = get_prog_num(
+        parameters.chip.chip_type, parameters.map_type, parameters.pump_repeat
+    )
+    yield from bps.abs_set(pmac.program_number, prog_num, group="setup_pmac")
+    # Calculate approx collection time
+    total_collection_time = calculate_collection_timeout(parameters)
+    logger.info(f"Estimated collection time: {total_collection_time}s.")
+    yield from bps.abs_set(
+        pmac.collection_time, total_collection_time, group="setup_pmac"
+    )
+    yield from bps.wait(group="setup_pmac")  # Make sure the soft signals are set
+
     @bpp.run_decorator(md={"subplan_name": "run_ft_collection"})
-    def kickoff_and_complete_collection():
-        # Get program number
-        prog_num = get_prog_num(
-            parameters.chip.chip_type, parameters.map_type, parameters.pump_repeat
-        )  # TODO fix this to return right thing
-        yield from bps.abs_set(pmac.program_number, prog_num, group="setup_pmac")
-        # Calculate approx collection time
-        total_collection_time = calculate_collection_timeout(parameters)
-        logger.info(f"Estimated collection time: {total_collection_time}s.")
-        yield from bps.abs_set(
-            pmac.collection_time, total_collection_time, group="setup_pmac"
-        )
-        yield from bps.wait(group="setup_pmac")  # Make sure the soft signals are set
+    def run_collection():
         logger.info(f"Kick off PMAC with program number {prog_num}.")
         yield from bps.kickoff(pmac.run_program, wait=True)
         yield from bps.complete(pmac.run_program, wait=True)
         logger.info("Collection completed without errors.")
 
-    yield from kickoff_and_complete_collection()
+    yield from run_collection()
 
 
 @log.log_on_entry
