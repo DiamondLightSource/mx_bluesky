@@ -80,7 +80,10 @@ def calculate_collection_timeout(parameters: FixedTargetParameters) -> float:
     https://confluence.diamond.ac.uk/display/MXTech/Dynamics+and+fixed+targets.
 
     Args:
-        parameters (FixedTargerParameters): The collection paramelters
+        parameters (FixedTargerParameters): The collection paramelters.
+
+    Returns:
+        The estimated collection time, in s.
     """
     buffer = 30
     pump_setting = parameters.pump_repeat
@@ -659,10 +662,6 @@ def main_fixed_target_plan(
     yield from bps.trigger(pmac.to_xyz_zero)
     sleep(2.0)
 
-    prog_num = get_prog_num(
-        parameters.chip.chip_type, parameters.map_type, parameters.pump_repeat
-    )
-
     # Now ready for data collection. Open fast shutter (zebra gate)
     logger.info("Opening fast shutter.")
     yield from open_fast_shutter(zebra)
@@ -681,11 +680,26 @@ def main_fixed_target_plan(
             wavelength,
         )
 
-    timeout_time = calculate_collection_timeout(parameters)
-    logger.info(f"Run PMAC with program number {prog_num}")
-    yield from bps.abs_set(pmac.run_program, prog_num, timeout_time, wait=True)
+    @bpp.run_decorator(md={"subplan_name": "run_ft_collection"})
+    def kickoff_and_complete_collection():
+        # Get program number
+        prog_num = get_prog_num(
+            parameters.chip.chip_type, parameters.map_type, parameters.pump_repeat
+        )  # TODO fix this to return right thing
+        yield from bps.abs_set(pmac.program_number, prog_num, group="setup_pmac")
+        # Calculate approx collection time
+        total_collection_time = calculate_collection_timeout(parameters)
+        logger.info(f"Estimated collection time: {total_collection_time}s.")
+        yield from bps.abs_set(
+            pmac.collection_time, total_collection_time, group="setup_pmac"
+        )
+        yield from bps.wait(group="setup_pmac")  # Make sure the soft signals are set
+        logger.info(f"Kick off PMAC with program number {prog_num}.")
+        yield from bps.kickoff(pmac.run_program, wait=True)
+        yield from bps.complete(pmac.run_program, wait=True)
+        logger.info("Collection completed without errors.")
 
-    logger.debug("Collection completed without errors.")
+    yield from kickoff_and_complete_collection()
 
 
 @log.log_on_entry
