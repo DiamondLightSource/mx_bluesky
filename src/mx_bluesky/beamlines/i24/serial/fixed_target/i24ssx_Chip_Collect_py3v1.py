@@ -281,54 +281,41 @@ def load_motion_program_data(
 def get_prog_num(
     chip_type: ChipType, map_type: MappingType, pump_repeat: PumpProbeSetting
 ) -> int:
-    logger.info("Get Program Number")
-    if pump_repeat == PumpProbeSetting.NoPP:
-        if chip_type in [ChipType.Oxford, ChipType.OxfordInner]:
-            logger.info(
-                f"Pump_repeat: {str(pump_repeat)} \tOxford Chip: {str(chip_type)}"
-            )
-            if map_type == MappingType.NoMap:
-                logger.info("Map type 0 = None")
-                logger.info("Program number: 11")
-                return 11
-            elif map_type == MappingType.Lite:
-                logger.info("Map type 1 = Mapping Lite")
-                logger.info("Program number: 12")
-                return 12
-            elif map_type == MappingType.Full:
-                logger.info("Map type 2 = Full Mapping")
-                logger.info("Program number: 13")  # once fixed return 13
-                msg = "Mapping Type FULL is broken as of 11.09.17"
-                logger.error(msg)
-                raise ValueError(msg)
-            else:
-                logger.debug(f"Unknown Mapping Type; map_type = {map_type}")
-                return 0
-        elif chip_type == ChipType.Custom:
-            logger.info(
-                f"Pump_repeat: {str(pump_repeat)} \tCustom Chip: {str(chip_type)}"
-            )
-            logger.info("Program number: 11")
-            return 11
-        elif chip_type == ChipType.Minichip:
-            logger.info(
-                f"Pump_repeat: {str(pump_repeat)} \tMini Oxford Chip: {str(chip_type)}"
-            )
-            logger.info("Program number: 11")
-            return 11
-        else:
-            logger.debug(f"Unknown chip_type, chip_tpe = {chip_type}")
-            return 0
-    elif pump_repeat in [
-        pp.value for pp in PumpProbeSetting if pp != PumpProbeSetting.NoPP
-    ]:
-        logger.info(f"Pump_repeat: {str(pump_repeat)} \t Chip Type: {str(chip_type)}")
-        logger.info("Map Type = Mapping Lite with Pump Probe")
+    """Get the motion program number based on the experiment parameters set by \
+    the user.
+    Any pump probe experiment will return program number 14 (assumes lite mapping).
+    For non pump probe experiments, the program number depends on the chip and map type:
+        - Custom, Mini and PSI chips, as well as Oxford chips with no map return 11
+        - Oxford chips with lite mapping return 12
+        - Oxford chips with full mapping should return 13. Currently disabled, will \
+            raise an error.
+    """
+    logger.info("Get Program Number for the motion program.")
+    logger.info(f"Pump_repeat: {str(pump_repeat)} \t Chip Type: {str(chip_type)}")
+    if pump_repeat != PumpProbeSetting.NoPP:
+        logger.info("Assuming Map type = Mapping Lite.")
         logger.info("Program number: 14")
         return 14
+
+    if chip_type not in [ChipType.Oxford, ChipType.OxfordInner]:
+        logger.info("Program number: 11")
+        return 11
     else:
-        logger.warning(f"Unknown pump_repeat, pump_repeat = {pump_repeat}")
-        return 0
+        if map_type == MappingType.NoMap:
+            logger.info(f"Map type: {str(map_type)}")
+            logger.info("Program number: 11")
+            return 11
+        if map_type == MappingType.Lite:
+            logger.info(f"Map type: {str(map_type)}")
+            logger.info("Program number: 12")
+            return 12
+        if map_type == MappingType.Full:
+            logger.info(f"Map type: {str(map_type)}")
+            logger.info("Program number: 13")
+            # TODO once reinstated return 13
+            msg = "Full mapping is broken and currently disabled."
+            logger.error(msg)
+            raise ValueError(msg)
 
 
 @log.log_on_entry
