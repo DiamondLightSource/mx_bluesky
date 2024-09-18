@@ -238,9 +238,9 @@ async def test_rotation_plan_moves_aperture_correctly(
     aperture_scatterguard: ApertureScatterguard = (
         run_full_rotation_plan.aperture_scatterguard
     )
-    assert (
-        await aperture_scatterguard.selected_aperture.get_value() == ApertureValue.SMALL
-    )
+    reading = await aperture_scatterguard.read()
+    aperture_state = reading[aperture_scatterguard.selected_aperture.name]["value"]
+    assert aperture_state == ApertureValue.SMALL
 
 
 async def test_rotation_plan_smargon_doesnt_move_xyz_if_not_given_in_params(
