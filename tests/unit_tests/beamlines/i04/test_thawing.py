@@ -4,9 +4,10 @@ from unittest.mock import ANY, MagicMock, call, patch
 import pytest
 from _pytest.python_api import ApproxBase
 from bluesky.run_engine import RunEngine
+from bluesky.simulators import assert_message_and_return_remaining
 from dodal.beamlines import i04
 from dodal.devices.oav.oav_detector import OAV
-from dodal.devices.oav.oav_to_redis_forwarder import OAVToRedisForwarder
+from dodal.devices.oav.oav_to_redis_forwarder import OAVToRedisForwarder, Source
 from dodal.devices.robot import BartRobot
 from dodal.devices.smargon import Smargon
 from dodal.devices.thawer import Thawer, ThawerStates
@@ -195,8 +196,8 @@ async def test_thaw_and_stream_sets_sample_id_and_kicks_off_forwarder(
         )
     )
     assert await oav_forwarder.sample_id.get_value() == 100
-    oav_forwarder.kickoff.assert_called_once()  # type: ignore
-    oav_forwarder.complete.assert_called_once()  # type: ignore
+    oav_forwarder.kickoff.assert_called()  # type: ignore
+    oav_forwarder.complete.assert_called()  # type: ignore
 
 
 @patch("mx_bluesky.beamlines.i04.thawing_plan.MurkoCallback")
@@ -255,3 +256,37 @@ def test_thaw_and_stream_will_produce_events_that_call_murko(
         )
     )
     patch_murko_call.assert_called()
+
+
+def test_thaw_and_stream_will_switch_murko_source_half_way_through_thaw(
+    sim_run_engine,
+    smargon: Smargon,
+    thawer: Thawer,
+    oav_forwarder: OAVToRedisForwarder,
+    oav: OAV,
+    robot: BartRobot,
+):
+    msgs = sim_run_engine.simulate_plan(
+        thaw_and_stream_to_redis(10, 360, robot, thawer, smargon, oav, oav_forwarder)
+    )
+    for source in [Source.FULL_SCREEN, Source.ROI]:
+        msgs = assert_message_and_return_remaining(
+            msgs,
+            lambda msg: msg.command == "set"
+            and msg.obj.name == "oav_to_redis_forwarder-selected_source"
+            and msg.args[0] == source,
+        )
+        msgs = assert_message_and_return_remaining(
+            msgs,
+            lambda msg: msg.command == "kickoff"
+            and msg.obj.name == "oav_to_redis_forwarder",
+        )
+        msgs = assert_message_and_return_remaining(
+            msgs,
+            lambda msg: msg.command == "set" and msg.obj.name == "smargon-omega",
+        )
+        msgs = assert_message_and_return_remaining(
+            msgs,
+            lambda msg: msg.command == "complete"
+            and msg.obj.name == "oav_to_redis_forwarder",
+        )
