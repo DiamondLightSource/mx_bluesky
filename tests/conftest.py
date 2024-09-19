@@ -294,8 +294,7 @@ def smargon(RE: RunEngine) -> Generator[Smargon, None, None]:
 
 
 @pytest.fixture
-def zebra():
-    RunEngine()
+def zebra(RE):
     zebra = i03.zebra(fake_with_ophyd_sim=True)
 
     def mock_side(*args, **kwargs):
@@ -693,6 +692,11 @@ async def async_status_done():
 def mock_gridscan_kickoff_complete(gridscan: FastGridScanCommon):
     gridscan.kickoff = MagicMock(return_value=async_status_done)
     gridscan.complete = MagicMock(return_value=async_status_done)
+
+
+@pytest.fixture
+def panda_fast_grid_scan(RE):
+    return i03.panda_fast_grid_scan(fake_with_ophyd_sim=True)
 
 
 @pytest.fixture
