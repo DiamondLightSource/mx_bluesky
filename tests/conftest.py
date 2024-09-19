@@ -346,6 +346,15 @@ def oav(test_config_files):
         test_config_files["zoom_params_file"], test_config_files["display_config"]
     )
     oav = i03.oav(fake_with_ophyd_sim=True, params=parameters)
+
+    oav.zoom_controller.zrst.set("1.0x")
+    oav.zoom_controller.onst.set("2.0x")
+
+    oav.parameters.micronsPerXPixel = 1.58
+    oav.parameters.micronsPerYPixel = 1.58
+    oav.parameters.beam_centre_i = 517
+    oav.parameters.beam_centre_j = 350
+
     oav.snapshot.trigger = MagicMock(return_value=NullStatus())
     oav.grid_snapshot.trigger = MagicMock(return_value=NullStatus())
     return oav

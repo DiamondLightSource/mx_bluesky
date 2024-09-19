@@ -24,10 +24,9 @@ def thaw_and_stream_to_redis(
 ) -> MsgGenerator:
     zoom_percentage = yield from bps.rd(oav.zoom_controller.percentage)
     sample_id = yield from bps.rd(robot.sample_id)
+    zoom_level_before_thawing = yield from bps.rd(oav.zoom_controller.level)
 
     yield from bps.mv(oav.zoom_controller.level, "1.0x")
-    yield from bps.mv(oav_to_redis_forwarder.sample_id, sample_id)
-    yield from bps.mv(oav_to_redis_forwarder.selected_source, Source.FULL_SCREEN)
 
     def switch_forwarder_to_ROI():
         yield from bps.complete(oav_to_redis_forwarder)
@@ -46,6 +45,9 @@ def thaw_and_stream_to_redis(
         }
     )
     def _thaw_and_stream_to_redis():
+        yield from bps.mv(oav_to_redis_forwarder.sample_id, sample_id)
+        yield from bps.mv(oav_to_redis_forwarder.selected_source, Source.FULL_SCREEN)
+
         yield from bps.kickoff(oav_to_redis_forwarder, wait=True)
         yield from bps.monitor(smargon.omega.user_readback, name="smargon")
         yield from bps.monitor(oav_to_redis_forwarder.uuid, name="oav")
@@ -54,7 +56,13 @@ def thaw_and_stream_to_redis(
         )
         yield from bps.complete(oav_to_redis_forwarder)
 
-    yield from _thaw_and_stream_to_redis()
+    def cleanup():
+        yield from bps.mv(oav.zoom_controller.level, zoom_level_before_thawing)
+
+    yield from bpp.contingency_wrapper(
+        _thaw_and_stream_to_redis(),
+        final_plan=cleanup,
+    )
 
 
 def thaw(
