@@ -300,22 +300,23 @@ def get_prog_num(
     if chip_type not in [ChipType.Oxford, ChipType.OxfordInner]:
         logger.info("Program number: 11")
         return 11
-    else:
-        if map_type == MappingType.NoMap:
-            logger.info(f"Map type: {str(map_type)}")
-            logger.info("Program number: 11")
-            return 11
-        if map_type == MappingType.Lite:
-            logger.info(f"Map type: {str(map_type)}")
-            logger.info("Program number: 12")
-            return 12
-        if map_type == MappingType.Full:
-            logger.info(f"Map type: {str(map_type)}")
-            logger.info("Program number: 13")
-            # TODO once reinstated return 13
-            msg = "Full mapping is broken and currently disabled."
-            logger.error(msg)
-            raise ValueError(msg)
+
+    if map_type == MappingType.NoMap:
+        logger.info(f"Map type: {str(map_type)}")
+        logger.info("Program number: 11")
+        return 11
+    if map_type == MappingType.Lite:
+        logger.info(f"Map type: {str(map_type)}")
+        logger.info("Program number: 12")
+        return 12
+    if map_type == MappingType.Full:
+        # TODO See https://github.com/DiamondLightSource/mx-bluesky/issues/515
+        logger.info(f"Map type: {str(map_type)}")
+        logger.info("Program number: 13")
+        # TODO once reinstated return 13
+        msg = "Full mapping is broken and currently disabled."
+        logger.error(msg)
+        raise ValueError(msg)
 
 
 @log.log_on_entry
