@@ -11,9 +11,7 @@ from ophyd_async.core import load_device
 from ophyd_async.fastcs.panda import (
     HDFPanda,
     SeqTable,
-    SeqTableRow,
     SeqTrigger,
-    seq_table_from_rows,
 )
 
 import mx_bluesky.hyperion.resources.panda as panda_resource
@@ -85,10 +83,10 @@ def _get_seq_table(
     # BITA_1 trigger wired from TTLIN1, this is the trigger input
 
     # +ve direction scan
-    rows = [SeqTableRow(trigger=SeqTrigger.BITA_1, time2=1)]
 
-    rows.append(
-        SeqTableRow(
+    table = (
+        SeqTable.row(trigger=SeqTrigger.BITA_1, time2=1)
+        + SeqTable.row(
             repeats=num_pulses,
             trigger=SeqTrigger.POSA_GT,
             position=start_of_grid_x_counts,
@@ -97,13 +95,10 @@ def _get_seq_table(
             time2=delay_between_pulses - PULSE_WIDTH_US,
             outa2=False,
         )
-    )
-
-    # -ve direction scan
-    rows.append(SeqTableRow(trigger=SeqTrigger.BITA_1, time2=1))
-
-    rows.append(
-        SeqTableRow(
+        +
+        # -ve direction scan
+        SeqTable.row(trigger=SeqTrigger.BITA_1, time2=1)
+        + SeqTable.row(
             repeats=num_pulses,
             trigger=SeqTrigger.POSA_LT,
             position=end_of_grid_x_counts + exposure_distance_x_counts,
@@ -113,8 +108,6 @@ def _get_seq_table(
             outa2=False,
         )
     )
-
-    table = seq_table_from_rows(*rows)
 
     return table
 
