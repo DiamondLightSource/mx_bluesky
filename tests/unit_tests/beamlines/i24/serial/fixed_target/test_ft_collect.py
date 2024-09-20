@@ -70,6 +70,7 @@ def test_get_chip_prog_values(dummy_params_without_pp):
         (ChipType.Custom, MappingType.Lite, PumpProbeSetting.NoPP, 11),
         (ChipType.Minichip, MappingType.NoMap, PumpProbeSetting.NoPP, 11),
         (ChipType.Oxford, MappingType.Lite, PumpProbeSetting.Short2, 14),
+        (ChipType.Minichip, MappingType.NoMap, PumpProbeSetting.Repeat5, 14),
         (ChipType.Custom, MappingType.Lite, PumpProbeSetting.Medium1, 14),
     ],
 )
