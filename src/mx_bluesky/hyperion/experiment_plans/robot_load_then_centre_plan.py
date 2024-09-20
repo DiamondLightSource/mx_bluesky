@@ -32,6 +32,7 @@ from dodal.devices.undulator_dcm import UndulatorDCM
 from dodal.devices.webcam import Webcam
 from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.devices.zocalo import ZocaloResults
 from dodal.plans.motor_util_plans import MoveTooLarge, home_and_reset_wrapper
 from ophyd_async.fastcs.panda import HDFPanda
@@ -79,6 +80,7 @@ class RobotLoadThenCentreComposite:
     panda: HDFPanda
     panda_fast_grid_scan: PandAFastGridScan
     thawer: Thawer
+    sample_shutter: ZebraShutter
 
     # SetEnergyComposite fields
     vfm: FocusingMirrorWithStripes

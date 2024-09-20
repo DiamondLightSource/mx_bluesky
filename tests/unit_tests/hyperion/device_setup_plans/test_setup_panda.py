@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import NamedTuple
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -9,7 +8,7 @@ from bluesky.run_engine import RunEngine
 from bluesky.simulators import RunEngineSimulator, assert_message_and_return_remaining
 from dodal.common.types import UpdatingPathProvider
 from dodal.devices.fast_grid_scan import PandAGridScanParams
-from ophyd_async.fastcs.panda import SeqTrigger
+from ophyd_async.fastcs.panda import SeqTable, SeqTrigger
 
 from mx_bluesky.hyperion.device_setup_plans.setup_panda import (
     MM_TO_ENCODER_COUNTS,
@@ -67,16 +66,6 @@ def test_setup_panda_performs_correct_plans(mock_load_device, sim_run_engine):
     mock_load_device.assert_called_once()
     assert num_of_sets == 8
     assert num_of_waits == 3
-
-
-class SeqRow(NamedTuple):
-    repeats: int
-    trigger: SeqTrigger
-    position: int
-    time1: int
-    outa1: int
-    time2: int
-    outa2: int
 
 
 @pytest.mark.parametrize(
@@ -142,44 +131,54 @@ def test_setup_panda_correctly_configures_table(
 
     PULSE_WIDTH_US = 1
     SPACE_WIDTH_US = int(time_between_x_steps_ms * 1000 - PULSE_WIDTH_US)
-    expected_seq_rows: list[SeqRow] = [
-        SeqRow(1, SeqTrigger.BITA_1, 0, 0, 0, 1, 0),
-        SeqRow(
-            x_steps,
-            SeqTrigger.POSA_GT,
-            int(params.x_start * MM_TO_ENCODER_COUNTS),
-            PULSE_WIDTH_US,
-            1,
-            SPACE_WIDTH_US,
-            0,
-        ),
-    ]
 
     exposure_distance_counts = exposure_distance_mm * MM_TO_ENCODER_COUNTS
-    expected_seq_rows.extend(
-        [
-            SeqRow(1, SeqTrigger.BITA_1, 0, 0, 0, 1, 0),
-            SeqRow(
-                x_steps,
-                SeqTrigger.POSA_LT,
-                int(
-                    (params.x_start + (params.x_steps - 1) * params.x_step_size)
-                    * MM_TO_ENCODER_COUNTS
-                    + exposure_distance_counts
-                ),
-                PULSE_WIDTH_US,
-                1,
-                SPACE_WIDTH_US,
-                0,
+    expected_seq_table: SeqTable = (
+        SeqTable.row(
+            repeats=1,
+            trigger=SeqTrigger.BITA_1,
+            position=0,
+            time1=False,
+            outa1=False,
+            time2=True,
+            outa2=False,
+        )
+        + SeqTable.row(
+            repeats=x_steps,
+            trigger=SeqTrigger.POSA_GT,
+            position=int(params.x_start * MM_TO_ENCODER_COUNTS),
+            time1=PULSE_WIDTH_US,
+            outa1=True,
+            time2=SPACE_WIDTH_US,
+            outa2=False,
+        )
+        + SeqTable.row(
+            repeats=1,
+            trigger=SeqTrigger.BITA_1,
+            position=0,
+            time1=False,
+            outa1=False,
+            time2=True,
+            outa2=False,
+        )
+        + SeqTable.row(
+            repeats=x_steps,
+            trigger=SeqTrigger.POSA_LT,
+            position=int(
+                (params.x_start + (params.x_steps - 1) * params.x_step_size)
+                * MM_TO_ENCODER_COUNTS
+                + exposure_distance_counts
             ),
-        ]
+            time1=PULSE_WIDTH_US,
+            outa1=True,
+            time2=SPACE_WIDTH_US,
+            outa2=False,
+        )
     )
 
-    for key in SeqRow._fields:
+    for attr_name in table.__annotations__.keys():
         np.testing.assert_array_equal(
-            table.get(key),
-            [getattr(row, key) for row in expected_seq_rows],
-            f"Sequence table for field {key} does not match",
+            getattr(table, attr_name), getattr(expected_seq_table, attr_name)
         )
 
 

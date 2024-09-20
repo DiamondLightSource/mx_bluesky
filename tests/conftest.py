@@ -294,8 +294,7 @@ def smargon(RE: RunEngine) -> Generator[Smargon, None, None]:
 
 
 @pytest.fixture
-def zebra():
-    RunEngine()
+def zebra(RE):
     zebra = i03.zebra(fake_with_ophyd_sim=True)
 
     def mock_side(*args, **kwargs):
@@ -440,10 +439,10 @@ def vfm_mirror_voltages():
 def undulator_dcm(RE, dcm):
     undulator_dcm = i03.undulator_dcm(fake_with_ophyd_sim=True)
     undulator_dcm.dcm = dcm
-    undulator_dcm.dcm_roll_converter_lookup_table_path = (
+    undulator_dcm.roll_energy_table_path = (
         "tests/test_data/test_beamline_dcm_roll_converter.txt"
     )
-    undulator_dcm.dcm_pitch_converter_lookup_table_path = (
+    undulator_dcm.pitch_energy_table_path = (
         "tests/test_data/test_beamline_dcm_pitch_converter.txt"
     )
     yield undulator_dcm
@@ -693,6 +692,11 @@ async def async_status_done():
 def mock_gridscan_kickoff_complete(gridscan: FastGridScanCommon):
     gridscan.kickoff = MagicMock(return_value=async_status_done)
     gridscan.complete = MagicMock(return_value=async_status_done)
+
+
+@pytest.fixture
+def panda_fast_grid_scan(RE):
+    return i03.panda_fast_grid_scan(fake_with_ophyd_sim=True)
 
 
 @pytest.fixture

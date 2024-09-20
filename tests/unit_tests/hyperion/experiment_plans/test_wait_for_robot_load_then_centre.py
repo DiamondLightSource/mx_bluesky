@@ -13,6 +13,9 @@ from dodal.devices.webcam import Webcam
 from ophyd.sim import NullStatus
 from ophyd_async.core import set_mock_value
 
+from mx_bluesky.hyperion.experiment_plans.grid_detect_then_xray_centre_plan import (
+    GridDetectThenXRayCentreComposite,
+)
 from mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan import (
     RobotLoadThenCentreComposite,
     prepare_for_robot_load,
@@ -33,21 +36,67 @@ from ....conftest import raw_params_from_file
 
 @pytest.fixture
 def robot_load_composite(
-    smargon, dcm, robot, aperture_scatterguard, oav, webcam, thawer, lower_gonio, eiger
+    smargon,
+    dcm,
+    robot,
+    aperture_scatterguard,
+    oav,
+    webcam,
+    thawer,
+    lower_gonio,
+    eiger,
+    xbpm_feedback,
+    flux,
+    zocalo,
+    panda,
+    backlight,
+    attenuator,
+    pin_tip,
+    fast_grid_scan,
+    detector_motion,
+    synchrotron,
+    s4_slit_gaps,
+    undulator,
+    zebra,
+    panda_fast_grid_scan,
+    vfm,
+    vfm_mirror_voltages,
+    undulator_dcm,
+    sample_shutter,
 ) -> RobotLoadThenCentreComposite:
-    composite: RobotLoadThenCentreComposite = MagicMock()
-    composite.smargon = smargon
-    composite.dcm = dcm
+    composite: RobotLoadThenCentreComposite = RobotLoadThenCentreComposite(
+        smargon=smargon,
+        dcm=dcm,
+        robot=robot,
+        aperture_scatterguard=aperture_scatterguard,
+        oav=oav,
+        webcam=webcam,
+        lower_gonio=lower_gonio,
+        thawer=thawer,
+        eiger=eiger,
+        xbpm_feedback=xbpm_feedback,
+        flux=flux,
+        zocalo=zocalo,
+        panda=panda,
+        backlight=backlight,
+        attenuator=attenuator,
+        pin_tip_detection=pin_tip,
+        zebra_fast_grid_scan=fast_grid_scan,
+        detector_motion=detector_motion,
+        synchrotron=synchrotron,
+        s4_slit_gaps=s4_slit_gaps,
+        undulator=undulator,
+        zebra=zebra,
+        panda_fast_grid_scan=panda_fast_grid_scan,
+        vfm=vfm,
+        vfm_mirror_voltages=vfm_mirror_voltages,
+        undulator_dcm=undulator_dcm,
+        sample_shutter=sample_shutter,
+    )
     set_mock_value(composite.dcm.energy_in_kev.user_readback, 11.105)
-    composite.robot = robot
     composite.aperture_scatterguard = aperture_scatterguard
     composite.smargon.stub_offsets.set = MagicMock(return_value=NullStatus())
     composite.aperture_scatterguard.set = MagicMock(return_value=NullStatus())
-    composite.oav = oav
-    composite.webcam = webcam
-    composite.lower_gonio = lower_gonio
-    composite.thawer = thawer
-    composite.eiger = eiger
     return composite
 
 
@@ -89,6 +138,9 @@ def test_when_plan_run_then_centring_plan_run_with_expected_parameters(
 
     for name, value in vars(composite_passed).items():
         assert value == getattr(robot_load_composite, name)
+
+    for name in GridDetectThenXRayCentreComposite.__dataclass_fields__.keys():
+        assert getattr(composite_passed, name), f"{name} not in composite"
 
     assert isinstance(params_passed, PinTipCentreThenXrayCentre)
     assert params_passed.detector_params.expected_energy_ev == 11100
