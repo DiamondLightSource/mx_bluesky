@@ -672,7 +672,6 @@ def main_fixed_target_plan(
 
 
 def kickoff_and_complete_collection(pmac: PMAC, parameters: FixedTargetParameters):
-    # Get program number
     prog_num = get_prog_num(
         parameters.chip.chip_type, parameters.map_type, parameters.pump_repeat
     )
