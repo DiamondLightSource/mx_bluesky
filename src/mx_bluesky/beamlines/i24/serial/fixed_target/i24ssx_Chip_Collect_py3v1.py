@@ -80,7 +80,7 @@ def calculate_collection_timeout(parameters: FixedTargetParameters) -> float:
     https://confluence.diamond.ac.uk/display/MXTech/Dynamics+and+fixed+targets.
 
     Args:
-        parameters (FixedTargerParameters): The collection paramelters.
+        parameters (FixedTargerParameters): The collection parameters.
 
     Returns:
         The estimated collection time, in s.
