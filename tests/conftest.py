@@ -10,6 +10,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import bluesky.plan_stubs as bps
+import numpy
 import numpy as np
 import pytest
 from bluesky.run_engine import RunEngine
@@ -913,3 +914,20 @@ def assert_none_matching(
     predicate: Callable[[Msg], bool],
 ):
     assert not list(filter(predicate, messages))
+
+
+def pin_tip_edge_data():
+    tip_x_px = 100
+    tip_y_px = 200
+    microns_per_pixel = 2.87  # from zoom levels .xml
+    grid_width_px = int(400 / microns_per_pixel)
+    target_grid_height_px = 70
+    top_edge_data = ([0] * tip_x_px) + (
+        [(tip_y_px - target_grid_height_px // 2)] * grid_width_px
+    )
+    bottom_edge_data = [0] * tip_x_px + [
+        (tip_y_px + target_grid_height_px // 2)
+    ] * grid_width_px
+    top_edge_array = numpy.array(top_edge_data, dtype=numpy.uint32)
+    bottom_edge_array = numpy.array(bottom_edge_data, dtype=numpy.uint32)
+    return tip_x_px, tip_y_px, top_edge_array, bottom_edge_array

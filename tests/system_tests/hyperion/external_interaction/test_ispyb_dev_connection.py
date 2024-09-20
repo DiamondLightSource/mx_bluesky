@@ -59,7 +59,7 @@ from mx_bluesky.hyperion.parameters.gridscan import (
 from mx_bluesky.hyperion.parameters.rotation import RotationScan
 from mx_bluesky.hyperion.utils.utils import convert_angstrom_to_eV
 
-from ....conftest import fake_read
+from ....conftest import fake_read, pin_tip_edge_data
 from .conftest import raw_params_from_file
 
 EXPECTED_DATACOLLECTION_FOR_ROTATION = {
@@ -309,25 +309,15 @@ def grid_detect_then_xray_centre_composite(
         unpatched_method(zoom, 1024, 768)
 
     def mock_pin_tip_detect(_):
-        tip_x_px = 100
-        tip_y_px = 200
-        microns_per_pixel = 2.87  # from zoom levels .xml
-        grid_width_px = int(400 / microns_per_pixel)
-        target_grid_height_px = 70
-        top_edge_data = ([0] * tip_x_px) + (
-            [(tip_y_px - target_grid_height_px // 2)] * grid_width_px
-        )
-        bottom_edge_data = [0] * tip_x_px + [
-            (tip_y_px + target_grid_height_px // 2)
-        ] * grid_width_px
+        tip_x_px, tip_y_px, top_edge_array, bottom_edge_array = pin_tip_edge_data()
         set_mock_value(
             ophyd_pin_tip_detection.triggered_top_edge,
-            numpy.array(top_edge_data, dtype=numpy.uint32),
+            top_edge_array,
         )
 
         set_mock_value(
             ophyd_pin_tip_detection.triggered_bottom_edge,
-            numpy.array(bottom_edge_data, dtype=numpy.uint32),
+            bottom_edge_array,
         )
         set_mock_value(
             zocalo.bbox_sizes, numpy.array([[10, 10, 10]], dtype=numpy.uint64)
