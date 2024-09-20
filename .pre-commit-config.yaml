@@ -6,6 +6,7 @@ repos:
         args: ["--maxkb=500"]
       - id: check-yaml
         args: ["--allow-multiple-documents"]
+        exclude: ^helmchart/
       - id: check-merge-conflict
       - id: end-of-file-fixer
       - id: no-commit-to-branch

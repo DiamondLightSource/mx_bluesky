@@ -30,6 +30,9 @@ from mx_bluesky.beamlines.i24.serial.fixed_target.ft_utils import (
     MappingType,
     PumpProbeSetting,
 )
+from mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_Chip_Manager_py3v1 import (
+    write_parameter_file,
+)
 from mx_bluesky.beamlines.i24.serial.parameters import (
     ChipDescription,
     FixedTargetParameters,
@@ -606,9 +609,7 @@ def run_aborted_plan(pmac: PMAC, dcid: DCID):
         P variable.
     """
     logger.warning("Data Collection Aborted")
-    yield from bps.abs_set(pmac.pmac_string, "A", wait=True)
-    yield from bps.sleep(1.0)
-    yield from bps.abs_set(pmac.pmac_string, "P2401=0", wait=True)
+    yield from bps.trigger(pmac.abort_program, wait=True)
 
     end_time = datetime.now()
     dcid.collection_complete(end_time, aborted=True)
@@ -746,6 +747,9 @@ def run_fixed_target_plan(
     dcm: DCM = inject("dcm"),
 ) -> MsgGenerator:
     setup_logging()
+
+    # in the first instance, write params here
+    yield from write_parameter_file(detector_stage)
 
     logger.info("Getting parameters from file.")
     parameters = FixedTargetParameters.from_file(PARAM_FILE_PATH_FT / PARAM_FILE_NAME)

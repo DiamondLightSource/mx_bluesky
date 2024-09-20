@@ -123,9 +123,8 @@ def initialise_stages(
 
 @log.log_on_entry
 def write_parameter_file(
-    detector_stage: DetectorMotion = inject("detector_motion"),
+    detector_stage: DetectorMotion,
 ) -> MsgGenerator:
-    setup_logging()
     param_path: Path = PARAM_FILE_PATH_FT
     # Create directory if it doesn't yet exist.
     param_path.mkdir(parents=True, exist_ok=True)

@@ -43,6 +43,7 @@ from dodal.devices.thawer import Thawer
 from dodal.devices.undulator import Undulator
 from dodal.devices.util.test_utils import patch_motor as oa_patch_motor
 from dodal.devices.webcam import Webcam
+from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import Zebra
 from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.log import LOGGER as dodal_logger
@@ -293,8 +294,7 @@ def smargon(RE: RunEngine) -> Generator[Smargon, None, None]:
 
 
 @pytest.fixture
-def zebra():
-    RunEngine()
+def zebra(RE):
     zebra = i03.zebra(fake_with_ophyd_sim=True)
 
     def mock_side(*args, **kwargs):
@@ -347,6 +347,7 @@ def oav(test_config_files):
     )
     oav = i03.oav(fake_with_ophyd_sim=True, params=parameters)
     oav.snapshot.trigger = MagicMock(return_value=NullStatus())
+    oav.grid_snapshot.trigger = MagicMock(return_value=NullStatus())
     return oav
 
 
@@ -438,10 +439,10 @@ def vfm_mirror_voltages():
 def undulator_dcm(RE, dcm):
     undulator_dcm = i03.undulator_dcm(fake_with_ophyd_sim=True)
     undulator_dcm.dcm = dcm
-    undulator_dcm.dcm_roll_converter_lookup_table_path = (
+    undulator_dcm.roll_energy_table_path = (
         "tests/test_data/test_beamline_dcm_roll_converter.txt"
     )
-    undulator_dcm.dcm_pitch_converter_lookup_table_path = (
+    undulator_dcm.pitch_energy_table_path = (
         "tests/test_data/test_beamline_dcm_pitch_converter.txt"
     )
     yield undulator_dcm
@@ -589,6 +590,7 @@ def fake_create_rotation_devices(
     robot: BartRobot,
     oav: OAV,
     sample_shutter: ZebraShutter,
+    xbpm_feedback: XBPMFeedback,
 ):
     set_mock_value(smargon.omega.max_velocity, 131)
     oav.zoom_controller.onst.sim_put("1.0x")  # type: ignore
@@ -610,6 +612,7 @@ def fake_create_rotation_devices(
         robot=robot,
         oav=oav,
         sample_shutter=sample_shutter,
+        xbpm_feedback=xbpm_feedback,
     )
 
 
@@ -689,6 +692,11 @@ async def async_status_done():
 def mock_gridscan_kickoff_complete(gridscan: FastGridScanCommon):
     gridscan.kickoff = MagicMock(return_value=async_status_done)
     gridscan.complete = MagicMock(return_value=async_status_done)
+
+
+@pytest.fixture
+def panda_fast_grid_scan(RE):
+    return i03.panda_fast_grid_scan(fake_with_ophyd_sim=True)
 
 
 @pytest.fixture

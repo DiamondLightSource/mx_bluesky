@@ -25,7 +25,7 @@ dependencies = [
     "matplotlib",
     "nexgen",
     "numpy",
-    "opencv-python",
+    "opencv-python-headless",
     "opentelemetry-distro",
     "opentelemetry-exporter-otlp",
     "pydantic",
@@ -45,7 +45,7 @@ dependencies = [
     "ophyd == 1.9.0",
     "ophyd-async >= 0.3a5",
     "bluesky >= 1.13.0a4",
-    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@ad506a1e2fbe5d094cb6bb6f143b67160d19203a"
+    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@ff848a6984050b7c21cbf4b351cacb88a88cfbb1",
 ]
 
 
@@ -114,6 +114,7 @@ markers = [
     "s03: marks tests as requiring the s03 simulator running (deselect with '-m \"not s03\"')",
     "dlstbx: marks tests as requiring dlstbx (deselect with '-m \"not dlstbx\"')",
     "skip_log_setup: marks tests so that loggers are not setup before the test.",
+    "skip_in_pycharm: marks test as not working in pycharm testrunner",
 ]
 addopts = """
     --tb=native -vv --doctest-modules --doctest-glob="*.rst"
@@ -135,6 +136,8 @@ filterwarnings = [
     "ignore:(.*)unclosed event loop(.*):ResourceWarning",
     # Ignore pydantic 2 issues from blueapi, see https://github.com/DiamondLightSource/blueapi/issues/622
     "ignore::DeprecationWarning:blueapi",
+    # Ignore deprecation warning from python-workflows https://github.com/DiamondLightSource/python-workflows/issues/180
+    "ignore:.*pkg_resources.*:DeprecationWarning",
 ]
 # Doctest python code in docs, python code in src docstrings, test functions in tests
 testpaths = "docs src tests/unit_tests"

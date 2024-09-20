@@ -14,6 +14,7 @@ Documentation is split into four categories, and each is also accessible from li
 
             reference/param-hierarchy
             reference/readme
+            deploying-hyperion
 
         +++
 
