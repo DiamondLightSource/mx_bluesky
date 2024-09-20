@@ -205,11 +205,6 @@ def rotation_scan_plan(
             "scan_points": [params.scan_points],
         }
     )
-    @transmission_and_xbpm_feedback_for_collection_decorator(
-        composite.xbpm_feedback,
-        composite.attenuator,
-        params.transmission_frac,
-    )
     def _rotation_scan_plan(
         motion_values: RotationMotionProfile,
         composite: RotationScanComposite,
@@ -360,6 +355,11 @@ def rotation_scan(
                 "RotationNexusFileCallback",
             ],
         }
+    )
+    @transmission_and_xbpm_feedback_for_collection_decorator(
+        composite.xbpm_feedback,
+        composite.attenuator,
+        parameters.transmission_frac,
     )
     def rotation_scan_plan_with_stage_and_cleanup(
         params: RotationScan,
