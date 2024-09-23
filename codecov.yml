@@ -12,6 +12,10 @@ component_management:
       name: i24 SSX
       paths:
         - beamlines/i24/serial/**
+      statuses:
+        - type: project
+          target: 60%
+          threshold: 1%
 
 ignore:
   - "**/conftest.py"

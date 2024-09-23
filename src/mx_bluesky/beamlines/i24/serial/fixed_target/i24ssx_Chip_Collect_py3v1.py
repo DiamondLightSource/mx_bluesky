@@ -62,7 +62,7 @@ logger = logging.getLogger("I24ssx.fixed_target")
 
 
 def setup_logging():
-    # Log should now change name daily.
+    # Log should now change name daily
     logfile = time.strftime("i24fixedtarget_%d%B%y.log").lower()
     log.config(logfile)
 
