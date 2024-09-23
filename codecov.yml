@@ -17,6 +17,18 @@ component_management:
         - type: project
           target: 60%
           threshold: 1%
+    - component_id: module_hyperion
+      name: hyperion
+      paths:
+        - src/mx_bluesky/hyperion/**
+        - tests/unit_tests//hyperion/**
+    - component_id: module_other
+      name: other
+      paths:
+        - "!src/mx_bluesky/hyperion/"
+        - "!tests/unit_tests//hyperion/**"
+        - "!src/mx_bluesky/beamlines/i24/serial/**"
+        - "!tests/unit_tests/beamlines/i24/serial/**"
 
 ignore:
   - "**/conftest.py"
