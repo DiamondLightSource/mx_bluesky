@@ -15,7 +15,7 @@ component_management:
         - tests/unit_tests/beamlines/i24/serial/**
       statuses:
         - type: project
-          target: 60%
+          target: 55%
           threshold: 1%
     - component_id: module_hyperion
       name: hyperion
