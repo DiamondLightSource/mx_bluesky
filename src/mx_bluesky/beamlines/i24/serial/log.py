@@ -6,8 +6,11 @@ from pathlib import Path
 
 from dodal.log import (
     ERROR_LOG_BUFFER_LINES,
+    get_graylog_configuration,
     integrate_bluesky_and_ophyd_logging,
-    set_up_all_logging_handlers,
+    set_up_DEBUG_memory_handler,
+    set_up_graylog_handler,
+    set_up_INFO_file_handler,
 )
 from dodal.log import LOGGER as dodal_logger
 
@@ -90,21 +93,17 @@ def _get_logging_file_path() -> Path:
 def default_logging_setup(dev_mode: bool = False):
     """ Default log setup for i24 serial.
 
-    - Set up handlers for parent logger (from dodal)
-    - integrate bluesky and ophyd loggers
-    - Remove dodal stream handler to avoid double messages (for now, use only the \
-        i24ssx default stream to keep the output expected by the scientists.)
+    - Set up handlers for parent logger (from dodal): INFO file, DEBUG \
+        memory and graylog.
+    - integrate bluesky and ophyd loggers.
     """
-    handlers = set_up_all_logging_handlers(  # noqa: F841
-        dodal_logger,
-        _get_logging_file_path(),
-        "dodal.log",
-        dev_mode,
-        ERROR_LOG_BUFFER_LINES,
+    logging_path = _get_logging_file_path()
+    set_up_INFO_file_handler(dodal_logger, logging_path, "dodal.log")
+    set_up_DEBUG_memory_handler(
+        dodal_logger, logging_path, "dodal.log", ERROR_LOG_BUFFER_LINES
     )
+    set_up_graylog_handler(dodal_logger, *get_graylog_configuration(dev_mode, None))
     integrate_bluesky_and_ophyd_logging(dodal_logger)
-    # Remove dodal StreamHandler to avoid duplication of messages above debug
-    dodal_logger.removeHandler(dodal_logger.handlers[0])
 
 
 def config(
