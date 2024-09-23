@@ -80,7 +80,10 @@ def calculate_collection_timeout(parameters: FixedTargetParameters) -> float:
     https://confluence.diamond.ac.uk/display/MXTech/Dynamics+and+fixed+targets.
 
     Args:
-        parameters (FixedTargerParameters): The collection paramelters
+        parameters (FixedTargerParameters): The collection parameters.
+
+    Returns:
+        The estimated collection time, in s.
     """
     buffer = 30
     pump_setting = parameters.pump_repeat
@@ -278,54 +281,42 @@ def load_motion_program_data(
 def get_prog_num(
     chip_type: ChipType, map_type: MappingType, pump_repeat: PumpProbeSetting
 ) -> int:
-    logger.info("Get Program Number")
-    if pump_repeat == PumpProbeSetting.NoPP:
-        if chip_type in [ChipType.Oxford, ChipType.OxfordInner]:
-            logger.info(
-                f"Pump_repeat: {str(pump_repeat)} \tOxford Chip: {str(chip_type)}"
-            )
-            if map_type == MappingType.NoMap:
-                logger.info("Map type 0 = None")
-                logger.info("Program number: 11")
-                return 11
-            elif map_type == MappingType.Lite:
-                logger.info("Map type 1 = Mapping Lite")
-                logger.info("Program number: 12")
-                return 12
-            elif map_type == MappingType.Full:
-                logger.info("Map type 2 = Full Mapping")
-                logger.info("Program number: 13")  # once fixed return 13
-                msg = "Mapping Type FULL is broken as of 11.09.17"
-                logger.error(msg)
-                raise ValueError(msg)
-            else:
-                logger.debug(f"Unknown Mapping Type; map_type = {map_type}")
-                return 0
-        elif chip_type == ChipType.Custom:
-            logger.info(
-                f"Pump_repeat: {str(pump_repeat)} \tCustom Chip: {str(chip_type)}"
-            )
-            logger.info("Program number: 11")
-            return 11
-        elif chip_type == ChipType.Minichip:
-            logger.info(
-                f"Pump_repeat: {str(pump_repeat)} \tMini Oxford Chip: {str(chip_type)}"
-            )
-            logger.info("Program number: 11")
-            return 11
-        else:
-            logger.debug(f"Unknown chip_type, chip_tpe = {chip_type}")
-            return 0
-    elif pump_repeat in [
-        pp.value for pp in PumpProbeSetting if pp != PumpProbeSetting.NoPP
-    ]:
-        logger.info(f"Pump_repeat: {str(pump_repeat)} \t Chip Type: {str(chip_type)}")
-        logger.info("Map Type = Mapping Lite with Pump Probe")
+    """Get the motion program number based on the experiment parameters set by \
+    the user.
+    Any pump probe experiment will return program number 14 (assumes lite mapping).
+    For non pump probe experiments, the program number depends on the chip and map type:
+        - Custom, Mini and PSI chips, as well as Oxford chips with no map return 11
+        - Oxford chips with lite mapping return 12
+        - Oxford chips with full mapping should return 13. Currently disabled, will \
+            raise an error.
+    """
+    logger.info("Get Program Number for the motion program.")
+    logger.info(f"Pump_repeat: {str(pump_repeat)} \t Chip Type: {str(chip_type)}")
+    if pump_repeat != PumpProbeSetting.NoPP:
+        logger.info("Assuming Map type = Mapping Lite.")
         logger.info("Program number: 14")
         return 14
-    else:
-        logger.warning(f"Unknown pump_repeat, pump_repeat = {pump_repeat}")
-        return 0
+
+    if chip_type not in [ChipType.Oxford, ChipType.OxfordInner]:
+        logger.info("Program number: 11")
+        return 11
+
+    if map_type == MappingType.NoMap:
+        logger.info(f"Map type: {str(map_type)}")
+        logger.info("Program number: 11")
+        return 11
+    if map_type == MappingType.Lite:
+        logger.info(f"Map type: {str(map_type)}")
+        logger.info("Program number: 12")
+        return 12
+    if map_type == MappingType.Full:
+        # TODO See https://github.com/DiamondLightSource/mx-bluesky/issues/515
+        logger.info(f"Map type: {str(map_type)}")
+        logger.info("Program number: 13")
+        # TODO once reinstated return 13
+        msg = "Full mapping is broken and currently disabled."
+        logger.error(msg)
+        raise ValueError(msg)
 
 
 @log.log_on_entry
@@ -659,10 +650,6 @@ def main_fixed_target_plan(
     yield from bps.trigger(pmac.to_xyz_zero)
     sleep(2.0)
 
-    prog_num = get_prog_num(
-        parameters.chip.chip_type, parameters.map_type, parameters.pump_repeat
-    )
-
     # Now ready for data collection. Open fast shutter (zebra gate)
     logger.info("Opening fast shutter.")
     yield from open_fast_shutter(zebra)
@@ -681,11 +668,30 @@ def main_fixed_target_plan(
             wavelength,
         )
 
-    timeout_time = calculate_collection_timeout(parameters)
-    logger.info(f"Run PMAC with program number {prog_num}")
-    yield from bps.abs_set(pmac.run_program, prog_num, timeout_time, wait=True)
+    yield from kickoff_and_complete_collection(pmac, parameters)
 
-    logger.debug("Collection completed without errors.")
+
+def kickoff_and_complete_collection(pmac: PMAC, parameters: FixedTargetParameters):
+    prog_num = get_prog_num(
+        parameters.chip.chip_type, parameters.map_type, parameters.pump_repeat
+    )
+    yield from bps.abs_set(pmac.program_number, prog_num, group="setup_pmac")
+    # Calculate approx collection time
+    total_collection_time = calculate_collection_timeout(parameters)
+    logger.info(f"Estimated collection time: {total_collection_time}s.")
+    yield from bps.abs_set(
+        pmac.collection_time, total_collection_time, group="setup_pmac"
+    )
+    yield from bps.wait(group="setup_pmac")  # Make sure the soft signals are set
+
+    @bpp.run_decorator(md={"subplan_name": "run_ft_collection"})
+    def run_collection():
+        logger.info(f"Kick off PMAC with program number {prog_num}.")
+        yield from bps.kickoff(pmac.run_program, wait=True)
+        yield from bps.complete(pmac.run_program, wait=True)
+        logger.info("Collection completed without errors.")
+
+    yield from run_collection()
 
 
 @log.log_on_entry
