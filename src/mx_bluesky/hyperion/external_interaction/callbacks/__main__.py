@@ -108,7 +108,7 @@ def wait_for_threads_forever(threads: Sequence[Thread]):
             sleep(LIVENESS_POLL_SECONDS)
             alive = [t.is_alive() for t in threads]
     except KeyboardInterrupt:
-        log_info("Main thread recieved interrupt - exiting.")
+        log_info("Main thread received interrupt - exiting.")
     else:
         log_info("Proxy or dispatcher thread ended - exiting.")
 

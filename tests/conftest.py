@@ -843,7 +843,7 @@ class DocumentCapturer:
         matches_fields: dict[str, Any] = {},  # noqa
         does_exist: bool = True,
     ):
-        """Assert that a matching doc has been recieved by the sim,
+        """Assert that a matching doc has been received by the sim,
         and returns the first match if it is meant to exist"""
         matches = DocumentCapturer.get_matches(docs, name, has_fields, matches_fields)
         if does_exist:
