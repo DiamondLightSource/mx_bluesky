@@ -9,8 +9,6 @@ repos:
         exclude: ^helmchart/
       - id: check-merge-conflict
       - id: end-of-file-fixer
-      - id: no-commit-to-branch
-        name: "Don't commit to 'main'"
 
   - repo: local
     hooks:
