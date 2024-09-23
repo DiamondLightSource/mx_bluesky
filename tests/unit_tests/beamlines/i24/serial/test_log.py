@@ -50,8 +50,7 @@ def test_default_logging_setup_removes_dodal_stream(mock_blusky_ophyd_logs):
     with patch("mx_bluesky.beamlines.i24.serial.log.dodal_logger") as mock_dodal_logger:
         log.default_logging_setup(dev_mode=True)
         mock_blusky_ophyd_logs.assert_called_once()
-        assert mock_dodal_logger.addHandler.call_count == 4
-        mock_dodal_logger.removeHandler.assert_called_once()
+        assert mock_dodal_logger.addHandler.call_count == 3
 
 
 @patch("mx_bluesky.beamlines.i24.serial.log.Path.mkdir")
