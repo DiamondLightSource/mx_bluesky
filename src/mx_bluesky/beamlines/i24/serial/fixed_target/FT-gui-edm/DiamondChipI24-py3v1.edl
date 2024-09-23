@@ -45,9 +45,9 @@ major 4
 minor 0
 release 0
 x 480
-y 315
+y 320
 w 515
-h 470
+h 460
 lineColor index 14
 fill
 fillColor index 7
@@ -196,8 +196,8 @@ major 4
 minor 8
 release 0
 # Geometry
-x 725
-y 0
+x 740
+y 5
 w 275
 h 305
 # Appearance
@@ -270,7 +270,7 @@ major 4
 minor 3
 release 0
 x 610
-y 110
+y 75
 w 115
 h 30
 fgColor index 14
@@ -291,7 +291,7 @@ major 4
 minor 3
 release 0
 x 475
-y 110
+y 75
 w 130
 h 30
 fgColor index 14
@@ -311,8 +311,8 @@ beginObjectProperties
 major 4
 minor 3
 release 0
-x 645
-y 730
+x 640
+y 725
 w 135
 h 50
 fgColor index 14
@@ -934,8 +934,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 525
-y 735
+x 520
+y 730
 w 91
 h 42
 font "helvetica-bold-r-18.0"
@@ -977,7 +977,7 @@ major 4
 minor 1
 release 1
 x 615
-y 115
+y 80
 w 103
 h 18
 font "arial-medium-r-16.0"
@@ -998,7 +998,7 @@ major 4
 minor 1
 release 1
 x 480
-y 115
+y 80
 w 117
 h 18
 font "arial-medium-r-16.0"
@@ -1018,10 +1018,10 @@ beginObjectProperties
 major 4
 minor 6
 release 0
-x 50
+x 120
 y 910
-w 240
-h 18
+w 170
+h 20
 controlPv "ME14E-MO-CHIP-01:SEND_STRING.AINP"
 font "arial-medium-r-16.0"
 fgColor index 16
@@ -1032,48 +1032,6 @@ nullColor index 0
 useHexPrefix
 newPos
 objType "monitors"
-endObjectProperties
-
-# (Shell Command)
-object shellCmdClass
-beginObjectProperties
-major 4
-minor 3
-release 0
-x 475
-y 75
-w 155
-h 30
-fgColor index 14
-bgColor index 49
-topShadowColor index 0
-botShadowColor index 14
-font "arial-medium-r-18.0"
-numCmds 1
-command {
-  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"zero\"\}'"
-}
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 1
-x 480
-y 80
-w 145
-h 18
-font "arial-medium-r-16.0"
-fontAlign "center"
-fgColor index 14
-bgColor index 0
-useDisplayBg
-value {
-  "Move chip to origin"
-}
-autoSize
 endObjectProperties
 
 # (Static Text)
@@ -1123,7 +1081,7 @@ major 4
 minor 1
 release 1
 x 590
-y 320
+y 330
 w 299
 h 23
 font "arial-bold-r-20.0"
@@ -1231,7 +1189,7 @@ major 4
 minor 1
 release 0
 x 605
-y 630
+y 650
 w 165
 h 28
 fgColor index 14
@@ -1283,7 +1241,7 @@ major 4
 minor 1
 release 1
 x 505
-y 635
+y 655
 w 94
 h 18
 font "arial-medium-r-16.0"
@@ -1303,7 +1261,7 @@ major 4
 minor 1
 release 0
 x 605
-y 560
+y 575
 w 165
 h 28
 fgColor index 14
@@ -1337,7 +1295,7 @@ major 4
 minor 1
 release 1
 x 515
-y 565
+y 580
 w 74
 h 18
 font "arial-medium-r-16.0"
@@ -1400,7 +1358,7 @@ major 4
 minor 0
 release 0
 x 540
-y 720
+y 710
 w 200
 h 2
 lineColor index 58
@@ -1431,49 +1389,6 @@ displayFileName {
 }
 endObjectProperties
 
-# (Shell Command)
-object shellCmdClass
-beginObjectProperties
-major 4
-minor 3
-release 0
-x 580
-y 665
-w 165
-h 50
-fgColor index 14
-bgColor index 17
-topShadowColor index 1
-botShadowColor index 14
-font "arial-medium-r-18.0"
-numCmds 1
-command {
-  0 "blueapi -c CONFIG_LOCATION controller run write_parameter_file"
-}
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 1
-x 590
-y 670
-w 141
-h 36
-font "arial-medium-r-16.0"
-fontAlign "center"
-fgColor index 14
-bgColor index 0
-useDisplayBg
-value {
-  "Set parameters "
-  "and create shotlist"
-}
-autoSize
-endObjectProperties
-
 # (Lines)
 object activeLineClass
 beginObjectProperties
@@ -1481,7 +1396,7 @@ major 4
 minor 0
 release 1
 x 670
-y 335
+y 350
 w 0
 h 0
 lineColor index 14
@@ -1491,7 +1406,7 @@ xPoints {
   0 670
 }
 yPoints {
-  0 335
+  0 350
 }
 endObjectProperties
 
@@ -1501,8 +1416,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 475
-y 215
+x 472
+y 255
 w 69
 h 18
 font "arial-medium-r-16.0"
@@ -1783,7 +1698,7 @@ major 4
 minor 6
 release 0
 x 645
-y 530
+y 545
 w 125
 h 25
 controlPv "ME14E-MO-CHIP-01:detDistance"
@@ -1810,7 +1725,7 @@ major 4
 minor 1
 release 1
 x 515
-y 535
+y 550
 w 98
 h 18
 font "arial-medium-r-16.0"
@@ -1830,7 +1745,7 @@ major 4
 minor 1
 release 1
 x 515
-y 465
+y 480
 w 109
 h 18
 font "arial-medium-r-16.0"
@@ -1850,7 +1765,7 @@ major 4
 minor 6
 release 0
 x 645
-y 460
+y 475
 w 125
 h 25
 controlPv "ME14E-MO-CHIP-01:expTime"
@@ -1877,7 +1792,7 @@ major 4
 minor 6
 release 0
 x 710
-y 430
+y 445
 w 60
 h 25
 controlPv "ME14E-MO-IOC-01:GP3"
@@ -1904,7 +1819,7 @@ major 4
 minor 1
 release 1
 x 515
-y 435
+y 450
 w 167
 h 18
 font "arial-medium-r-16.0"
@@ -1924,7 +1839,7 @@ major 4
 minor 1
 release 1
 x 515
-y 405
+y 420
 w 34
 h 18
 font "arial-medium-r-16.0"
@@ -1944,7 +1859,7 @@ major 4
 minor 6
 release 0
 x 600
-y 400
+y 415
 w 195
 h 25
 controlPv "ME14E-MO-CHIP-01:chipName"
@@ -1971,7 +1886,7 @@ major 4
 minor 6
 release 0
 x 600
-y 370
+y 385
 w 235
 h 25
 controlPv "ME14E-MO-CHIP-01:filePath"
@@ -1998,7 +1913,7 @@ major 4
 minor 1
 release 1
 x 515
-y 375
+y 390
 w 54
 h 18
 font "arial-medium-r-16.0"
@@ -2018,7 +1933,7 @@ major 4
 minor 1
 release 1
 x 515
-y 345
+y 360
 w 32
 h 18
 font "arial-medium-r-16.0"
@@ -2059,8 +1974,8 @@ beginObjectProperties
 major 4
 minor 1
 release 0
-x 550
-y 210
+x 545
+y 250
 w 90
 h 30
 fgColor index 14
@@ -2771,7 +2686,7 @@ lineColor index 25
 fill
 fillColor index 35
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 endObjectProperties
 
@@ -2789,7 +2704,7 @@ lineColor index 25
 fill
 fillColor index 35
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 endObjectProperties
 
@@ -2807,7 +2722,7 @@ lineColor index 25
 fill
 fillColor index 35
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 endObjectProperties
 
@@ -2825,7 +2740,7 @@ lineColor index 25
 fill
 fillColor index 35
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 endObjectProperties
 
@@ -2835,7 +2750,7 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 135
+x 138
 y 720
 w 11
 h 10
@@ -2843,7 +2758,7 @@ lineColor index 25
 fill
 fillColor index 35
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 endObjectProperties
 
@@ -2861,7 +2776,7 @@ lineColor index 25
 fill
 fillColor index 35
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 endObjectProperties
 
@@ -2871,7 +2786,7 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 135
+x 138
 y 760
 w 11
 h 10
@@ -2879,7 +2794,7 @@ lineColor index 25
 fill
 fillColor index 35
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 endObjectProperties
 
@@ -2924,7 +2839,7 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 70
+x 75
 y 495
 w 97
 h 21
@@ -2932,7 +2847,7 @@ font "arial-medium-r-18.0"
 fgColor index 35
 bgColor index 13
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 value {
   " Fid1 A8_tt "
@@ -2954,7 +2869,7 @@ font "arial-medium-r-18.0"
 fgColor index 35
 bgColor index 13
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 value {
   " Fid2 H1_ta "
@@ -3106,7 +3021,7 @@ font "arial-medium-r-18.0"
 fgColor index 35
 bgColor index 13
 visPv "ME14E-MO-IOC-01:GP1"
-visMin "0"
+visMin "1"
 visMax "2"
 value {
   " Home A1_aa "
@@ -3164,7 +3079,7 @@ major 4
 minor 1
 release 1
 x 515
-y 495
+y 510
 w 102
 h 18
 font "arial-medium-r-16.0"
@@ -3184,7 +3099,7 @@ major 10
 minor 0
 release 0
 x 645
-y 495
+y 510
 w 125
 h 25
 controlPv "BL24I-OP-ATTN-01:T2A:SETVAL1"
@@ -3225,7 +3140,7 @@ major 4
 minor 1
 release 1
 x 515
-y 515
+y 530
 w 100
 h 16
 font "arial-medium-r-14.0"
@@ -3265,7 +3180,7 @@ major 4
 minor 1
 release 0
 x 605
-y 595
+y 612
 w 165
 h 28
 fgColor index 14
@@ -3305,7 +3220,7 @@ major 4
 minor 1
 release 1
 x 515
-y 600
+y 618
 w 75
 h 18
 font "arial-medium-r-16.0"
@@ -3517,7 +3432,7 @@ fgColor index 11
 bgColor index 0
 useDisplayBg
 value {
-  "gui version: python3 1.0"
+  "gui version: mx_bluesky"
 }
 autoSize
 endObjectProperties
@@ -3528,8 +3443,8 @@ beginObjectProperties
 major 4
 minor 1
 release 0
-x 550
-y 245
+x 545
+y 215
 w 90
 h 30
 fgColor index 14
@@ -3577,8 +3492,8 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 495
-y 250
+x 490
+y 220
 w 44
 h 18
 font "arial-medium-r-16.0"
@@ -3591,29 +3506,6 @@ value {
 autoSize
 endObjectProperties
 
-# (Message Button)
-object activeMessageButtonClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 645
-y 245
-w 50
-h 30
-fgColor index 14
-onColor index 3
-offColor index 3
-topShadowColor index 1
-botShadowColor index 11
-controlPv "BL24I-DI-OAV-01:CAM:GainAuto"
-pressValue "Once"
-onLabel "Gain"
-offLabel "Gain"
-3d
-font "arial-medium-r-16.0"
-endObjectProperties
-
 # (Static Text)
 object activeXTextClass
 beginObjectProperties
@@ -3621,7 +3513,7 @@ major 4
 minor 1
 release 1
 x 475
-y 180
+y 150
 w 141
 h 27
 font "arial-medium-r-24.0"
@@ -3640,8 +3532,8 @@ beginObjectProperties
 major 4
 minor 3
 release 0
-x 645
-y 210
+x 615
+y 180
 w 60
 h 30
 fgColor index 43
@@ -3663,7 +3555,7 @@ major 4
 minor 6
 release 0
 x 595
-y 345
+y 360
 w 280
 h 20
 controlPv "ME14E-MO-IOC-01:GP100"
@@ -3809,8 +3701,8 @@ beginObjectProperties
 major 4
 minor 3
 release 0
-x 550
-y 280
+x 485
+y 180
 w 110
 h 30
 fgColor index 43
@@ -3874,7 +3766,7 @@ major 4
 minor 3
 release 0
 x 475
-y 145
+y 110
 w 130
 h 30
 fgColor index 14
@@ -3895,7 +3787,7 @@ major 4
 minor 1
 release 1
 x 480
-y 150
+y 115
 w 120
 h 18
 font "arial-medium-r-16.0"
@@ -3916,7 +3808,7 @@ major 4
 minor 3
 release 0
 x 610
-y 145
+y 110
 w 100
 h 30
 fgColor index 14
@@ -3937,7 +3829,7 @@ major 4
 minor 1
 release 1
 x 620
-y 150
+y 115
 w 78
 h 18
 font "arial-medium-r-16.0"
@@ -3980,16 +3872,16 @@ beginObjectProperties
 major 4
 minor 1
 release 1
-x 465
-y 883
-w 97
+x 515
+y 885
+w 45
 h 18
 font "arial-medium-r-16.0"
 fgColor index 14
 bgColor index 0
 useDisplayBg
 value {
-  "Zebra Status"
+  "Zebra"
 }
 autoSize
 endObjectProperties
@@ -4080,8 +3972,8 @@ beginObjectProperties
 major 4
 minor 3
 release 0
-x 800
-y 730
+x 795
+y 725
 w 135
 h 50
 fgColor index 0
@@ -4094,4 +3986,154 @@ numCmds 1
 command {
   0 "blueapi -c CONFIG_LOCATION controller abort"
 }
+endObjectProperties
+
+# (Byte)
+object ByteClass
+beginObjectProperties
+major 4
+minor 0
+release 0
+x 710
+y 287
+w 20
+h 20
+controlPv "BL24I-DI-LED-01:TOGGLE"
+lineColor index 14
+onColor index 15
+offColor index 19
+lineWidth 2
+numBits 1
+endObjectProperties
+
+# (Choice Button)
+object activeChoiceButtonClass
+beginObjectProperties
+major 4
+minor 0
+release 0
+x 645
+y 255
+w 90
+h 20
+fgColor index 25
+bgColor index 3
+selectColor index 3
+inconsistentColor index 0
+topShadowColor index 1
+botShadowColor index 11
+controlPv "BL24I-DI-LED-01:TOGGLE"
+indicatorPv "BL24I-DI-LED-01:TOGGLE"
+font "arial-medium-r-16.0"
+orientation "horizontal"
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 6
+release 0
+x 640
+y 287
+w 60
+h 21
+controlPv "BL24I-DI-LED-01:PWMDEMAND"
+font "arial-medium-r-18.0"
+fgColor index 16
+bgColor index 10
+autoHeight
+limitsFromDb
+nullColor index 0
+useHexPrefix
+newPos
+objType "monitors"
+endObjectProperties
+
+# (Text Control)
+object activeXTextDspClass
+beginObjectProperties
+major 4
+minor 6
+release 0
+x 550
+y 285
+w 80
+h 25
+controlPv "BL24I-DI-LED-01:PWMDEMAND"
+font "helvetica-medium-r-18.0"
+fgColor index 25
+bgColor index 3
+editable
+autoHeight
+motifWidget
+limitsFromDb
+nullColor index 0
+useKp
+useHexPrefix
+newPos
+inputFocusUpdates
+objType "controls"
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 1
+x 485
+y 288
+w 49
+h 18
+font "arial-medium-r-16.0"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "Power"
+}
+autoSize
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 6
+release 0
+x 415
+y 880
+w 68
+h 18
+controlPv "BL24I-EA-DET-01:Z.RBV"
+font "arial-medium-r-16.0"
+fgColor index 16
+bgColor index 10
+autoHeight
+limitsFromDb
+nullColor index 0
+useHexPrefix
+newPos
+objType "monitors"
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 1
+x 55
+y 910
+w 48
+h 18
+font "arial-medium-r-16.0"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "PMAC"
+}
+autoSize
 endObjectProperties
