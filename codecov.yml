@@ -1,9 +1,17 @@
-coverage:
-  status:
-    project:
-      default:
-        target: 85%    # the required coverage value
-        threshold: 1%  # the leniency in hitting the target
+comment:
+  layout: "header, diff, flags, components" # show component info in the PR comment
+
+component_management:
+  default_rules: # default rules that will be inherited by all components
+    statuses:
+      - type: project
+        target: 85%
+        threshold: 1%
+  individual_components:
+    - component_id: module_i24_ssx
+      name: i24 SSX
+      paths:
+        - beamlines/i24/serial/**
 
 ignore:
- - "**/conftest.py"
+  - "**/conftest.py"
