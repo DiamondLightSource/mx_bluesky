@@ -11,7 +11,8 @@ component_management:
     - component_id: module_i24_ssx
       name: i24 SSX
       paths:
-        - beamlines/i24/serial/**
+        - src/mx_bluesky/beamlines/i24/serial/**
+        - tests/unit_tests/beamlines/i24/serial/**
       statuses:
         - type: project
           target: 60%
