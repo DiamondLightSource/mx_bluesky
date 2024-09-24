@@ -1,9 +1,18 @@
 #!/bin/bash
 
-# Check we're in the right place
-dir_name=${PWD##*/}
-if [ "$dir_name" != "mx-bluesky" ]; then
-  echo "This script should be run from the 'mx-bluesky' directory"
+# Check we're in the right place (assuming the location of this script in the repo)
+
+# Get the directory where the script is located
+script_dir=$(dirname "$(readlink -f "$0")")
+
+# Get the current working directory
+current_dir=$(pwd)
+
+# Get the directory up from the script's location
+two_levels_up=$(dirname "$script_dir")
+
+if [ "$current_dir" != "$two_levels_up" ]; then
+  echo "This script should be run from the top directory of the repo"
   exit 1
 fi
 

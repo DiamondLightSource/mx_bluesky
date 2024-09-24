@@ -24,7 +24,6 @@ from mx_bluesky.hyperion.parameters.components import (
     OptionalXyzStarts,
     RotationAxis,
     SplitScan,
-    TemporaryIspybExtras,
     WithScan,
 )
 from mx_bluesky.hyperion.parameters.constants import (
@@ -39,7 +38,6 @@ class RotationScanPerSweep(OptionalGonioAngleStarts, OptionalXyzStarts):
     scan_width_deg: float = Field(default=360, gt=0)
     rotation_direction: RotationDirection = Field(default=RotationDirection.NEGATIVE)
     nexus_vds_start_img: int = Field(default=0, ge=0)
-    ispyb_extras: TemporaryIspybExtras | None = None
 
 
 class RotationExperiment(DiffractionExperimentWithSample):

@@ -387,28 +387,3 @@ def test_when_plan_run_then_thawing_turned_on_for_expected_time(
         and msg.obj.name == "thawer-thaw_for_time_s"
         and msg.args[0] == thaw_time,
     )
-
-
-@patch("mx_bluesky.hyperion.experiment_plans.robot_load.do_robot_load")
-@patch("mx_bluesky.hyperion.experiment_plans.robot_load.prepare_for_robot_load")
-def test_given_sample_already_loaded_when_plan_run_then_sample_not_loaded(
-    mock_prepare_robot: MagicMock,
-    mock_do_robot_load: MagicMock,
-    robot_load_composite: RobotLoadAndEnergyChangeComposite,
-    robot_load_and_energy_change_params_no_energy: RobotLoadAndEnergyChange,
-    RE: RunEngine,
-):
-    set_mock_value(robot_load_composite.robot.current_pin, 1)
-    set_mock_value(robot_load_composite.robot.current_puck, 2)
-
-    robot_load_and_energy_change_params_no_energy.sample_pin = 1
-    robot_load_and_energy_change_params_no_energy.sample_puck = 2
-
-    RE(
-        full_robot_load_plan(
-            robot_load_composite,
-            robot_load_and_energy_change_params_no_energy,
-        )
-    )
-    mock_prepare_robot.assert_not_called()
-    mock_do_robot_load.assert_not_called()

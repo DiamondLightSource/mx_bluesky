@@ -150,12 +150,15 @@ def raise_exception_if_moved_out_of_cryojet(exception):
         )
 
 
-def _pin_already_loaded(
-    robot: BartRobot, pin_to_load: int, puck_to_load: int
+def pin_already_loaded(
+    robot: BartRobot, sample_location: SampleLocation
 ) -> Generator[Msg, None, bool]:
     current_puck = yield from bps.rd(robot.current_puck)
     current_pin = yield from bps.rd(robot.current_pin)
-    return int(current_puck) == puck_to_load and int(current_pin) == pin_to_load
+    return (
+        int(current_puck) == sample_location.puck
+        and int(current_pin) == sample_location.pin
+    )
 
 
 def robot_load_and_snapshots(
@@ -203,40 +206,32 @@ def full_robot_load_plan(
     composite: RobotLoadAndEnergyChangeComposite,
     params: RobotLoadAndEnergyChange,
 ):
-    # TODO: get these from one source of truth #254
     assert params.sample_puck is not None
     assert params.sample_pin is not None
 
-    if not (
-        yield from _pin_already_loaded(
-            composite.robot, params.sample_pin, params.sample_puck
-        )
-    ):
-        yield from prepare_for_robot_load(
-            composite.aperture_scatterguard, composite.smargon
-        )
-        yield from bpp.run_wrapper(
-            robot_load_and_snapshots(
-                composite,
-                SampleLocation(params.sample_puck, params.sample_pin),
-                params.snapshot_directory,
-                params.thawing_time,
-                params.demand_energy_ev,
-            ),
-            md={
-                "subplan_name": CONST.PLAN.ROBOT_LOAD,
-                "metadata": {
-                    "visit": params.visit,
-                    "sample_id": params.sample_id,
-                    "sample_puck": params.sample_puck,
-                    "sample_pin": params.sample_pin,
-                },
-                "activate_callbacks": [
-                    "RobotLoadISPyBCallback",
-                ],
+    sample_location = SampleLocation(params.sample_puck, params.sample_pin)
+
+    yield from prepare_for_robot_load(
+        composite.aperture_scatterguard, composite.smargon
+    )
+    yield from bpp.run_wrapper(
+        robot_load_and_snapshots(
+            composite,
+            sample_location,
+            params.snapshot_directory,
+            params.thawing_time,
+            params.demand_energy_ev,
+        ),
+        md={
+            "subplan_name": CONST.PLAN.ROBOT_LOAD,
+            "metadata": {
+                "visit": params.visit,
+                "sample_id": params.sample_id,
+                "sample_puck": sample_location.puck,
+                "sample_pin": sample_location.pin,
             },
-        )
-    else:
-        LOGGER.info(
-            f"Pin/puck {params.sample_pin}/{params.sample_puck} already loaded, will not reload."
-        )
+            "activate_callbacks": [
+                "RobotLoadISPyBCallback",
+            ],
+        },
+    )

@@ -4,7 +4,7 @@ import json
 import logging
 import sys
 import threading
-from collections.abc import Generator, Sequence
+from collections.abc import Callable, Generator, Sequence
 from functools import partial
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -294,8 +294,7 @@ def smargon(RE: RunEngine) -> Generator[Smargon, None, None]:
 
 
 @pytest.fixture
-def zebra():
-    RunEngine()
+def zebra(RE):
     zebra = i03.zebra(fake_with_ophyd_sim=True)
 
     def mock_side(*args, **kwargs):
@@ -348,6 +347,7 @@ def oav(test_config_files):
     )
     oav = i03.oav(fake_with_ophyd_sim=True, params=parameters)
     oav.snapshot.trigger = MagicMock(return_value=NullStatus())
+    oav.grid_snapshot.trigger = MagicMock(return_value=NullStatus())
     return oav
 
 
@@ -439,10 +439,10 @@ def vfm_mirror_voltages():
 def undulator_dcm(RE, dcm):
     undulator_dcm = i03.undulator_dcm(fake_with_ophyd_sim=True)
     undulator_dcm.dcm = dcm
-    undulator_dcm.dcm_roll_converter_lookup_table_path = (
+    undulator_dcm.roll_energy_table_path = (
         "tests/test_data/test_beamline_dcm_roll_converter.txt"
     )
-    undulator_dcm.dcm_pitch_converter_lookup_table_path = (
+    undulator_dcm.pitch_energy_table_path = (
         "tests/test_data/test_beamline_dcm_pitch_converter.txt"
     )
     yield undulator_dcm
@@ -695,6 +695,11 @@ def mock_gridscan_kickoff_complete(gridscan: FastGridScanCommon):
 
 
 @pytest.fixture
+def panda_fast_grid_scan(RE):
+    return i03.panda_fast_grid_scan(fake_with_ophyd_sim=True)
+
+
+@pytest.fixture
 async def fake_fgs_composite(
     smargon: Smargon,
     test_fgs_params: ThreeDGridScan,
@@ -838,7 +843,7 @@ class DocumentCapturer:
         matches_fields: dict[str, Any] = {},  # noqa
         does_exist: bool = True,
     ):
-        """Assert that a matching doc has been recieved by the sim,
+        """Assert that a matching doc has been received by the sim,
         and returns the first match if it is meant to exist"""
         matches = DocumentCapturer.get_matches(docs, name, has_fields, matches_fields)
         if does_exist:
@@ -891,3 +896,10 @@ def feature_flags():
     return FeatureFlags(
         **{field_name: False for field_name in FeatureFlags.model_fields.keys()}
     )
+
+
+def assert_none_matching(
+    messages: list[Msg],
+    predicate: Callable[[Msg], bool],
+):
+    assert not list(filter(predicate, messages))

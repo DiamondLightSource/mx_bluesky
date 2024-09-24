@@ -13,6 +13,7 @@ from dodal.devices.detector.detector_motion import ShutterState
 from dodal.devices.oav.oav_parameters import OAVParameters
 from dodal.devices.smargon import Smargon
 from dodal.devices.synchrotron import SynchrotronMode
+from dodal.devices.xbpm_feedback import Pause
 from dodal.devices.zebra import PC_GATE, Zebra
 from dodal.devices.zebra_controlled_shutter import ZebraShutterControl
 from ophyd_async.core import get_mock_put
@@ -28,6 +29,13 @@ from mx_bluesky.hyperion.experiment_plans.rotation_scan_plan import (
     rotation_scan,
     rotation_scan_plan,
 )
+from mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback import (
+    RotationISPyBCallback,
+)
+from mx_bluesky.hyperion.external_interaction.callbacks.zocalo_callback import (
+    ZocaloCallback,
+)
+from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_store import IspybIds
 from mx_bluesky.hyperion.parameters.constants import CONST, DocDescriptorNames
 from mx_bluesky.hyperion.parameters.rotation import RotationScan
 
@@ -384,13 +392,35 @@ def test_rotation_scan_triggers_xbpm_then_pauses_xbpm_and_sets_transmission(
         msgs,
         lambda msg: msg.command == "set"
         and msg.obj.name == "xbpm_feedback-pause_feedback"
-        and msg.args[0] == "Paused",
+        and msg.args[0] == Pause.PAUSE.value,
     )
     msgs = assert_message_and_return_remaining(
         msgs,
         lambda msg: msg.command == "set"
         and msg.obj.name == "attenuator"
         and msg.args[0] == test_rotation_params.transmission_frac,
+    )
+
+
+def test_rotation_scan_does_not_change_transmission_back_until_after_data_collected(
+    rotation_scan_simulated_messages,
+    test_rotation_params: RotationScan,
+):
+    msgs = assert_message_and_return_remaining(
+        rotation_scan_simulated_messages,
+        lambda msg: msg.command == "unstage" and msg.obj.name == "eiger",
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "xbpm_feedback-pause_feedback"
+        and msg.args[0] == Pause.RUN.value,
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "attenuator"
+        and msg.args[0] == 1.0,
     )
 
 
@@ -600,3 +630,69 @@ def test_rotation_scan_arms_detector_and_takes_snapshots_whilst_arming(
         lambda msg: msg.command == "wait"
         and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
     )
+
+
+@patch(
+    "mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback.StoreInIspyb"
+)
+def test_rotation_scan_correctly_triggers_ispyb_callback(
+    mock_store_in_ispyb,
+    RE: RunEngine,
+    test_rotation_params: RotationScan,
+    fake_create_rotation_devices: RotationScanComposite,
+    oav_parameters_for_rotation: OAVParameters,
+):
+    mock_ispyb_callback = RotationISPyBCallback()
+    RE.subscribe(mock_ispyb_callback)
+    with (
+        patch("bluesky.plan_stubs.wait", autospec=True),
+        patch(
+            "bluesky.preprocessors.__read_and_stash_a_motor",
+            fake_read,
+        ),
+    ):
+        RE(
+            rotation_scan(
+                fake_create_rotation_devices,
+                test_rotation_params,
+                oav_parameters_for_rotation,
+            ),
+        )
+    mock_store_in_ispyb.assert_called()
+
+
+@patch(
+    "mx_bluesky.hyperion.external_interaction.callbacks.zocalo_callback.ZocaloTrigger"
+)
+@patch(
+    "mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback.StoreInIspyb"
+)
+def test_rotation_scan_correctly_triggers_zocalo_callback(
+    mock_store_in_ispyb,
+    mock_zocalo_interactor,
+    RE: RunEngine,
+    test_rotation_params: RotationScan,
+    fake_create_rotation_devices: RotationScanComposite,
+    oav_parameters_for_rotation: OAVParameters,
+):
+    mock_zocalo_callback = ZocaloCallback()
+    mock_ispyb_callback = RotationISPyBCallback(emit=mock_zocalo_callback)
+    mock_store_in_ispyb.return_value.update_deposition.return_value = IspybIds(
+        data_collection_ids=(0, 1)
+    )
+    RE.subscribe(mock_ispyb_callback)
+    with (
+        patch("bluesky.plan_stubs.wait", autospec=True),
+        patch(
+            "bluesky.preprocessors.__read_and_stash_a_motor",
+            fake_read,
+        ),
+    ):
+        RE(
+            rotation_scan(
+                fake_create_rotation_devices,
+                test_rotation_params,
+                oav_parameters_for_rotation,
+            ),
+        )
+    mock_zocalo_interactor.return_value.run_start.assert_called_once()
