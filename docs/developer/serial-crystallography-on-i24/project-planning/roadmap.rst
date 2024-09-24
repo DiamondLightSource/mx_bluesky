@@ -30,13 +30,14 @@ Ongoing list of TODOs:
    - Prepare generic react components to match the features in the edms.
    - Components for things currently managed by general purpose PVs (eg. map).
    - OAV viewer.
-  
-7. Implementation of serial tools to be used at XFELS.
+
+7. Start integrating Panda, at least for fixed-target collections. 
+8. Implementation of serial tools to be used at XFELS.
 
    - Reinstate removed code from sacla and move it to bluesky.
    - Add any plans/devices that might be needed for other locations.
   
-8. Reinstate full mapping code using bluesky.
+9. Reinstate full mapping code using bluesky.
 
 (TBC…)
 
@@ -72,7 +73,7 @@ Ongoing list of TODOs:
    * - Improve current alignment (moveonclick)
      - Nov. 24
      - :material-regular:`pending;2em`
-   * - Set up `coniql <https://github.com/DiamondLightSource/coniql>`__ on the beamline
+   * - Set up a PV backend, eg. ``pvws``, for web GUI on the beamline.
      - Jan. 25
      - :material-regular:`pending;2em`
    * - Prepare React components to switch from EDM to a web GUI
