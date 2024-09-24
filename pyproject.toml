@@ -25,7 +25,7 @@ dependencies = [
     "matplotlib",
     "nexgen",
     "numpy",
-    "opencv-python-headless",
+    "opencv-python",
     "opentelemetry-distro",
     "opentelemetry-exporter-otlp",
     "pydantic",
