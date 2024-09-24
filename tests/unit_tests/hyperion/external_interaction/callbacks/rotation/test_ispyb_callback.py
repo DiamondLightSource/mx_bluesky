@@ -51,10 +51,6 @@ EXPECTED_DATA_COLLECTION = {
 def rotation_start_outer_doc_without_snapshots(
     test_rotation_start_outer_document, dummy_rotation_params
 ):
-    dummy_rotation_params.ispyb_extras.xtal_snapshots_omega_start = None
-    test_rotation_start_outer_document["hyperion_parameters"] = (
-        dummy_rotation_params.model_dump_json()
-    )
     return test_rotation_start_outer_document
 
 
@@ -108,12 +104,7 @@ def test_activity_gated_start_with_snapshot_parameters(
     assert_upsert_call_with(
         mx.upsert_data_collection.mock_calls[0],
         mx.get_data_collection_params(),
-        EXPECTED_DATA_COLLECTION
-        | {
-            "xtal_snapshot1": "test_1_y",
-            "xtal_snapshot2": "test_2_y",
-            "xtal_snapshot3": "test_3_y",
-        },
+        EXPECTED_DATA_COLLECTION,
     )
 
 
