@@ -452,7 +452,7 @@ def undulator_dcm(RE, dcm):
 @pytest.fixture
 def webcam(RE) -> Generator[Webcam, Any, Any]:
     webcam = i03.webcam(fake_with_ophyd_sim=True)
-    with patch.object(webcam, "_write_image"):
+    with patch.object(webcam, "_get_and_write_image"):
         yield webcam
 
 
