@@ -13,10 +13,10 @@ from dodal.devices.webcam import Webcam
 from ophyd.sim import NullStatus
 from ophyd_async.core import set_mock_value
 
-from mx_bluesky.hyperion.experiment_plans.robot_load import (
+from mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy import (
     RobotLoadAndEnergyChangeComposite,
-    full_robot_load_plan,
     prepare_for_robot_load,
+    robot_load_and_change_energy_plan,
     take_robot_snapshots,
 )
 from mx_bluesky.hyperion.external_interaction.callbacks.robot_load.ispyb_callback import (
@@ -66,7 +66,7 @@ def dummy_set_energy_plan(energy, composite):
 
 
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load.set_energy_plan",
+    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan",
     MagicMock(side_effect=dummy_set_energy_plan),
 )
 def test_when_plan_run_with_requested_energy_specified_energy_change_executes(
@@ -80,7 +80,9 @@ def test_when_plan_run_with_requested_energy_specified_energy_change_executes(
         "dcm-energy_in_kev",
     )
     messages = sim_run_engine.simulate_plan(
-        full_robot_load_plan(robot_load_composite, robot_load_and_energy_change_params)
+        robot_load_and_change_energy_plan(
+            robot_load_composite, robot_load_and_energy_change_params
+        )
     )
     assert_message_and_return_remaining(
         messages, lambda msg: msg.command == "set_energy_plan"
@@ -88,7 +90,7 @@ def test_when_plan_run_with_requested_energy_specified_energy_change_executes(
 
 
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load.set_energy_plan",
+    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan",
     MagicMock(return_value=iter([Msg("set_energy_plan")])),
 )
 def test_robot_load_and_energy_change_doesnt_set_energy_if_not_specified(
@@ -102,7 +104,7 @@ def test_robot_load_and_energy_change_doesnt_set_energy_if_not_specified(
         "dcm-energy_in_kev",
     )
     messages = sim_run_engine.simulate_plan(
-        full_robot_load_plan(
+        robot_load_and_change_energy_plan(
             robot_load_composite,
             robot_load_and_energy_change_params_no_energy,
         )
@@ -133,13 +135,15 @@ def run_simulating_smargon_wait(
     )
 
     return sim_run_engine.simulate_plan(
-        full_robot_load_plan(robot_load_composite, robot_load_then_centre_params)
+        robot_load_and_change_energy_plan(
+            robot_load_composite, robot_load_then_centre_params
+        )
     )
 
 
 @pytest.mark.parametrize("total_disabled_reads", [5, 3, 14])
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load.set_energy_plan",
+    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan",
     MagicMock(return_value=iter([])),
 )
 def test_given_smargon_disabled_when_plan_run_then_waits_on_smargon(
@@ -166,7 +170,7 @@ def test_given_smargon_disabled_when_plan_run_then_waits_on_smargon(
 
 
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load.set_energy_plan",
+    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan",
     MagicMock(return_value=iter([])),
 )
 def test_given_smargon_disabled_for_longer_than_timeout_when_plan_run_then_throws_exception(
@@ -214,7 +218,7 @@ async def test_when_prepare_for_robot_load_called_then_moves_as_expected(
     "mx_bluesky.hyperion.external_interaction.callbacks.robot_load.ispyb_callback.ExpeyeInteraction.start_load"
 )
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load.set_energy_plan",
+    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan",
     MagicMock(return_value=iter([])),
 )
 def test_given_ispyb_callback_attached_when_robot_load_then_centre_plan_called_then_ispyb_deposited(
@@ -234,7 +238,11 @@ def test_given_ispyb_callback_attached_when_robot_load_then_centre_plan_called_t
     action_id = 1098
     start_load.return_value = action_id
 
-    RE(full_robot_load_plan(robot_load_composite, robot_load_and_energy_change_params))
+    RE(
+        robot_load_and_change_energy_plan(
+            robot_load_composite, robot_load_and_energy_change_params
+        )
+    )
 
     start_load.assert_called_once_with("cm31105", 4, 12345, 40, 3)
     update_barcode_and_snapshots.assert_called_once_with(
@@ -243,7 +251,7 @@ def test_given_ispyb_callback_attached_when_robot_load_then_centre_plan_called_t
     end_load.assert_called_once_with(action_id, "success", "OK")
 
 
-@patch("mx_bluesky.hyperion.experiment_plans.robot_load.datetime")
+@patch("mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.datetime")
 async def test_when_take_snapshots_called_then_filename_and_directory_set_and_device_triggered(
     mock_datetime: MagicMock, oav: OAV, webcam: Webcam
 ):
@@ -282,7 +290,7 @@ def test_given_lower_gonio_moved_when_robot_load_then_lower_gonio_moved_to_home_
         )
 
     messages = sim_run_engine.simulate_plan(
-        full_robot_load_plan(
+        robot_load_and_change_energy_plan(
             robot_load_composite,
             robot_load_and_energy_change_params_no_energy,
         )
@@ -306,7 +314,7 @@ def test_given_lower_gonio_moved_when_robot_load_then_lower_gonio_moved_to_home_
 
 
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load.set_energy_plan",
+    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan",
     MagicMock(return_value=iter([])),
 )
 def test_when_plan_run_then_lower_gonio_moved_before_robot_loads_and_back_after_smargon_enabled(
@@ -325,7 +333,7 @@ def test_when_plan_run_then_lower_gonio_moved_before_robot_loads_and_back_after_
         )
 
     messages = sim_run_engine.simulate_plan(
-        full_robot_load_plan(
+        robot_load_and_change_energy_plan(
             robot_load_composite,
             robot_load_and_energy_change_params_no_energy,
         )
@@ -358,7 +366,7 @@ def test_when_plan_run_then_lower_gonio_moved_before_robot_loads_and_back_after_
 
 
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load.set_energy_plan",
+    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan",
     MagicMock(return_value=iter([])),
 )
 def test_when_plan_run_then_thawing_turned_on_for_expected_time(
@@ -375,7 +383,7 @@ def test_when_plan_run_then_thawing_turned_on_for_expected_time(
     )
 
     messages = sim_run_engine.simulate_plan(
-        full_robot_load_plan(
+        robot_load_and_change_energy_plan(
             robot_load_composite,
             robot_load_and_energy_change_params_no_energy,
         )

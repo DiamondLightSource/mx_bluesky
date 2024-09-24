@@ -202,7 +202,7 @@ def robot_load_and_snapshots(
     yield from bps.wait("reset-lower_gonio")
 
 
-def full_robot_load_plan(
+def robot_load_and_change_energy_plan(
     composite: RobotLoadAndEnergyChangeComposite,
     params: RobotLoadAndEnergyChange,
 ):

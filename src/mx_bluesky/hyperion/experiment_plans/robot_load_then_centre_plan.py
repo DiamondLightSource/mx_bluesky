@@ -41,10 +41,10 @@ from mx_bluesky.hyperion.experiment_plans.grid_detect_then_xray_centre_plan impo
 from mx_bluesky.hyperion.experiment_plans.pin_centre_then_xray_centre_plan import (
     pin_centre_then_xray_centre_plan,
 )
-from mx_bluesky.hyperion.experiment_plans.robot_load import (
+from mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy import (
     RobotLoadAndEnergyChangeComposite,
-    full_robot_load_plan,
     pin_already_loaded,
+    robot_load_and_change_energy_plan,
 )
 from mx_bluesky.hyperion.parameters.constants import CONST
 from mx_bluesky.hyperion.parameters.gridscan import RobotLoadThenCentre
@@ -108,7 +108,7 @@ def robot_load_then_centre_plan(
     composite: RobotLoadThenCentreComposite,
     params: RobotLoadThenCentre,
 ):
-    yield from full_robot_load_plan(
+    yield from robot_load_and_change_energy_plan(
         cast(RobotLoadAndEnergyChangeComposite, composite),
         params.robot_load_params(),
     )
