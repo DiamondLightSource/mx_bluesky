@@ -32,4 +32,3 @@ component_management:
 
 ignore:
   - "**/conftest.py"
-  - "*.edl"
