@@ -30,7 +30,17 @@ class LoadCentreCollect(HyperionParameters, WithVisit, WithSample):
 
     @model_validator(mode="before")
     @classmethod
-    def robot_load_params(cls, values):
+    def validate_model(cls, values):
+        allowed_keys = (
+            LoadCentreCollect.model_fields.keys()
+            | RobotLoadThenCentre.model_fields.keys()
+            | MultiRotationScan.model_fields.keys()
+        )
+        disallowed_keys = values.keys() - allowed_keys
+        assert (
+            disallowed_keys == set()
+        ), f"Unexpected fields found in LoadCentreCollect {disallowed_keys}"
+
         values["robot_load_then_centre"] = construct_from_values(
             values, "robot_load_then_centre", RobotLoadThenCentre
         )

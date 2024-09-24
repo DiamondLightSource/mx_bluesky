@@ -149,7 +149,6 @@ class WithVisit(BaseModel):
     visit: str = Field(min_length=1)
     zocalo_environment: str = Field(default=CONST.ZOCALO_ENV)
     beamline: str = Field(default=CONST.I03.BEAMLINE, pattern=r"BL\d{2}[BIJS]")
-    storage_directory: str
     det_dist_to_beam_converter_path: str = Field(
         default=CONST.PARAM.DETECTOR.BEAM_XY_LUT_PATH
     )
@@ -172,6 +171,7 @@ class DiffractionExperiment(
     selected_aperture: ApertureValue | None = Field(default=None)
     transmission_frac: float = Field(default=0.1)
     ispyb_experiment_type: IspybExperimentType
+    storage_directory: str
 
     @model_validator(mode="before")
     @classmethod

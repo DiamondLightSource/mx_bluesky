@@ -281,6 +281,10 @@ def smargon(RE: RunEngine) -> Generator[Smargon, None, None]:
     set_mock_value(smargon.z.user_readback, 0.0)
     set_mock_value(smargon.x.high_limit_travel, 2)
     set_mock_value(smargon.x.low_limit_travel, -2)
+    set_mock_value(smargon.y.high_limit_travel, 2)
+    set_mock_value(smargon.y.low_limit_travel, -2)
+    set_mock_value(smargon.z.high_limit_travel, 2)
+    set_mock_value(smargon.z.low_limit_travel, -2)
 
     with (
         patch_async_motor(smargon.omega),
@@ -415,7 +419,12 @@ def dcm(RE):
     dcm = i03.dcm(fake_with_ophyd_sim=True)
     set_mock_value(dcm.energy_in_kev.user_readback, 12.7)
     set_mock_value(dcm.pitch_in_mrad.user_readback, 1)
-    return dcm
+    with (
+        oa_patch_motor(dcm.roll_in_mrad),
+        oa_patch_motor(dcm.pitch_in_mrad),
+        oa_patch_motor(dcm.offset_in_mm),
+    ):
+        yield dcm
 
 
 @pytest.fixture
@@ -604,7 +613,7 @@ def fake_create_rotation_devices(
     xbpm_feedback: XBPMFeedback,
 ):
     set_mock_value(smargon.omega.max_velocity, 131)
-    oav.zoom_controller.onst.sim_put("1.0x")  # type: ignore
+    oav.zoom_controller.zrst.sim_put("1.0x")  # type: ignore
     oav.zoom_controller.fvst.sim_put("5.0x")  # type: ignore
 
     return RotationScanComposite(

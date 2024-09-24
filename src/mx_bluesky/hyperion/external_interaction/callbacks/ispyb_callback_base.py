@@ -110,9 +110,9 @@ class BaseISPyBCallback(PlanReactiveCallback):
             slitgap_vertical=doc["data"]["s4_slit_gaps_ygap"],
         )
         hwscan_position_info = DataCollectionPositionInfo(
-            pos_x=doc["data"]["smargon-x"],
-            pos_y=doc["data"]["smargon-y"],
-            pos_z=doc["data"]["smargon-z"],
+            pos_x=float(doc["data"]["smargon-x"]),
+            pos_y=float(doc["data"]["smargon-y"]),
+            pos_z=float(doc["data"]["smargon-z"]),
         )
         scan_data_infos = self.populate_info_for_update(
             hwscan_data_collection_info, hwscan_position_info, self.params

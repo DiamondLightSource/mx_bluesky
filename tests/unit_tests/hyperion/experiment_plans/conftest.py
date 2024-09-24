@@ -261,6 +261,7 @@ def robot_load_composite(
         panda=panda,
         panda_fast_grid_scan=panda_fast_grid_scan,
         thawer=thawer,
+        sample_shutter=sample_shutter,
         vfm=vfm,
         vfm_mirror_voltages=vfm_mirror_voltages,
         dcm=dcm,
@@ -268,7 +269,6 @@ def robot_load_composite(
         robot=robot,
         webcam=webcam,
         lower_gonio=lower_gonio,
-        sample_shutter=sample_shutter
     )
 
 
