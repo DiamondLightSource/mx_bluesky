@@ -242,7 +242,7 @@ def centring_plan_from_robot_load_params(
     composite: RobotLoadThenCentreComposite,
     params: RobotLoadThenCentre,
 ):
-    return pin_centre_then_xray_centre_plan(
+    yield from pin_centre_then_xray_centre_plan(
         cast(GridDetectThenXRayCentreComposite, composite),
         params.pin_centre_then_xray_centre_params(),
     )
