@@ -92,7 +92,7 @@ class BaseISPyBCallback(PlanReactiveCallback):
             case _:
                 return self._tag_doc(doc)
         self.ispyb_ids = self.ispyb.update_deposition(self.ispyb_ids, scan_data_infos)
-        ISPYB_LOGGER.info(f"Recieved ISPYB IDs: {self.ispyb_ids}")
+        ISPYB_LOGGER.info(f"Received ISPYB IDs: {self.ispyb_ids}")
         return self._tag_doc(doc)
 
     def _handle_ispyb_hardware_read(self, doc) -> Sequence[ScanDataInfo]:
@@ -166,8 +166,8 @@ class BaseISPyBCallback(PlanReactiveCallback):
     def activity_gated_stop(self, doc: RunStop) -> RunStop:
         """Subclasses must check that they are recieving a stop document for the correct
         uid to use this method!"""
-        assert isinstance(
-            self.ispyb, StoreInIspyb
+        assert (
+            self.ispyb is not None
         ), "ISPyB handler received stop document, but deposition object doesn't exist!"
         ISPYB_LOGGER.debug("ISPyB handler received stop document.")
         exit_status = (
@@ -184,7 +184,7 @@ class BaseISPyBCallback(PlanReactiveCallback):
         return self._tag_doc(doc)
 
     def _append_to_comment(self, id: int, comment: str) -> None:
-        assert isinstance(self.ispyb, StoreInIspyb)
+        assert self.ispyb is not None
         try:
             self.ispyb.append_to_comment(id, comment)
         except TypeError:
