@@ -92,7 +92,7 @@ class BaseISPyBCallback(PlanReactiveCallback):
             case _:
                 return self._tag_doc(doc)
         self.ispyb_ids = self.ispyb.update_deposition(self.ispyb_ids, scan_data_infos)
-        ISPYB_LOGGER.info(f"Recieved ISPYB IDs: {self.ispyb_ids}")
+        ISPYB_LOGGER.info(f"Received ISPYB IDs: {self.ispyb_ids}")
         return self._tag_doc(doc)
 
     def _handle_ispyb_hardware_read(self, doc) -> Sequence[ScanDataInfo]:
