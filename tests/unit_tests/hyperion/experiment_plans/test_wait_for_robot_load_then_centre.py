@@ -8,6 +8,7 @@ from bluesky.simulators import RunEngineSimulator, assert_message_and_return_rem
 from bluesky.utils import Msg
 from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.oav.oav_detector import OAV
+from dodal.devices.robot import SampleLocation
 from dodal.devices.smargon import StubPosition
 from dodal.devices.webcam import Webcam
 from ophyd.sim import NullStatus
@@ -20,7 +21,6 @@ from mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan import (
     RobotLoadThenCentreComposite,
     prepare_for_robot_load,
     robot_load_then_centre,
-    robot_load_then_centre_plan,
     take_robot_snapshots,
 )
 from mx_bluesky.hyperion.external_interaction.callbacks.robot_load.ispyb_callback import (
@@ -31,7 +31,7 @@ from mx_bluesky.hyperion.parameters.gridscan import (
     RobotLoadThenCentre,
 )
 
-from ....conftest import raw_params_from_file
+from ....conftest import assert_none_matching, raw_params_from_file
 
 
 @pytest.fixture
@@ -546,33 +546,185 @@ def test_when_plan_run_then_thawing_turned_on_for_expected_time(
     )
 
 
+def mock_current_sample(sim_run_engine: RunEngineSimulator, sample: SampleLocation):
+    sim_run_engine.add_handler(
+        "read",
+        lambda msg: {"robot-current_puck": {"value": sample.puck}},
+        "robot-current_puck",
+    )
+    sim_run_engine.add_handler(
+        "read",
+        lambda msg: {"robot-current_pin": {"value": sample.pin}},
+        "robot-current_pin",
+    )
+
+
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.pin_centre_then_xray_centre_plan"
+    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.pin_centre_then_xray_centre_plan",
+    MagicMock(return_value=iter([Msg("centre_plan")])),
 )
-@patch("mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.do_robot_load")
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.prepare_for_robot_load"
+    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.set_energy_plan",
+    MagicMock(return_value=iter([])),
 )
-def test_given_sample_already_loaded_when_plan_run_then_sample_not_loaded(
-    mock_prepare_robot: MagicMock,
-    mock_do_robot_load: MagicMock,
-    mock_centring_plan: MagicMock,
+def test_given_sample_already_loaded_and_chi_not_changed_when_robot_load_called_then_eiger_not_staged_and_centring_not_run(
     robot_load_composite: RobotLoadThenCentreComposite,
-    robot_load_then_centre_params_no_energy: RobotLoadThenCentre,
-    RE: RunEngine,
+    robot_load_then_centre_params: RobotLoadThenCentre,
+    sim_run_engine: RunEngineSimulator,
 ):
-    set_mock_value(robot_load_composite.robot.current_pin, 1)
-    set_mock_value(robot_load_composite.robot.current_puck, 2)
+    sample_location = SampleLocation(2, 6)
+    robot_load_then_centre_params.sample_puck = sample_location.puck
+    robot_load_then_centre_params.sample_pin = sample_location.pin
+    robot_load_then_centre_params.chi_start_deg = None
 
-    robot_load_then_centre_params_no_energy.sample_pin = 1
-    robot_load_then_centre_params_no_energy.sample_puck = 2
+    mock_current_sample(sim_run_engine, sample_location)
 
-    RE(
-        robot_load_then_centre_plan(
+    messages = sim_run_engine.simulate_plan(
+        robot_load_then_centre(
             robot_load_composite,
-            robot_load_then_centre_params_no_energy,
+            robot_load_then_centre_params,
         )
     )
-    mock_prepare_robot.assert_not_called()
-    mock_do_robot_load.assert_not_called()
-    mock_centring_plan.assert_called()
+
+    assert_none_matching(
+        messages, lambda msg: msg.command == "set" and msg.obj.name == "eiger_do_arm"
+    )
+
+    assert_none_matching(
+        messages, lambda msg: msg.command == "set" and msg.obj.name == "robot"
+    )
+
+    assert_none_matching(
+        messages,
+        lambda msg: msg.command == "centre_plan",
+    )
+
+
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.pin_centre_then_xray_centre_plan",
+    MagicMock(return_value=iter([Msg("centre_plan")])),
+)
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.set_energy_plan",
+    MagicMock(return_value=iter([])),
+)
+def test_given_sample_already_loaded_and_chi_is_changed_when_robot_load_called_then_eiger_staged_and_centring_run(
+    robot_load_composite: RobotLoadThenCentreComposite,
+    robot_load_then_centre_params: RobotLoadThenCentre,
+    sim_run_engine: RunEngineSimulator,
+):
+    sample_location = SampleLocation(2, 6)
+    robot_load_then_centre_params.sample_puck = sample_location.puck
+    robot_load_then_centre_params.sample_pin = sample_location.pin
+    robot_load_then_centre_params.chi_start_deg = 30
+
+    mock_current_sample(sim_run_engine, sample_location)
+
+    messages = sim_run_engine.simulate_plan(
+        robot_load_then_centre(
+            robot_load_composite,
+            robot_load_then_centre_params,
+        )
+    )
+
+    messages = assert_message_and_return_remaining(
+        messages,
+        lambda msg: msg.command == "set" and msg.obj.name == "eiger_do_arm",
+    )
+
+    assert_none_matching(
+        messages, lambda msg: msg.command == "set" and msg.obj.name == "robot"
+    )
+
+    messages = assert_message_and_return_remaining(
+        messages,
+        lambda msg: msg.command == "centre_plan",
+    )
+
+
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.pin_centre_then_xray_centre_plan",
+    MagicMock(return_value=iter([Msg("centre_plan")])),
+)
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.set_energy_plan",
+    MagicMock(return_value=iter([])),
+)
+def test_given_sample_not_loaded_and_chi_not_changed_when_robot_load_called_then_eiger_staged_before_robot_and_centring_run_after(
+    robot_load_composite: RobotLoadThenCentreComposite,
+    robot_load_then_centre_params: RobotLoadThenCentre,
+    sim_run_engine: RunEngineSimulator,
+):
+    robot_load_then_centre_params.sample_puck = (puck := 2)
+    robot_load_then_centre_params.sample_pin = (pin := 6)
+    robot_load_then_centre_params.chi_start_deg = None
+
+    mock_current_sample(sim_run_engine, SampleLocation(1, 1))
+
+    messages = sim_run_engine.simulate_plan(
+        robot_load_then_centre(
+            robot_load_composite,
+            robot_load_then_centre_params,
+        )
+    )
+
+    messages = assert_message_and_return_remaining(
+        messages,
+        lambda msg: msg.command == "set" and msg.obj.name == "eiger_do_arm",
+    )
+
+    messages = assert_message_and_return_remaining(
+        messages,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "robot"
+        and msg.args[0] == SampleLocation(puck, pin),
+    )
+
+    messages = assert_message_and_return_remaining(
+        messages,
+        lambda msg: msg.command == "centre_plan",
+    )
+
+
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.pin_centre_then_xray_centre_plan",
+    MagicMock(return_value=iter([Msg("centre_plan")])),
+)
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.robot_load_then_centre_plan.set_energy_plan",
+    MagicMock(return_value=iter([])),
+)
+def test_given_sample_not_loaded_and_chi_changed_when_robot_load_called_then_eiger_staged_before_robot_and_centring_run(
+    robot_load_composite: RobotLoadThenCentreComposite,
+    robot_load_then_centre_params: RobotLoadThenCentre,
+    sim_run_engine: RunEngineSimulator,
+):
+    robot_load_then_centre_params.sample_puck = (puck := 2)
+    robot_load_then_centre_params.sample_pin = (pin := 6)
+    robot_load_then_centre_params.chi_start_deg = 30
+
+    mock_current_sample(sim_run_engine, SampleLocation(1, 1))
+
+    messages = sim_run_engine.simulate_plan(
+        robot_load_then_centre(
+            robot_load_composite,
+            robot_load_then_centre_params,
+        )
+    )
+
+    messages = assert_message_and_return_remaining(
+        messages,
+        lambda msg: msg.command == "set" and msg.obj.name == "eiger_do_arm",
+    )
+
+    messages = assert_message_and_return_remaining(
+        messages,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "robot"
+        and msg.args[0] == SampleLocation(puck, pin),
+    )
+
+    messages = assert_message_and_return_remaining(
+        messages,
+        lambda msg: msg.command == "centre_plan",
+    )
