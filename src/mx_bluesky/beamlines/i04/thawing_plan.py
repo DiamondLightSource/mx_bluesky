@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
 from bluesky.preprocessors import run_decorator, subs_decorator
@@ -28,7 +30,7 @@ def thaw_and_stream_to_redis(
 
     yield from bps.mv(oav.zoom_controller.level, "1.0x")
 
-    def switch_forwarder_to_ROI():
+    def switch_forwarder_to_ROI() -> MsgGenerator:
         yield from bps.complete(oav_to_redis_forwarder)
         yield from bps.mv(oav_to_redis_forwarder.selected_source, Source.ROI)
         yield from bps.kickoff(oav_to_redis_forwarder, wait=True)
@@ -70,7 +72,7 @@ def thaw(
     rotation: float = 360,
     thawer: Thawer = inject("thawer"),
     smargon: Smargon = inject("smargon"),
-    plan_between_rotations=None,
+    plan_between_rotations: Callable[[], MsgGenerator] | None = None,
 ) -> MsgGenerator:
     """Rotates the sample and thaws it at the same time.
 
