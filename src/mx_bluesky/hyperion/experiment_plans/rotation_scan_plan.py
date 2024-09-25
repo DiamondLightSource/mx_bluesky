@@ -49,7 +49,7 @@ from mx_bluesky.hyperion.device_setup_plans.xbpm_feedback import (
 from mx_bluesky.hyperion.experiment_plans.oav_snapshot_plan import (
     OavSnapshotComposite,
     oav_snapshot_plan,
-    setup_oav_snapshot_plan,
+    setup_beamline_for_OAV,
 )
 from mx_bluesky.hyperion.log import LOGGER
 from mx_bluesky.hyperion.parameters.constants import CONST
@@ -324,8 +324,8 @@ def _move_and_rotation(
     )
     if params.take_snapshots:
         yield from bps.wait(CONST.WAIT.MOVE_GONIO_TO_START)
-        yield from setup_oav_snapshot_plan(
-            composite, params, motion_values.max_velocity_deg_s
+        yield from setup_beamline_for_OAV(
+            composite.smargon, composite.backlight, composite.aperture_scatterguard
         )
         yield from oav_snapshot_plan(composite, params, oav_params)
     yield from rotation_scan_plan(
