@@ -4,7 +4,7 @@ import json
 import logging
 import sys
 import threading
-from collections.abc import Generator, Sequence
+from collections.abc import Callable, Generator, Sequence
 from functools import partial
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -896,3 +896,10 @@ def feature_flags():
     return FeatureFlags(
         **{field_name: False for field_name in FeatureFlags.model_fields.keys()}
     )
+
+
+def assert_none_matching(
+    messages: list[Msg],
+    predicate: Callable[[Msg], bool],
+):
+    assert not list(filter(predicate, messages))
