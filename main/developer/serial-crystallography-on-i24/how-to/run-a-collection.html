@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Run a collection &#8212; mx-bluesky 1.0.1.dev20+g3c0a8c99b documentation</title>
+    <title>Run a collection &#8212; mx-bluesky 1.0.1.dev21+g25ce1fd29 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=95d7a131"></script>
+    <script src="../../../_static/documentation_options.js?v=ac7ccce1"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -538,7 +538,7 @@ collection</p></li>
 </ul>
 <p>Before opening the experiment specific edm, each of these entry points
 will start a <code class="docutils literal notranslate"><span class="pre">BlueAPI</span></code> server. The configuration used by <code class="docutils literal notranslate"><span class="pre">BlueAPI</span></code>
-is saved in <code class="docutils literal notranslate"><span class="pre">src/mx_bluesky/i24/serial/blueapi_config.yaml</span></code>.</p>
+is saved in <code class="docutils literal notranslate"><span class="pre">src/mx_bluesky/beamlines/i24/serial/blueapi_config.yaml</span></code>.</p>
 </section>
 <section id="detector-choice">
 <h2>Detector choice<a class="headerlink" href="#detector-choice" title="Link to this heading">#</a></h2>
@@ -574,7 +574,8 @@ into a single sub-directory but split into multiple smaller collections.</p>
 </ol>
 <p>For a pump-probe experiment, select <code class="docutils literal notranslate"><span class="pre">True</span></code> on the dropdown menu in
 <code class="docutils literal notranslate"><span class="pre">Data</span> <span class="pre">Collection</span> <span class="pre">Setup</span></code> and then set the laser dwell and delay times
-in the <code class="docutils literal notranslate"><span class="pre">Pump</span> <span class="pre">Probe</span></code> panel. <strong>WARNING</strong> This setting requires an
+in the <code class="docutils literal notranslate"><span class="pre">Pump</span> <span class="pre">Probe</span></code> panel.</p>
+<p><strong>WARNING</strong> This setting requires a
 hardware change, as there are only 4 outputs on the zebra and they are
 all in use. When using the Eiger the Pilatus trigger cable should be
 used to trigger the light source. When using the pilatus the eiger
@@ -590,7 +591,7 @@ collection. A stream log will show what is going on in the terminal.</p>
 set up the coordinate system.</p>
 <p>Before this step remember to reset the scale and skew factors as well as
 the motor directions as needed. Current values are saved in
-<code class="docutils literal notranslate"><span class="pre">src/mx_bluesky/i24/serial/parameters/fixed_target</span></code> in the
+<code class="docutils literal notranslate"><span class="pre">src/mx_bluesky/beamlines/i24/serial/parameters/fixed_target</span></code> in the
 <code class="docutils literal notranslate"><span class="pre">cs_maker.json</span></code> and <code class="docutils literal notranslate"><span class="pre">motor_direction.txt</span></code> files.</p>
 <ol class="arabic simple">
 <li><p>From the main edm screen open the <code class="docutils literal notranslate"><span class="pre">viewer</span></code> and <code class="docutils literal notranslate"><span class="pre">moveonclick</span></code>.</p></li>
@@ -661,16 +662,14 @@ delays between each one.</p></li>
 set the laser dwell and delay times accordingly.</p>
 <p>For more details on the pump probe settings see <a class="reference external" href="https://confluence.diamond.ac.uk/display/MXTech/Dynamics+and+fixed+targets">Dynamics and fixed
 targets</a></p>
-<p>III - <strong>Save the parameters</strong></p>
-<p><strong>This step cannot be skipped!</strong></p>
-<p>Once all of the previous steps have been completed - and before running
-a collection - all parameters have to be saved using the
-<code class="docutils literal notranslate"><span class="pre">Set</span> <span class="pre">parameters</span></code> button so that they can be applied to the collection.
-A copy parameter file will be saved along with the chip map (if
-applicable) in the data directory at collection time.</p>
-<p>IV - <strong>Run a collection</strong></p>
+<p>III - <strong>Run a collection</strong></p>
 <p>Once all parameters have been set, press <code class="docutils literal notranslate"><span class="pre">Start</span></code> to run the
 collection. A stream log will show what is going on in the terminal.</p>
+<p><strong>NOTE</strong> As of version <code class="docutils literal notranslate"><span class="pre">1.0.0</span></code>, the <code class="docutils literal notranslate"><span class="pre">Set</span> <span class="pre">parameters</span></code> button has been removed and
+the parameters will now be read from the edm and applied to the collection directly
+once the <code class="docutils literal notranslate"><span class="pre">Start</span></code> button is pressed. For previous versions however, the button must
+still be pressed before starting the collection. A copy of the parameter file and chip
+map (if applicable) will still be saved in the data directory at collection time.</p>
 </section>
 </section>
 

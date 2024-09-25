@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Set up for serial experiments on I24 &#8212; mx-bluesky 1.0.1.dev20+g3c0a8c99b documentation</title>
+    <title>Set up for serial experiments on I24 &#8212; mx-bluesky 1.0.1.dev21+g25ce1fd29 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=95d7a131"></script>
+    <script src="../../../_static/documentation_options.js?v=ac7ccce1"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -545,7 +545,7 @@ environment to get the update. The <code class="docutils literal notranslate"><s
 a local copy of the all EDM screens - both for a fixed target and for a
 serial jet collection - in a <code class="docutils literal notranslate"><span class="pre">edm_serial/</span></code> directory with all the
 shell commands pointing to the correct scripts/edm locations.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./path/to/mx-bluesky/deploy/deploy_edm_for_ssx.sh
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./path/to/mx-bluesky/utility_scripts/deploy/deploy_edm_for_ssx.sh
 </pre></div>
 </div>
 </section>
@@ -555,14 +555,14 @@ shell commands pointing to the correct scripts/edm locations.</p>
 commissioning beamtime. This can be done by a member of the beamline
 staff by modifying the file <code class="docutils literal notranslate"><span class="pre">/dls_sw/i24/etc/ssx_current_visit.txt</span></code> to
 point to the current visit and then running the command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./path/to/mx-bluesky/src/mx_bluesky/i24/serial/set_visit_directory.sh
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./path/to/mx-bluesky/src/mx_bluesky/beamlines/i24/serial/set_visit_directory.sh
 </pre></div>
 </div>
 <p>Note that the default experiment type for the script setting the
 directory will be <code class="docutils literal notranslate"><span class="pre">fixed-target</span></code>. In case of an extruder collection,
 to set the correct visit PV the experiment type should be modified from
 the command line.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./path/to/mx-bluesky/src/mx_bluesky/i24/serial/set_visit_directory.sh<span class="w"> </span>extruder
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./path/to/mx-bluesky/src/mx_bluesky/beamlines/i24/serial/set_visit_directory.sh<span class="w"> </span>extruder
 </pre></div>
 </div>
 </section>
