@@ -9,7 +9,7 @@ from subprocess import PIPE, CalledProcessError, Popen
 from git import Repo
 from packaging.version import Version
 
-recognised_beamlines = ["i24"]
+recognised_beamlines = ["i04", "i24"]
 
 help_message = """
 To deploy mx_bluesky on a specific beamline, pass only the --beamline argument.
