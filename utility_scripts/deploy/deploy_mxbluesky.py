@@ -134,7 +134,7 @@ if __name__ == "__main__":
     beamline, release_area = get_beamline_and_release_dir_from_args(mx_repo)
 
     release_area_version = os.path.join(
-        release_area, f"mx_bluesky_{mx_repo.latest_version_str}"
+        release_area, f"mx-bluesky_{mx_repo.latest_version_str}"
     )
 
     print(f"Putting releases into {release_area_version}")
@@ -165,8 +165,8 @@ if __name__ == "__main__":
     os.chdir(mx_repo.deploy_location)
     print(f"Setting up environment in {mx_repo.deploy_location}")
 
-    if mx_repo.name == "mx_bluesky":
-        run_process_and_print_output("./utility_scripts/dls_dev_setup.sh")
+    if mx_repo.name == "mx-bluesky":
+        run_process_and_print_output("./utility_scripts/dls_dev_env.sh")
 
     # If on beamline I24 also deploy the screens to run ssx collections
     if beamline == "i24":
