@@ -74,8 +74,8 @@ def get_permission_groups(beamline: str | None = None) -> list:
 
 # Get the release directory based off the beamline and the latest mx_bluesky version
 def get_beamline_and_release_dir_from_args(repo: repo) -> tuple[str | None, str]:
-    if repo.name != "mx_bluesky":
-        raise ValueError("This function should only be used with the mx_bluesky repo")
+    if repo.name != "mx-bluesky":
+        raise ValueError("This function should only be used with the mx-bluesky repo")
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
@@ -126,8 +126,8 @@ def run_process_and_print_output(proc_to_run):
 
 if __name__ == "__main__":
     mx_repo = repo(
-        name="mx_bluesky",
-        repo_args=os.path.join(os.path.dirname(__file__), "../.git"),
+        name="mx-bluesky",
+        repo_args=os.path.join(os.path.dirname(__file__), "../../.git"),
     )
 
     # Gives path to /bluesky
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     dodal_repo = repo(
         name="dodal",
-        repo_args=os.path.join(os.path.dirname(__file__), "../../dodal/.git"),
+        repo_args=os.path.join(os.path.dirname(__file__), "../../../dodal/.git"),
     )
 
     dodal_repo.set_deploy_location(release_area_version)
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     mx_repo.deploy(mx_repo.origin.url, beamline)
 
     # Get version of dodal that latest mx_bluesky version uses
-    with open(f"{release_area_version}/mx_bluesky/pyproject.toml") as setup_file:
+    with open(f"{release_area_version}/mx-bluesky/pyproject.toml") as setup_file:
         dodal_url = [
             line
             for line in setup_file
@@ -175,15 +175,15 @@ if __name__ == "__main__":
 
     move_symlink = input(
         """Move symlink (y/n)? WARNING: this will affect the running version!
-Only do so if you have informed the beamline scientist and you're sure mx_bluesky is not running.
+Only do so if you have informed the beamline scientist and you're sure mx-bluesky is not running.
 """
     )
     # Creates symlink: software/bluesky/mx_bluesky_version -> software/bluesky/mx_bluesky
     if move_symlink == "y":
-        live_location = os.path.join(release_area, "mx_bluesky")
+        live_location = os.path.join(release_area, "mx-bluesky")
         new_tmp_location = os.path.join(release_area, "tmp_art")
         os.symlink(mx_repo.deploy_location, new_tmp_location)
         os.rename(new_tmp_location, live_location)
         print(f"New version moved to {live_location}")
     else:
-        print("Quiting without latest version being updated")
+        print("Quitting without latest version being updated")
