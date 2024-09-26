@@ -1,5 +1,6 @@
 import copy
 import json
+from datetime import timedelta
 
 from bluesky.callbacks import CallbackBase
 from dodal.log import LOGGER
@@ -8,6 +9,8 @@ from redis import StrictRedis
 
 
 class MurkoCallback(CallbackBase):
+    DATA_EXPIRY_DAYS = 7
+
     def __init__(self, redis_host: str, redis_password: str, redis_db: int = 0):
         self.redis_client = StrictRedis(
             host=redis_host, password=redis_password, db=redis_db
@@ -40,6 +43,8 @@ class MurkoCallback(CallbackBase):
         metadata["uuid"] = uuid
 
         # Send metadata to REDIS and trigger murko
-        self.redis_client.hset("test-metadata", uuid, json.dumps(metadata))
+        redis_key = f"murko:{metadata['sample_id']}:metadata"
+        self.redis_client.hset(redis_key, uuid, json.dumps(metadata))
+        self.redis_client.expire(redis_key, timedelta(days=self.DATA_EXPIRY_DAYS))
         self.redis_client.publish("murko", json.dumps(metadata))
         LOGGER.info("Metadata sent to redis")
