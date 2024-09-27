@@ -238,45 +238,39 @@ def robot_load_and_snapshots(
     yield from bps.wait("reset-lower_gonio")
 
 
-def robot_load_then_centre_plan(
+def centring_plan_from_robot_load_params(
     composite: RobotLoadThenCentreComposite,
     params: RobotLoadThenCentre,
 ):
-    # TODO: get these from one source of truth #254
-    assert params.sample_puck is not None
-    assert params.sample_pin is not None
-
-    if not (
-        yield from _pin_already_loaded(
-            composite.robot, params.sample_pin, params.sample_puck
-        )
-    ):
-        yield from prepare_for_robot_load(composite)
-        yield from bpp.run_wrapper(
-            robot_load_and_snapshots(
-                composite, params, SampleLocation(params.sample_puck, params.sample_pin)
-            ),
-            md={
-                "subplan_name": CONST.PLAN.ROBOT_LOAD,
-                "metadata": {
-                    "visit_path": str(params.visit_directory),
-                    "sample_id": params.sample_id,
-                    "sample_puck": params.sample_puck,
-                    "sample_pin": params.sample_pin,
-                },
-                "activate_callbacks": [
-                    "RobotLoadISPyBCallback",
-                ],
-            },
-        )
-    else:
-        LOGGER.info(
-            f"Pin/puck {params.sample_pin}/{params.sample_puck} already loaded, will not reload."
-        )
     yield from pin_centre_then_xray_centre_plan(
         cast(GridDetectThenXRayCentreComposite, composite),
         params.pin_centre_then_xray_centre_params(),
     )
+
+
+def robot_load_then_centre_plan(
+    composite: RobotLoadThenCentreComposite,
+    params: RobotLoadThenCentre,
+    sample_location: SampleLocation,
+):
+    yield from prepare_for_robot_load(composite)
+    yield from bpp.run_wrapper(
+        robot_load_and_snapshots(composite, params, sample_location),
+        md={
+            "subplan_name": CONST.PLAN.ROBOT_LOAD,
+            "metadata": {
+                "visit_path": str(params.visit_directory),
+                "sample_id": params.sample_id,
+                "sample_puck": params.sample_puck,
+                "sample_pin": params.sample_pin,
+            },
+            "activate_callbacks": [
+                "RobotLoadISPyBCallback",
+            ],
+        },
+    )
+
+    yield from centring_plan_from_robot_load_params(composite, params)
 
 
 def robot_load_then_centre(
@@ -284,6 +278,32 @@ def robot_load_then_centre(
     parameters: RobotLoadThenCentre,
 ) -> MsgGenerator:
     eiger: EigerDetector = composite.eiger
+
+    # TODO: get these from one source of truth #254
+    assert parameters.sample_puck is not None
+    assert parameters.sample_pin is not None
+
+    doing_sample_load = not (
+        yield from _pin_already_loaded(
+            composite.robot, parameters.sample_pin, parameters.sample_puck
+        )
+    )
+
+    doing_chi_change = parameters.chi_start_deg is not None
+
+    if doing_sample_load:
+        plan = robot_load_then_centre_plan(
+            composite,
+            parameters,
+            SampleLocation(parameters.sample_puck, parameters.sample_pin),
+        )
+        LOGGER.info("Pin not loaded, loading and centring")
+    elif doing_chi_change:
+        plan = centring_plan_from_robot_load_params(composite, parameters)
+        LOGGER.info("Pin already loaded but chi changed so centring")
+    else:
+        LOGGER.info("Pin already loaded and chi not changed so doing nothing")
+        return
 
     detector_params = parameters.detector_params
     if not detector_params.expected_energy_ev:
@@ -297,6 +317,6 @@ def robot_load_then_centre(
         eiger,
         composite.detector_motion,
         parameters.detector_distance_mm,
-        robot_load_then_centre_plan(composite, parameters),
+        plan,
         group=CONST.WAIT.GRID_READY_FOR_DC,
     )

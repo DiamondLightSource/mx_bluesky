@@ -129,6 +129,7 @@ def flyscan_xray_centre(
     parameters.features.update_self_from_server()
     composite.eiger.set_detector_parameters(parameters.detector_params)
     composite.zocalo.zocalo_environment = parameters.zocalo_environment
+    composite.zocalo.use_cpu_and_gpu = parameters.use_cpu_and_gpu_zocalo
 
     feature_controlled = _get_feature_controlled(composite, parameters)
 
@@ -202,14 +203,14 @@ def run_gridscan_and_move(
             )
         else:
             xray_centre = initial_xyz
-            LOGGER.warning("No X-ray centre recieved")
+            LOGGER.warning("No X-ray centre received")
         if bbox_size is not None:
             with TRACER.start_span("change_aperture"):
                 yield from set_aperture_for_bbox_size(
                     fgs_composite.aperture_scatterguard, bbox_size
                 )
         else:
-            LOGGER.warning("No bounding box size recieved")
+            LOGGER.warning("No bounding box size received")
 
     # once we have the results, go to the appropriate position
     LOGGER.info("Moving to centre of mass.")
