@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Deploy a New Release &#8212; mx-bluesky 1.0.1.dev23+g9c1e4b184 documentation</title>
+    <title>Deploy a New Release &#8212; mx-bluesky 1.0.1.dev24+gcbfe74b56 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=b7a6d9e3"></script>
+    <script src="../../../_static/documentation_options.js?v=8b30031b"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -529,16 +529,56 @@ document.write(`
   <section id="deploy-a-new-release">
 <h1>Deploy a New Release<a class="headerlink" href="#deploy-a-new-release" title="Link to this heading">#</a></h1>
 <p><strong>Remember to discuss any new deployments with the appropriate beamline scientist.</strong></p>
-<p>The <code class="docutils literal notranslate"><span class="pre">/deploy/deploy_mxbluesky.py</span></code> script will deploy the latest Hyperion version to a specified beamline. Deployments live in <code class="docutils literal notranslate"><span class="pre">/dls_sw/ixx/software/bluesky/mx-bluesky_vXXX</span></code>. To do a new deployment you should run the deploy script from your mx-bluesky dev environment with e.g.</p>
-<p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">./deploy/deploy_mxbluesky.py</span> <span class="pre">--beamline</span> <span class="pre">i24</span></code></p>
+<section id="general-deployment">
+<h2>General deployment<a class="headerlink" href="#general-deployment" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">utility_scripts/deploy/deploy_mxbluesky.py</span></code> script will deploy the latest mx-bluesky version to a specified beamline. Deployments live in <code class="docutils literal notranslate"><span class="pre">/dls_sw/ixx/software/bluesky/mx-bluesky_vX.X.X</span></code>. To do a new deployment you should run the deploy script from your mx-bluesky dev environment with e.g.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python ./utility_scripts/deploy/deploy_mxbluesky.py --beamline i24</span>
+</pre></div>
+</div>
 <p>If you want to test the script you can run:</p>
-<p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">./deploy/deploy_mxbluesky.py</span> <span class="pre">--dev-path</span> <span class="pre">/your-path/</span></code></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python ./deploy/deploy_mxbluesky.py --dev-path /your-path/</span>
+</pre></div>
+</div>
 <p>and a released version will be put in <code class="docutils literal notranslate"><span class="pre">/your-path/mxbluesky_release_test</span></code>.</p>
 <p>If you need a specific beamline test deployment you can also run:</p>
-<p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">./deploy/deploy_mxbluesky.py</span> <span class="pre">--beamline</span> <span class="pre">i24</span> <span class="pre">--dev-path</span> <span class="pre">/your-path/</span></code></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python ./deploy/deploy_mxbluesky.py --beamline i24 --dev-path /your-path/</span>
+</pre></div>
+</div>
 <p>which will create the beamline deployment (eg. I24) in the specified test directory <code class="docutils literal notranslate"><span class="pre">/your-path/mxbluesky_release_test</span></code>.</p>
 <p><strong>Note:</strong> When deploying on I24, the edm screens for serial crystallography will be deployed automatically along with the mx-bluesky release.
 When running a <code class="docutils literal notranslate"><span class="pre">dev</span></code> deployment instead, <a class="reference external" href="https://github.com/DiamondLightSource/mx-bluesky/wiki/Serial-Crystallography-on-I24#deploying-a-local-version-of-the-edm-screens">this script</a> will also need to be run to get the latest version of the screens.</p>
+</section>
+<section id="hyperion-deployment">
+<h2>Hyperion deployment<a class="headerlink" href="#hyperion-deployment" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">utility_scripts/deploy/deploy_hyperion.py</span></code> script will deploy the latest mx-bluesky/Hyperion version to a specified beamline. Deployments live in <code class="docutils literal notranslate"><span class="pre">/dls_sw/ixx/software/bluesky/mx-bluesky_vX.X.X</span></code>.</p>
+<p>If you have just created a release as above, you may need to run git fetch –tags to get the newest release.</p>
+<p>To do a new deployment you should run the deploy script from your Hyperion dev environment with e.g.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python ./utility_scripts/deploy/deploy_hyperion.py i03</span>
+</pre></div>
+</div>
+<p>If you want to test the script you can run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python ./utility_scripts/deploy/deploy_hyperion.py dev</span>
+</pre></div>
+</div>
+<p>and a released version will be put in <code class="docutils literal notranslate"><span class="pre">/scratch/30day_tmp/hyperion_release_test</span></code>.</p>
+<p>For building and deploying a Docker image please see <a class="reference internal" href="../../hyperion/deploying-hyperion.html"><span class="doc">Building a deployable Docker image</span></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>On i03 the installation will succeed with error messages due to RedHat7 versions of a dependency being unavailable.
+This results in the installation being incomplete, thus requiring the following post-installation steps:</p>
+<p>First, on a RedHat8 workstation, run</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">. ./.venv/bin/activate</span>
+<span class="go">pip install confluent-kafka</span>
+</pre></div>
+</div>
+<p>Then, on the control machine, run</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">. ./.venv/bin/activate</span>
+<span class="go">pip install -e .</span>
+<span class="go">pip install -e ../dodal</span>
+</pre></div>
+</div>
+</div>
+</section>
 </section>
 
 
@@ -578,6 +618,19 @@ When running a <code class="docutils literal notranslate"><span class="pre">dev<
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#general-deployment">General deployment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hyperion-deployment">Hyperion deployment</a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
 
