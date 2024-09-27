@@ -141,7 +141,7 @@ def _create_environment_from_control_machine(
 
 def main(options: Options):
     release_area = options.release_dir
-    this_repo_top = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+    this_repo_top = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
     if not options.quiet:
         print(f"Repo top is {this_repo_top}")

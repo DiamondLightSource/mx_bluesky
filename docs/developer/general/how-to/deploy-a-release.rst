@@ -61,3 +61,24 @@ If you want to test the script you can run:
 and a released version will be put in ``/scratch/30day_tmp/hyperion_release_test``.
 
 For building and deploying a Docker image please see :doc:`../../hyperion/deploying-hyperion`.
+
+
+.. note::
+    
+    On i03 the installation will succeed with error messages due to RedHat7 versions of a dependency being unavailable.
+    This results in the installation being incomplete, thus requiring the following post-installation steps:
+
+    First, on a RedHat8 workstation, run
+
+    .. code:: console
+
+        . ./.venv/bin/activate
+        pip install confluent-kafka
+    
+    Then, on the control machine, run
+
+    .. code:: console
+        
+        . ./.venv/bin/activate
+        pip install -e .
+        pip install -e ../dodal
