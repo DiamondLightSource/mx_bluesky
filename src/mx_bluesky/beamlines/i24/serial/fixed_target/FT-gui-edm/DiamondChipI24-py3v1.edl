@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 2870
-y 282
+x 844
+y 238
 w 1030
 h 950
 font "arial-medium-r-18.0"
@@ -280,7 +280,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"load_position\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"load_position\",\"pmac\":\"pmac\",\"beamstop\":\"beamstop\",\"backlight\":\"backlight\",\"det_stage\":\"detector_motion\"\}'"
 }
 endObjectProperties
 
@@ -301,7 +301,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"collect_position\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"collect_position\",\"pmac\":\"pmac\",\"beamstop\":\"beamstop\",\"backlight\":\"backlight\",\"det_stage\":\"detector_motion\"\}'"
 }
 endObjectProperties
 
@@ -323,7 +323,7 @@ font "helvetica-bold-r-24.0"
 buttonLabel "Start"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run run_fixed_target_plan"
+  0 "blueapi -c CONFIG_LOCATION controller run run_fixed_target_plan '\{\"zebra\":\"zebra\",\"pmac\":\"pmac\",\"aperture\":\"aperture\",\"backlight\":\"backlight\",\"beamstop\":\"beamstop\",\"detector_stage\":\"detector_motion\",\"shutter\":\"shutter\",\"dcm\":\"dcm\"\}'"
 }
 endObjectProperties
 
@@ -615,7 +615,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run cs_maker"
+  0 "blueapi -c CONFIG_LOCATION controller run cs_maker '\{\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -1157,7 +1157,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run initialise_stages"
+  0 "blueapi -c CONFIG_LOCATION controller run initialise_stages '\{\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -1541,7 +1541,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run block_check"
+  0 "blueapi -c CONFIG_LOCATION controller run block_check '\{\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -2915,7 +2915,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Set Fiducial 2"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run fiducial '\{\"point\":\"2\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run fiducial '\{\"point\":\"2\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -2937,7 +2937,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Goto Fiducial 2"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"f2\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"f2\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -2981,7 +2981,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Set Fiducial 1"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run fiducial '\{\"point\":\"1\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run fiducial '\{\"point\":\"1\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -3003,7 +3003,7 @@ font "helvetica-medium-r-18.0"
 buttonLabel "Goto Fiducial 1"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"f1\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"f1\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -3734,7 +3734,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"zero\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto '\{\"place\":\"zero\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -3776,7 +3776,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"microdrop_position\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run moveto_preset '\{\"place\":\"microdrop_position\",\"pmac\":\"pmac\",\"beamstop\":\"beamstop\",\"backlight\":\"backlight\",\"det_stage\":\"detector_motion\"\}'"
 }
 endObjectProperties
 
