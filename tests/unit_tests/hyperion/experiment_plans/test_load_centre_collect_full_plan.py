@@ -184,7 +184,8 @@ def test_load_centre_collect_full_plan_happy_path_invokes_all_steps(
     return_value=iter([]),
 )
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan", new=MagicMock()
+    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan",
+    new=MagicMock(),
 )
 def test_load_centre_collect_full_plan_skips_collect_if_pin_tip_not_found(
     mock_rotation_scan: MagicMock,
@@ -212,7 +213,8 @@ def test_load_centre_collect_full_plan_skips_collect_if_pin_tip_not_found(
     return_value=iter([]),
 )
 @patch(
-    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan", new=MagicMock()
+    "mx_bluesky.hyperion.experiment_plans.robot_load_and_change_energy.set_energy_plan",
+    new=MagicMock(),
 )
 def test_load_centre_collect_full_plan_skips_collect_if_no_diffraction(
     mock_rotation_scan: MagicMock,

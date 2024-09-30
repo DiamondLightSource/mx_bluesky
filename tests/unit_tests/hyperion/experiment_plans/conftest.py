@@ -235,7 +235,7 @@ def robot_load_composite(
     sample_shutter,
     zebra,
     panda,
-    panda_fast_grid_scan
+    panda_fast_grid_scan,
 ) -> RobotLoadThenCentreComposite:
     set_mock_value(dcm.energy_in_kev.user_readback, 11.105)
     aperture_scatterguard = aperture_scatterguard
