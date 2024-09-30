@@ -3,8 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from bluesky import plan_stubs as bps
 from bluesky.run_engine import RunEngine
-from dodal.beamlines import i03
-from dodal.devices.oav.oav_detector import OAV, OAVConfigParams
+from dodal.devices.oav.oav_detector import OAV
 from dodal.devices.oav.oav_parameters import OAVParameters
 from dodal.devices.oav.pin_image_recognition import PinTipDetection
 from ophyd.signal import Signal
@@ -14,26 +13,7 @@ from mx_bluesky.hyperion.device_setup_plans.setup_oav import (
     pre_centring_setup_oav,
 )
 
-ZOOM_LEVELS_XML = "tests/test_data/test_jCameraManZoomLevels.xml"
 OAV_CENTRING_JSON = "tests/test_data/test_OAVCentring.json"
-DISPLAY_CONFIGURATION = "tests/test_data/test_display.configuration"
-
-
-@pytest.fixture
-def oav() -> OAV:
-    oav = i03.oav(fake_with_ophyd_sim=True)
-    oav.parameters = OAVConfigParams(ZOOM_LEVELS_XML, DISPLAY_CONFIGURATION)
-
-    oav.proc.port_name.sim_put("proc")  # type: ignore
-    oav.cam.port_name.sim_put("CAM")  # type: ignore
-
-    oav.zoom_controller.zrst.set("1.0x")
-    oav.zoom_controller.onst.set("2.0x")
-    oav.zoom_controller.twst.set("3.0x")
-    oav.zoom_controller.thst.set("5.0x")
-    oav.zoom_controller.frst.set("7.0x")
-    oav.zoom_controller.fvst.set("9.0x")
-    return oav
 
 
 @pytest.fixture

@@ -1,6 +1,7 @@
 import os
 from enum import Enum
 
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import EIGER2_X_16M_SIZE
 from pydantic.dataclasses import dataclass
 
@@ -41,6 +42,7 @@ class PlanGroupCheckpointConstants:
     GRID_READY_FOR_DC = "grid_ready_for_data_collection"
     ROTATION_READY_FOR_DC = "rotation_ready_for_data_collection"
     MOVE_GONIO_TO_START = "move_gonio_to_start"
+    READY_FOR_OAV = "ready_for_oav"
 
 
 @dataclass(frozen=True)
@@ -70,11 +72,16 @@ class TriggerConstants:
 @dataclass(frozen=True)
 class GridscanParamConstants:
     WIDTH_UM = 600.0
-    EXPOSURE_TIME_S = 0.02
+    EXPOSURE_TIME_S = 0.004
     USE_ROI = True
     BOX_WIDTH_UM = 20.0
     OMEGA_1 = 0.0
     OMEGA_2 = 90.0
+
+
+@dataclass(frozen=True)
+class RotationParamConstants:
+    DEFAULT_APERTURE_POSITION = ApertureValue.LARGE
 
 
 @dataclass(frozen=True)
@@ -90,6 +97,7 @@ class DetectorParamConstants:
 class ExperimentParamConstants:
     DETECTOR = DetectorParamConstants()
     GRIDSCAN = GridscanParamConstants()
+    ROTATION = RotationParamConstants()
 
 
 _test_oav_file = "tests/test_data/test_OAVCentring.json"
@@ -107,6 +115,7 @@ class I03Constants:
     USE_PANDA_FOR_GRIDSCAN = False
     USE_GPU_FOR_GRIDSCAN_ANALYSIS = False
     THAWING_TIME = 20
+    USE_CPU_AND_GPU_ZOCALO = False
 
 
 @dataclass(frozen=True)

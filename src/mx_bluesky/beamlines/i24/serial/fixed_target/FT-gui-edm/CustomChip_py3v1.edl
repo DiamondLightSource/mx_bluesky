@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 1202
-y 1158
+x 1203
+y 544
 w 550
 h 380
 font "arial-medium-r-18.0"
@@ -690,7 +690,7 @@ botShadowColor index 11
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run cs_reset"
+  0 "blueapi -c CONFIG_LOCATION controller run cs_reset '\{\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from typing import cast
@@ -8,6 +9,7 @@ from typing import cast
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
 from blueapi.core import BlueskyContext, MsgGenerator
+from bluesky.utils import Msg
 from dodal.devices.aperturescatterguard import ApertureScatterguard, ApertureValue
 from dodal.devices.attenuator import Attenuator
 from dodal.devices.backlight import Backlight
@@ -30,9 +32,10 @@ from dodal.devices.undulator_dcm import UndulatorDCM
 from dodal.devices.webcam import Webcam
 from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.devices.zocalo import ZocaloResults
 from dodal.plans.motor_util_plans import MoveTooLarge, home_and_reset_wrapper
-from ophyd_async.panda import HDFPanda
+from ophyd_async.fastcs.panda import HDFPanda
 
 from mx_bluesky.hyperion.device_setup_plans.utils import (
     start_preparing_data_collection_then_do_plan,
@@ -77,6 +80,7 @@ class RobotLoadThenCentreComposite:
     panda: HDFPanda
     panda_fast_grid_scan: PandAFastGridScan
     thawer: Thawer
+    sample_shutter: ZebraShutter
 
     # SetEnergyComposite fields
     vfm: FocusingMirrorWithStripes
@@ -123,8 +127,9 @@ def take_robot_snapshots(oav: OAV, webcam: Webcam, directory: Path):
             device.filename, snapshot_format.format(device=device.name)
         )
         yield from bps.abs_set(device.directory, str(directory))
+        # Note: should be able to use `wait=True` after https://github.com/bluesky/bluesky/issues/1795
         yield from bps.trigger(device, group="snapshots")
-    yield from bps.wait("snapshots")
+        yield from bps.wait("snapshots")
 
 
 def prepare_for_robot_load(composite: RobotLoadThenCentreComposite):
@@ -184,13 +189,73 @@ def raise_exception_if_moved_out_of_cryojet(exception):
         )
 
 
-def robot_load_then_centre_plan(
+def _pin_already_loaded(
+    robot: BartRobot, pin_to_load: int, puck_to_load: int
+) -> Generator[Msg, None, bool]:
+    current_puck = yield from bps.rd(robot.current_puck)
+    current_pin = yield from bps.rd(robot.current_pin)
+    return int(current_puck) == puck_to_load and int(current_pin) == pin_to_load
+
+
+def robot_load_and_snapshots(
+    composite: RobotLoadThenCentreComposite,
+    params: RobotLoadThenCentre,
+    location: SampleLocation,
+):
+    robot_load_plan = do_robot_load(
+        composite,
+        location,
+        params.demand_energy_ev,
+        params.thawing_time,
+    )
+
+    # The lower gonio must be in the correct position for the robot load and we
+    # want to put it back afterwards. Note we don't wait the robot is interlocked
+    # to the lower gonio and the  move is quicker than the robot takes to get to the
+    # load position.
+    yield from bpp.contingency_wrapper(
+        home_and_reset_wrapper(
+            robot_load_plan,
+            composite.lower_gonio,
+            BartRobot.LOAD_TOLERANCE_MM,
+            CONST.HARDWARE.CRYOJET_MARGIN_MM,
+            "lower_gonio",
+            wait_for_all=False,
+        ),
+        except_plan=raise_exception_if_moved_out_of_cryojet,
+    )
+
+    yield from take_robot_snapshots(
+        composite.oav, composite.webcam, params.snapshot_directory
+    )
+
+    yield from bps.create(name=CONST.DESCRIPTORS.ROBOT_LOAD)
+    yield from bps.read(composite.robot.barcode)
+    yield from bps.read(composite.oav.snapshot)
+    yield from bps.read(composite.webcam)
+    yield from bps.save()
+
+    yield from bps.wait("reset-lower_gonio")
+
+
+def centring_plan_from_robot_load_params(
     composite: RobotLoadThenCentreComposite,
     params: RobotLoadThenCentre,
 ):
-    yield from prepare_for_robot_load(composite)
+    yield from pin_centre_then_xray_centre_plan(
+        cast(GridDetectThenXRayCentreComposite, composite),
+        params.pin_centre_then_xray_centre_params(),
+    )
 
-    @bpp.run_decorator(
+
+def robot_load_then_centre_plan(
+    composite: RobotLoadThenCentreComposite,
+    params: RobotLoadThenCentre,
+    sample_location: SampleLocation,
+):
+    yield from prepare_for_robot_load(composite)
+    yield from bpp.run_wrapper(
+        robot_load_and_snapshots(composite, params, sample_location),
         md={
             "subplan_name": CONST.PLAN.ROBOT_LOAD,
             "metadata": {
@@ -202,54 +267,10 @@ def robot_load_then_centre_plan(
             "activate_callbacks": [
                 "RobotLoadISPyBCallback",
             ],
-        }
+        },
     )
-    def robot_load_and_snapshots():
-        # TODO: get these from one source of truth #1347
-        assert params.sample_puck is not None
-        assert params.sample_pin is not None
 
-        robot_load_plan = do_robot_load(
-            composite,
-            SampleLocation(params.sample_puck, params.sample_pin),
-            params.demand_energy_ev,
-            params.thawing_time,
-        )
-
-        # The lower gonio must be in the correct position for the robot load and we
-        # want to put it back afterwards. Note we don't wait the robot is interlocked
-        # to the lower gonio and the  move is quicker than the robot takes to get to the
-        # load position.
-        yield from bpp.contingency_wrapper(
-            home_and_reset_wrapper(
-                robot_load_plan,
-                composite.lower_gonio,
-                BartRobot.LOAD_TOLERANCE_MM,
-                CONST.HARDWARE.CRYOJET_MARGIN_MM,
-                "lower_gonio",
-                wait_for_all=False,
-            ),
-            except_plan=raise_exception_if_moved_out_of_cryojet,
-        )
-
-        yield from take_robot_snapshots(
-            composite.oav, composite.webcam, params.snapshot_directory
-        )
-
-        yield from bps.create(name=CONST.DESCRIPTORS.ROBOT_LOAD)
-        yield from bps.read(composite.robot.barcode)
-        yield from bps.read(composite.oav.snapshot)
-        yield from bps.read(composite.webcam)
-        yield from bps.save()
-
-        yield from bps.wait("reset-lower_gonio")
-
-    yield from robot_load_and_snapshots()
-
-    yield from pin_centre_then_xray_centre_plan(
-        cast(GridDetectThenXRayCentreComposite, composite),
-        params.pin_centre_then_xray_centre_params(),
-    )
+    yield from centring_plan_from_robot_load_params(composite, params)
 
 
 def robot_load_then_centre(
@@ -257,6 +278,32 @@ def robot_load_then_centre(
     parameters: RobotLoadThenCentre,
 ) -> MsgGenerator:
     eiger: EigerDetector = composite.eiger
+
+    # TODO: get these from one source of truth #254
+    assert parameters.sample_puck is not None
+    assert parameters.sample_pin is not None
+
+    doing_sample_load = not (
+        yield from _pin_already_loaded(
+            composite.robot, parameters.sample_pin, parameters.sample_puck
+        )
+    )
+
+    doing_chi_change = parameters.chi_start_deg is not None
+
+    if doing_sample_load:
+        plan = robot_load_then_centre_plan(
+            composite,
+            parameters,
+            SampleLocation(parameters.sample_puck, parameters.sample_pin),
+        )
+        LOGGER.info("Pin not loaded, loading and centring")
+    elif doing_chi_change:
+        plan = centring_plan_from_robot_load_params(composite, parameters)
+        LOGGER.info("Pin already loaded but chi changed so centring")
+    else:
+        LOGGER.info("Pin already loaded and chi not changed so doing nothing")
+        return
 
     detector_params = parameters.detector_params
     if not detector_params.expected_energy_ev:
@@ -270,6 +317,6 @@ def robot_load_then_centre(
         eiger,
         composite.detector_motion,
         parameters.detector_distance_mm,
-        robot_load_then_centre_plan(composite, parameters),
+        plan,
         group=CONST.WAIT.GRID_READY_FOR_DC,
     )

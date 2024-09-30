@@ -13,7 +13,7 @@ from dodal.devices.thawer import Thawer, ThawerStates
 from mx_bluesky.beamlines.i04.callbacks.murko_callback import MurkoCallback
 
 
-def thaw_and_center(
+def thaw_and_stream_to_redis(
     time_to_thaw: float,
     rotation: float = 360,
     robot: BartRobot = inject("robot"),
@@ -26,6 +26,7 @@ def thaw_and_center(
     sample_id = yield from bps.rd(robot.sample_id)
 
     yield from bps.abs_set(oav.zoom_controller.level, "1.0x", wait=True)
+    yield from bps.abs_set(oav_to_redis_forwarder.sample_id, sample_id)
 
     @subs_decorator(MurkoCallback(REDIS_HOST, REDIS_PASSWORD, MURKO_REDIS_DB))
     @run_decorator(
@@ -38,14 +39,14 @@ def thaw_and_center(
             "sample_id": sample_id,
         }
     )
-    def _thaw_and_center():
+    def _thaw_and_stream_to_redis():
         yield from bps.kickoff(oav_to_redis_forwarder, wait=True)
         yield from bps.monitor(smargon.omega.user_readback, name="smargon")
         yield from bps.monitor(oav_to_redis_forwarder.uuid, name="oav")
         yield from thaw(time_to_thaw, rotation, thawer, smargon)
         yield from bps.complete(oav_to_redis_forwarder)
 
-    yield from _thaw_and_center()
+    yield from _thaw_and_stream_to_redis()
 
 
 def thaw(

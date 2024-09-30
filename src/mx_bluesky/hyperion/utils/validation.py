@@ -62,7 +62,7 @@ def fake_rotation_scan(
     @bpp.run_decorator(  # attach experiment metadata to the start document
         md={
             "subplan_name": CONST.PLAN.ROTATION_OUTER,
-            "hyperion_parameters": parameters.json(),
+            "hyperion_parameters": parameters.model_dump_json(),
             "activate_callbacks": "RotationNexusFileCallback",
         }
     )
@@ -98,6 +98,7 @@ def fake_create_rotation_devices():
             zoom_params_file=ZOOM_LEVELS_XML, display_config=DISPLAY_CONFIGURATION
         ),
     )
+    xbpm_feedback = i03.xbpm_feedback(fake_with_ophyd_sim=True)
 
     set_mock_value(smargon.omega.max_velocity, 131)
     set_mock_value(dcm.energy_in_kev.user_readback, 12700)
@@ -118,6 +119,8 @@ def fake_create_rotation_devices():
         zebra=zebra,
         robot=robot,
         oav=oav,
+        sample_shutter=i03.sample_shutter(fake_with_ophyd_sim=True),
+        xbpm_feedback=xbpm_feedback,
     )
 
 

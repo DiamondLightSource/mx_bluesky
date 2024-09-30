@@ -11,9 +11,8 @@ from dodal.devices.smargon import Smargon
 
 from mx_bluesky.hyperion.device_setup_plans.setup_oav import setup_general_oav_params
 from mx_bluesky.hyperion.parameters.components import WithSnapshot
-from mx_bluesky.hyperion.parameters.constants import DocDescriptorNames
+from mx_bluesky.hyperion.parameters.constants import CONST, DocDescriptorNames
 
-OAV_SNAPSHOT_SETUP_GROUP = "oav_snapshot_setup"
 OAV_SNAPSHOT_SETUP_SHOT = "oav_snapshot_setup_shot"
 OAV_SNAPSHOT_GROUP = "oav_snapshot_group"
 
@@ -25,24 +24,19 @@ class OavSnapshotComposite(Protocol):
     backlight: Backlight
 
 
-def setup_oav_snapshot_plan(
-    composite: OavSnapshotComposite,
-    parameters: WithSnapshot,
-    max_omega_velocity_deg_s: float,
+def setup_beamline_for_OAV(
+    smargon: Smargon,
+    backlight: Backlight,
+    aperture_scatterguard: ApertureScatterguard,
+    group=CONST.WAIT.READY_FOR_OAV,
 ):
-    if not parameters.take_snapshots:
-        return
-
+    max_vel = yield from bps.rd(smargon.omega.max_velocity)
+    yield from bps.abs_set(smargon.omega.velocity, max_vel, group=group)
+    yield from bps.abs_set(backlight, BacklightPosition.IN, group=group)
     yield from bps.abs_set(
-        composite.smargon.omega.velocity, max_omega_velocity_deg_s, wait=True
-    )
-    yield from bps.abs_set(
-        composite.backlight, BacklightPosition.IN, group=OAV_SNAPSHOT_SETUP_GROUP
-    )
-    yield from bps.abs_set(
-        composite.aperture_scatterguard,
+        aperture_scatterguard,
         ApertureValue.ROBOT_LOAD,
-        group=OAV_SNAPSHOT_SETUP_GROUP,
+        group=group,
     )
 
 
@@ -54,7 +48,7 @@ def oav_snapshot_plan(
 ) -> MsgGenerator:
     if not parameters.take_snapshots:
         return
-    yield from bps.wait(group=OAV_SNAPSHOT_SETUP_GROUP)
+    yield from bps.wait(group=CONST.WAIT.READY_FOR_OAV)
     yield from _setup_oav(composite, parameters, oav_parameters)
     for omega in parameters.snapshot_omegas_deg or []:
         yield from _take_oav_snapshot(composite, omega)

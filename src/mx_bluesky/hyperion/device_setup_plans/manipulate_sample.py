@@ -5,7 +5,6 @@ from dodal.devices.aperturescatterguard import (
     ApertureScatterguard,
     ApertureValue,
 )
-from dodal.devices.attenuator import Attenuator
 from dodal.devices.backlight import Backlight, BacklightPosition
 from dodal.devices.detector.detector_motion import DetectorMotion
 from dodal.devices.smargon import Smargon
@@ -13,15 +12,6 @@ from dodal.devices.smargon import Smargon
 from mx_bluesky.hyperion.log import LOGGER
 
 LOWER_DETECTOR_SHUTTER_AFTER_SCAN = True
-
-
-def begin_sample_environment_setup(
-    attenuator: Attenuator,
-    transmission_fraction: float,
-    group="setup_senv",
-):
-    """Start all sample environment changes that can be initiated before OAV snapshots are taken"""
-    yield from bps.abs_set(attenuator, transmission_fraction, group=group)
 
 
 def setup_sample_environment(

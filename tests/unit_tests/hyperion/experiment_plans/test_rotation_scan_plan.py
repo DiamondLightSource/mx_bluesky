@@ -13,12 +13,13 @@ from dodal.devices.detector.detector_motion import ShutterState
 from dodal.devices.oav.oav_parameters import OAVParameters
 from dodal.devices.smargon import Smargon
 from dodal.devices.synchrotron import SynchrotronMode
-from dodal.devices.zebra import Zebra
+from dodal.devices.xbpm_feedback import Pause
+from dodal.devices.zebra import PC_GATE, Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutterControl
 from ophyd_async.core import get_mock_put
 
 from mx_bluesky.hyperion.experiment_plans.oav_snapshot_plan import (
     OAV_SNAPSHOT_GROUP,
-    OAV_SNAPSHOT_SETUP_GROUP,
 )
 from mx_bluesky.hyperion.experiment_plans.rotation_scan_plan import (
     RotationMotionProfile,
@@ -27,6 +28,13 @@ from mx_bluesky.hyperion.experiment_plans.rotation_scan_plan import (
     rotation_scan,
     rotation_scan_plan,
 )
+from mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback import (
+    RotationISPyBCallback,
+)
+from mx_bluesky.hyperion.external_interaction.callbacks.zocalo_callback import (
+    ZocaloCallback,
+)
+from mx_bluesky.hyperion.external_interaction.ispyb.ispyb_store import IspybIds
 from mx_bluesky.hyperion.parameters.constants import CONST, DocDescriptorNames
 from mx_bluesky.hyperion.parameters.rotation import RotationScan
 
@@ -225,14 +233,12 @@ async def test_full_rotation_plan_smargon_settings(
 
 async def test_rotation_plan_moves_aperture_correctly(
     run_full_rotation_plan: RotationScanComposite,
-    test_rotation_params: RotationScan,
 ) -> None:
     aperture_scatterguard: ApertureScatterguard = (
         run_full_rotation_plan.aperture_scatterguard
     )
     assert (
-        await aperture_scatterguard.get_current_aperture_position()
-        == ApertureValue.SMALL
+        await aperture_scatterguard.selected_aperture.get_value() == ApertureValue.SMALL
     )
 
 
@@ -364,24 +370,54 @@ def test_rotation_scan_initialises_detector_distance_shutter_and_tx_fraction(
         and msg.obj.name == "detector_motion-shutter"
         and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
     )
-    msgs = assert_message_and_return_remaining(
-        msgs,
-        lambda msg: msg.command == "set"
-        and msg.obj.name == "attenuator"
-        and msg.args[0] == test_rotation_params.transmission_frac
-        and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
-    )
-    msgs = assert_message_and_return_remaining(
-        msgs,
-        lambda msg: msg.command == "set"
-        and msg.obj.name == "attenuator"
-        and msg.args[0] == test_rotation_params.transmission_frac
-        and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
-    )
     assert_message_and_return_remaining(
         msgs,
         lambda msg: msg.command == "wait"
         and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
+    )
+
+
+def test_rotation_scan_triggers_xbpm_then_pauses_xbpm_and_sets_transmission(
+    rotation_scan_simulated_messages,
+    test_rotation_params: RotationScan,
+):
+    msgs = assert_message_and_return_remaining(
+        rotation_scan_simulated_messages,
+        lambda msg: msg.command == "trigger" and msg.obj.name == "xbpm_feedback",
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "xbpm_feedback-pause_feedback"
+        and msg.args[0] == Pause.PAUSE.value,
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "attenuator"
+        and msg.args[0] == test_rotation_params.transmission_frac,
+    )
+
+
+def test_rotation_scan_does_not_change_transmission_back_until_after_data_collected(
+    rotation_scan_simulated_messages,
+    test_rotation_params: RotationScan,
+):
+    msgs = assert_message_and_return_remaining(
+        rotation_scan_simulated_messages,
+        lambda msg: msg.command == "unstage" and msg.obj.name == "eiger",
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "xbpm_feedback-pause_feedback"
+        and msg.args[0] == Pause.RUN.value,
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "attenuator"
+        and msg.args[0] == 1.0,
     )
 
 
@@ -396,7 +432,7 @@ def test_rotation_scan_moves_gonio_to_start_before_snapshots(
     msgs = assert_message_and_return_remaining(
         msgs,
         lambda msg: msg.command == "wait"
-        and msg.kwargs["group"] == OAV_SNAPSHOT_SETUP_GROUP,
+        and msg.kwargs["group"] == CONST.WAIT.READY_FOR_OAV,
     )
 
 
@@ -466,19 +502,19 @@ def test_rotation_snapshot_setup_called_to_move_backlight_in_aperture_out_before
         lambda msg: msg.command == "set"
         and msg.obj.name == "backlight"
         and msg.args[0] == BacklightPosition.IN
-        and msg.kwargs["group"] == OAV_SNAPSHOT_SETUP_GROUP,
+        and msg.kwargs["group"] == CONST.WAIT.READY_FOR_OAV,
     )
     msgs = assert_message_and_return_remaining(
         msgs,
         lambda msg: msg.command == "set"
         and msg.obj.name == "aperture_scatterguard"
         and msg.args[0] == ApertureValue.ROBOT_LOAD
-        and msg.kwargs["group"] == OAV_SNAPSHOT_SETUP_GROUP,
+        and msg.kwargs["group"] == CONST.WAIT.READY_FOR_OAV,
     )
     msgs = assert_message_and_return_remaining(
         msgs,
         lambda msg: msg.command == "wait"
-        and msg.kwargs["group"] == OAV_SNAPSHOT_SETUP_GROUP,
+        and msg.kwargs["group"] == CONST.WAIT.READY_FOR_OAV,
     )
     msgs = assert_message_and_return_remaining(
         msgs, lambda msg: msg.command == "trigger" and msg.obj.name == "oav_snapshot"
@@ -502,7 +538,7 @@ def test_rotation_scan_skips_init_backlight_aperture_and_snapshots_if_snapshot_p
         )
     )
     assert not [
-        msg for msg in msgs if msg.kwargs.get("group", None) == OAV_SNAPSHOT_SETUP_GROUP
+        msg for msg in msgs if msg.kwargs.get("group", None) == CONST.WAIT.READY_FOR_OAV
     ]
     assert not [
         msg for msg in msgs if msg.kwargs.get("group", None) == OAV_SNAPSHOT_GROUP
@@ -539,6 +575,40 @@ def _add_sim_handlers_for_normal_operation(
     )
 
 
+def test_rotation_scan_turns_shutter_to_auto_with_pc_gate_then_back_to_manual(
+    fake_create_rotation_devices: RotationScanComposite,
+    sim_run_engine: RunEngineSimulator,
+    test_rotation_params: RotationScan,
+    oav_parameters_for_rotation: OAVParameters,
+):
+    _add_sim_handlers_for_normal_operation(fake_create_rotation_devices, sim_run_engine)
+    msgs = sim_run_engine.simulate_plan(
+        rotation_scan(
+            fake_create_rotation_devices,
+            test_rotation_params,
+            oav_parameters_for_rotation,
+        )
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "sample_shutter-control_mode"
+        and msg.args[0] == ZebraShutterControl.AUTO,  # type:ignore
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "zebra-logic_gates-and_gates-2-sources-1"
+        and msg.args[0] == PC_GATE,  # type:ignore
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "sample_shutter-control_mode"
+        and msg.args[0] == ZebraShutterControl.MANUAL,  # type:ignore
+    )
+
+
 def test_rotation_scan_arms_detector_and_takes_snapshots_whilst_arming(
     rotation_scan_simulated_messages,
 ):
@@ -557,3 +627,69 @@ def test_rotation_scan_arms_detector_and_takes_snapshots_whilst_arming(
         lambda msg: msg.command == "wait"
         and msg.kwargs["group"] == CONST.WAIT.ROTATION_READY_FOR_DC,
     )
+
+
+@patch(
+    "mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback.StoreInIspyb"
+)
+def test_rotation_scan_correctly_triggers_ispyb_callback(
+    mock_store_in_ispyb,
+    RE: RunEngine,
+    test_rotation_params: RotationScan,
+    fake_create_rotation_devices: RotationScanComposite,
+    oav_parameters_for_rotation: OAVParameters,
+):
+    mock_ispyb_callback = RotationISPyBCallback()
+    RE.subscribe(mock_ispyb_callback)
+    with (
+        patch("bluesky.plan_stubs.wait", autospec=True),
+        patch(
+            "bluesky.preprocessors.__read_and_stash_a_motor",
+            fake_read,
+        ),
+    ):
+        RE(
+            rotation_scan(
+                fake_create_rotation_devices,
+                test_rotation_params,
+                oav_parameters_for_rotation,
+            ),
+        )
+    mock_store_in_ispyb.assert_called()
+
+
+@patch(
+    "mx_bluesky.hyperion.external_interaction.callbacks.zocalo_callback.ZocaloTrigger"
+)
+@patch(
+    "mx_bluesky.hyperion.external_interaction.callbacks.rotation.ispyb_callback.StoreInIspyb"
+)
+def test_rotation_scan_correctly_triggers_zocalo_callback(
+    mock_store_in_ispyb,
+    mock_zocalo_interactor,
+    RE: RunEngine,
+    test_rotation_params: RotationScan,
+    fake_create_rotation_devices: RotationScanComposite,
+    oav_parameters_for_rotation: OAVParameters,
+):
+    mock_zocalo_callback = ZocaloCallback()
+    mock_ispyb_callback = RotationISPyBCallback(emit=mock_zocalo_callback)
+    mock_store_in_ispyb.return_value.update_deposition.return_value = IspybIds(
+        data_collection_ids=(0, 1)
+    )
+    RE.subscribe(mock_ispyb_callback)
+    with (
+        patch("bluesky.plan_stubs.wait", autospec=True),
+        patch(
+            "bluesky.preprocessors.__read_and_stash_a_motor",
+            fake_read,
+        ),
+    ):
+        RE(
+            rotation_scan(
+                fake_create_rotation_devices,
+                test_rotation_params,
+                oav_parameters_for_rotation,
+            ),
+        )
+    mock_zocalo_interactor.return_value.run_start.assert_called_once()

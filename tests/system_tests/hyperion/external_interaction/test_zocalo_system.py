@@ -75,7 +75,8 @@ def run_zocalo_with_dev_ispyb(
                 md={
                     "subplan_name": CONST.PLAN.GRIDSCAN_OUTER,
                     CONST.TRIGGER.ZOCALO: CONST.PLAN.DO_FGS,
-                    "hyperion_parameters": dummy_params.json(),
+                    "zocalo_environment": dummy_params.zocalo_environment,
+                    "hyperion_parameters": dummy_params.model_dump_json(),
                 }
             )
             def inner_plan():

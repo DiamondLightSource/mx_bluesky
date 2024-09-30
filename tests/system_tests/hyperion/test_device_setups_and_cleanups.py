@@ -12,9 +12,9 @@ from dodal.devices.zebra import (
 )
 
 from mx_bluesky.hyperion.device_setup_plans.setup_zebra import (
-    set_zebra_shutter_to_manual,
     setup_zebra_for_gridscan,
     setup_zebra_for_rotation,
+    tidy_up_zebra_after_gridscan,
 )
 
 
@@ -42,6 +42,6 @@ async def test_zebra_set_up_for_rotation(RE, connected_zebra: Zebra):
 
 @pytest.mark.s03
 async def test_zebra_cleanup(RE, connected_zebra: Zebra):
-    RE(set_zebra_shutter_to_manual(connected_zebra, wait=True))
+    RE(tidy_up_zebra_after_gridscan(connected_zebra, wait=True))
     assert await connected_zebra.output.out_pvs[TTL_DETECTOR].get_value() == PC_PULSE
     assert await connected_zebra.output.out_pvs[TTL_SHUTTER].get_value() == OR1

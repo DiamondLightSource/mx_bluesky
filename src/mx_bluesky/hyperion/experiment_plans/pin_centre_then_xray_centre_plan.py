@@ -6,12 +6,16 @@ from blueapi.core import BlueskyContext, MsgGenerator
 from dodal.devices.eiger import EigerDetector
 from dodal.devices.oav.oav_parameters import OAV_CONFIG_JSON, OAVParameters
 
+from mx_bluesky.hyperion.device_setup_plans.manipulate_sample import move_phi_chi_omega
 from mx_bluesky.hyperion.device_setup_plans.utils import (
     start_preparing_data_collection_then_do_plan,
 )
 from mx_bluesky.hyperion.experiment_plans.grid_detect_then_xray_centre_plan import (
     GridDetectThenXRayCentreComposite,
     detect_grid_and_do_gridscan,
+)
+from mx_bluesky.hyperion.experiment_plans.oav_snapshot_plan import (
+    setup_beamline_for_OAV,
 )
 from mx_bluesky.hyperion.experiment_plans.pin_tip_centring_plan import (
     PinTipCentringComposite,
@@ -39,11 +43,11 @@ def create_devices(context: BlueskyContext) -> GridDetectThenXRayCentreComposite
 def create_parameters_for_grid_detection(
     pin_centre_parameters: PinTipCentreThenXrayCentre,
 ) -> GridScanWithEdgeDetect:
-    params_json = json.loads(pin_centre_parameters.json())
+    params_json = json.loads(pin_centre_parameters.model_dump_json())
     del params_json["tip_offset_um"]
     grid_detect_and_xray_centre = GridScanWithEdgeDetect(**params_json)
     LOGGER.info(
-        f"Parameters for grid detect and xray centre: {grid_detect_and_xray_centre.json(indent=2)}"
+        f"Parameters for grid detect and xray centre: {grid_detect_and_xray_centre.model_dump_json(indent=2)}"
     )
     return grid_detect_and_xray_centre
 
@@ -65,6 +69,17 @@ def pin_centre_then_xray_centre_plan(
     )
 
     def _pin_centre_then_xray_centre_plan():
+        yield from setup_beamline_for_OAV(
+            composite.smargon, composite.backlight, composite.aperture_scatterguard
+        )
+
+        yield from move_phi_chi_omega(
+            composite.smargon,
+            parameters.phi_start_deg,
+            parameters.chi_start_deg,
+            group=CONST.WAIT.READY_FOR_OAV,
+        )
+
         yield from pin_tip_centre_plan(
             pin_tip_centring_composite,
             parameters.tip_offset_um,

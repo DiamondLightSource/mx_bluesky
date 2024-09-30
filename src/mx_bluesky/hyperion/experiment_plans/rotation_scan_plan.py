@@ -19,11 +19,12 @@ from dodal.devices.s4_slit_gaps import S4SlitGaps
 from dodal.devices.smargon import Smargon
 from dodal.devices.synchrotron import Synchrotron
 from dodal.devices.undulator import Undulator
+from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import RotationDirection, Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.plans.check_topup import check_topup_and_wait_if_necessary
 
 from mx_bluesky.hyperion.device_setup_plans.manipulate_sample import (
-    begin_sample_environment_setup,
     cleanup_sample_environment,
     move_phi_chi_omega,
     move_x_y_z,
@@ -36,17 +37,19 @@ from mx_bluesky.hyperion.device_setup_plans.read_hardware_for_setup import (
 )
 from mx_bluesky.hyperion.device_setup_plans.setup_zebra import (
     arm_zebra,
-    disarm_zebra,
-    make_trigger_safe,
     setup_zebra_for_rotation,
+    tidy_up_zebra_after_rotation_scan,
 )
 from mx_bluesky.hyperion.device_setup_plans.utils import (
     start_preparing_data_collection_then_do_plan,
 )
+from mx_bluesky.hyperion.device_setup_plans.xbpm_feedback import (
+    transmission_and_xbpm_feedback_for_collection_decorator,
+)
 from mx_bluesky.hyperion.experiment_plans.oav_snapshot_plan import (
     OavSnapshotComposite,
     oav_snapshot_plan,
-    setup_oav_snapshot_plan,
+    setup_beamline_for_OAV,
 )
 from mx_bluesky.hyperion.log import LOGGER
 from mx_bluesky.hyperion.parameters.constants import CONST
@@ -73,8 +76,10 @@ class RotationScanComposite(OavSnapshotComposite):
     undulator: Undulator
     synchrotron: Synchrotron
     s4_slit_gaps: S4SlitGaps
+    sample_shutter: ZebraShutter
     zebra: Zebra
     oav: OAV
+    xbpm_feedback: XBPMFeedback
 
 
 def create_devices(context: BlueskyContext) -> RotationScanComposite:
@@ -219,6 +224,7 @@ def rotation_scan_plan(
 
         yield from setup_zebra_for_rotation(
             composite.zebra,
+            composite.sample_shutter,
             start_angle=motion_values.start_scan_deg,
             scan_width=motion_values.scan_width_deg,
             direction=motion_values.direction,
@@ -284,8 +290,10 @@ def _cleanup_plan(composite: RotationScanComposite, **kwargs):
     max_vel = yield from bps.rd(composite.smargon.omega.max_velocity)
     yield from cleanup_sample_environment(composite.detector_motion, group="cleanup")
     yield from bps.abs_set(composite.smargon.omega.velocity, max_vel, group="cleanup")
-    yield from make_trigger_safe(composite.zebra, group="cleanup")
-    yield from bpp.finalize_wrapper(disarm_zebra(composite.zebra), bps.wait("cleanup"))
+    yield from tidy_up_zebra_after_rotation_scan(
+        composite.zebra, composite.sample_shutter, group="cleanup", wait=False
+    )
+    yield from bps.wait("cleanup")
 
 
 def _move_and_rotation(
@@ -316,8 +324,8 @@ def _move_and_rotation(
     )
     if params.take_snapshots:
         yield from bps.wait(CONST.WAIT.MOVE_GONIO_TO_START)
-        yield from setup_oav_snapshot_plan(
-            composite, params, motion_values.max_velocity_deg_s
+        yield from setup_beamline_for_OAV(
+            composite.smargon, composite.backlight, composite.aperture_scatterguard
         )
         yield from oav_snapshot_plan(composite, params, oav_params)
     yield from rotation_scan_plan(
@@ -340,12 +348,18 @@ def rotation_scan(
         md={
             "subplan_name": CONST.PLAN.ROTATION_OUTER,
             CONST.TRIGGER.ZOCALO: CONST.PLAN.ROTATION_MAIN,
-            "hyperion_parameters": parameters.json(),
+            "zocalo_environment": parameters.zocalo_environment,
+            "hyperion_parameters": parameters.model_dump_json(),
             "activate_callbacks": [
                 "RotationISPyBCallback",
                 "RotationNexusFileCallback",
             ],
         }
+    )
+    @transmission_and_xbpm_feedback_for_collection_decorator(
+        composite.xbpm_feedback,
+        composite.attenuator,
+        parameters.transmission_frac,
     )
     def rotation_scan_plan_with_stage_and_cleanup(
         params: RotationScan,
@@ -355,13 +369,6 @@ def rotation_scan(
 
         @bpp.finalize_decorator(lambda: _cleanup_plan(composite))
         def rotation_with_cleanup_and_stage(params: RotationScan):
-            LOGGER.info("setting up sample environment...")
-            yield from begin_sample_environment_setup(
-                composite.attenuator,
-                params.transmission_frac,
-                group=CONST.WAIT.ROTATION_READY_FOR_DC,
-            )
-
             yield from _move_and_rotation(composite, params, oav_params)
 
         LOGGER.info("setting up and staging eiger...")
@@ -386,12 +393,6 @@ def multi_rotation_scan(
         oav_params = OAVParameters(context="xrayCentring")
     eiger: EigerDetector = composite.eiger
     eiger.set_detector_parameters(parameters.detector_params)
-    LOGGER.info("setting up sample environment...")
-    yield from begin_sample_environment_setup(
-        composite.attenuator,
-        parameters.transmission_frac,
-        group=CONST.WAIT.ROTATION_READY_FOR_DC,
-    )
 
     @bpp.set_run_key_decorator("multi_rotation_scan")
     @bpp.run_decorator(
@@ -415,7 +416,7 @@ def multi_rotation_scan(
                 md={
                     "subplan_name": CONST.PLAN.ROTATION_OUTER,
                     CONST.TRIGGER.ZOCALO: CONST.PLAN.ROTATION_MAIN,
-                    "hyperion_parameters": single_scan.json(),
+                    "hyperion_parameters": single_scan.model_dump_json(),
                 }
             )
             def rotation_scan_core(

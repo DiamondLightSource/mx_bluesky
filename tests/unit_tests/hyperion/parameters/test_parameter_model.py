@@ -2,8 +2,10 @@ import json
 from pathlib import Path
 
 import pytest
+from dodal.devices.aperturescatterguard import ApertureValue
 from pydantic import ValidationError
 
+from mx_bluesky.hyperion.parameters.constants import GridscanParamConstants
 from mx_bluesky.hyperion.parameters.gridscan import (
     OddYStepsException,
     RobotLoadThenCentre,
@@ -38,7 +40,7 @@ def test_minimal_3d_gridscan_params(minimal_3d_gridscan_params):
     assert {"sam_x", "sam_y", "sam_z"} == set(test_params.scan_points.keys())
     assert test_params.scan_indices == [0, 35]
     assert test_params.num_images == (5 * 7 + 5 * 9)
-    assert test_params.exposure_time_s == 0.02
+    assert test_params.exposure_time_s == GridscanParamConstants.EXPOSURE_TIME_S
 
 
 def test_cant_do_panda_fgs_with_odd_y_steps(minimal_3d_gridscan_params):
@@ -50,7 +52,7 @@ def test_cant_do_panda_fgs_with_odd_y_steps(minimal_3d_gridscan_params):
 
 def test_serialise_deserialise(minimal_3d_gridscan_params):
     test_params = ThreeDGridScan(**minimal_3d_gridscan_params)
-    serialised = json.loads(test_params.json())
+    serialised = json.loads(test_params.model_dump_json())
     deserialised = ThreeDGridScan(**serialised)
     assert deserialised.demand_energy_ev is None
     assert deserialised.visit == "cm12345"
@@ -110,3 +112,12 @@ def test_osc_is_used():
         params = RotationScan(**raw_params)
         assert params.rotation_increment_deg == osc
         assert params.num_images == int(params.scan_width_deg / osc)
+
+
+def test_selected_aperture_uses_default():
+    raw_params = raw_params_from_file(
+        "tests/test_data/parameter_json_files/good_test_rotation_scan_parameters.json"
+    )
+    raw_params["selected_aperture"] = None
+    params = RotationScan(**raw_params)
+    assert params.selected_aperture == ApertureValue.LARGE

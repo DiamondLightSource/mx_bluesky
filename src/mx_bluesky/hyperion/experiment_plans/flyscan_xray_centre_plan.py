@@ -35,6 +35,7 @@ from dodal.devices.synchrotron import Synchrotron
 from dodal.devices.undulator import Undulator
 from dodal.devices.xbpm_feedback import XBPMFeedback
 from dodal.devices.zebra import Zebra
+from dodal.devices.zebra_controlled_shutter import ZebraShutter
 from dodal.devices.zocalo.zocalo_results import (
     ZOCALO_READING_PLAN_NAME,
     ZOCALO_STAGE_GROUP,
@@ -42,7 +43,7 @@ from dodal.devices.zocalo.zocalo_results import (
     get_processing_result,
 )
 from dodal.plans.check_topup import check_topup_and_wait_if_necessary
-from ophyd_async.panda import HDFPanda
+from ophyd_async.fastcs.panda import HDFPanda
 from scanspec.core import AxesPoints, Axis
 
 from mx_bluesky.hyperion.device_setup_plans.manipulate_sample import move_x_y_z
@@ -57,9 +58,9 @@ from mx_bluesky.hyperion.device_setup_plans.setup_panda import (
     setup_panda_for_flyscan,
 )
 from mx_bluesky.hyperion.device_setup_plans.setup_zebra import (
-    set_zebra_shutter_to_manual,
     setup_zebra_for_gridscan,
     setup_zebra_for_panda_flyscan,
+    tidy_up_zebra_after_gridscan,
 )
 from mx_bluesky.hyperion.device_setup_plans.xbpm_feedback import (
     transmission_and_xbpm_feedback_for_collection_decorator,
@@ -97,6 +98,7 @@ class FlyScanXRayCentreComposite:
     panda: HDFPanda
     panda_fast_grid_scan: PandAFastGridScan
     robot: BartRobot
+    sample_shutter: ZebraShutter
 
     @property
     def sample_motors(self) -> Smargon:
@@ -127,6 +129,7 @@ def flyscan_xray_centre(
     parameters.features.update_self_from_server()
     composite.eiger.set_detector_parameters(parameters.detector_params)
     composite.zocalo.zocalo_environment = parameters.zocalo_environment
+    composite.zocalo.use_cpu_and_gpu = parameters.use_cpu_and_gpu_zocalo
 
     feature_controlled = _get_feature_controlled(composite, parameters)
 
@@ -136,7 +139,7 @@ def flyscan_xray_centre(
             "subplan_name": CONST.PLAN.GRIDSCAN_OUTER,
             CONST.TRIGGER.ZOCALO: CONST.PLAN.DO_FGS,
             "zocalo_environment": parameters.zocalo_environment,
-            "hyperion_parameters": parameters.json(),
+            "hyperion_parameters": parameters.model_dump_json(),
             "activate_callbacks": [
                 "GridscanNexusFileCallback",
             ],
@@ -200,14 +203,14 @@ def run_gridscan_and_move(
             )
         else:
             xray_centre = initial_xyz
-            LOGGER.warning("No X-ray centre recieved")
+            LOGGER.warning("No X-ray centre received")
         if bbox_size is not None:
             with TRACER.start_span("change_aperture"):
                 yield from set_aperture_for_bbox_size(
                     fgs_composite.aperture_scatterguard, bbox_size
                 )
         else:
-            LOGGER.warning("No bounding box size recieved")
+            LOGGER.warning("No bounding box size received")
 
     # once we have the results, go to the appropriate position
     LOGGER.info("Moving to centre of mass.")
@@ -438,7 +441,9 @@ def _generic_tidy(
     fgs_composite: FlyScanXRayCentreComposite, group, wait=True
 ) -> MsgGenerator:
     LOGGER.info("Tidying up Zebra")
-    yield from set_zebra_shutter_to_manual(fgs_composite.zebra, group=group, wait=wait)
+    yield from tidy_up_zebra_after_gridscan(
+        fgs_composite.zebra, fgs_composite.sample_shutter, group=group, wait=wait
+    )
     LOGGER.info("Tidying up Zocalo")
     # make sure we don't consume any other results
     yield from bps.unstage(fgs_composite.zocalo, group=group, wait=wait)
@@ -458,7 +463,9 @@ def _zebra_triggering_setup(
     parameters: ThreeDGridScan,
     initial_xyz: np.ndarray,
 ):
-    yield from setup_zebra_for_gridscan(fgs_composite.zebra, wait=True)
+    yield from setup_zebra_for_gridscan(
+        fgs_composite.zebra, fgs_composite.sample_shutter, wait=True
+    )
 
 
 def _panda_triggering_setup(
@@ -516,4 +523,6 @@ def _panda_triggering_setup(
     )
 
     LOGGER.info("Setting up Zebra for panda flyscan")
-    yield from setup_zebra_for_panda_flyscan(fgs_composite.zebra, wait=True)
+    yield from setup_zebra_for_panda_flyscan(
+        fgs_composite.zebra, fgs_composite.sample_shutter, wait=True
+    )

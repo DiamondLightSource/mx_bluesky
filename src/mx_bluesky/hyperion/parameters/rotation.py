@@ -3,17 +3,16 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 from itertools import accumulate
-from typing import Annotated
+from typing import Annotated, Any
 
 from annotated_types import Len
+from dodal.devices.aperturescatterguard import ApertureValue
 from dodal.devices.detector import DetectorParams
-from dodal.devices.detector.det_dist_to_beam_converter import (
-    DetectorDistanceToBeamXYConverter,
-)
 from dodal.devices.zebra import (
     RotationDirection,
 )
-from pydantic import Field, root_validator
+from dodal.log import LOGGER
+from pydantic import Field, field_validator, model_validator
 from scanspec.core import AxesPoints
 from scanspec.core import Path as ScanPath
 from scanspec.specs import Line
@@ -25,10 +24,12 @@ from mx_bluesky.hyperion.parameters.components import (
     OptionalXyzStarts,
     RotationAxis,
     SplitScan,
-    TemporaryIspybExtras,
     WithScan,
 )
-from mx_bluesky.hyperion.parameters.constants import CONST, I03Constants
+from mx_bluesky.hyperion.parameters.constants import (
+    CONST,
+    I03Constants,
+)
 
 
 class RotationScanPerSweep(OptionalGonioAngleStarts, OptionalXyzStarts):
@@ -37,7 +38,6 @@ class RotationScanPerSweep(OptionalGonioAngleStarts, OptionalXyzStarts):
     scan_width_deg: float = Field(default=360, gt=0)
     rotation_direction: RotationDirection = Field(default=RotationDirection.NEGATIVE)
     nexus_vds_start_img: int = Field(default=0, ge=0)
-    ispyb_extras: TemporaryIspybExtras | None
 
 
 class RotationExperiment(DiffractionExperimentWithSample):
@@ -48,7 +48,7 @@ class RotationExperiment(DiffractionExperimentWithSample):
     )
 
     def _detector_params(self, omega_start_deg: float):
-        self.det_dist_to_beam_converter_path: str = (
+        self.det_dist_to_beam_converter_path = (
             self.det_dist_to_beam_converter_path
             or CONST.PARAM.DETECTOR.BEAM_XY_LUT_PATH
         )
@@ -70,11 +70,20 @@ class RotationExperiment(DiffractionExperimentWithSample):
             num_triggers=1,
             use_roi_mode=False,
             det_dist_to_beam_converter_path=self.det_dist_to_beam_converter_path,
-            beam_xy_converter=DetectorDistanceToBeamXYConverter(
-                self.det_dist_to_beam_converter_path
-            ),
             **optional_args,
         )
+
+    @field_validator("selected_aperture")
+    @classmethod
+    def _set_default_aperture_position(cls, aperture_position: ApertureValue | None):
+        if not aperture_position:
+            default_aperture = CONST.PARAM.ROTATION.DEFAULT_APERTURE_POSITION
+            LOGGER.warning(
+                f"No aperture position selected. Defaulting to {default_aperture}"
+            )
+            return default_aperture
+        else:
+            return aperture_position
 
 
 class RotationScan(WithScan, RotationScanPerSweep, RotationExperiment):
@@ -106,19 +115,21 @@ class MultiRotationScan(RotationExperiment, SplitScan):
 
     def _single_rotation_scan(self, scan: RotationScanPerSweep) -> RotationScan:
         # self has everything from RotationExperiment
-        params = self.dict()
+        params = self.model_dump()
         del params["rotation_scans"]
         # provided `scan` has everything from RotationScanPerSweep
-        params.update(scan.dict())
+        params.update(scan.model_dump())
         # together they have everything for RotationScan
         return RotationScan(**params)
 
-    @root_validator(pre=False)  # type: ignore
-    def validate_snapshot_directory(cls, values):
-        start_img = 0
-        for scan in values["rotation_scans"]:
-            scan.nexus_vds_start_img = start_img
-            start_img += scan.scan_width_deg / values["rotation_increment_deg"]
+    @model_validator(mode="after")
+    @classmethod
+    def correct_start_vds(cls, values: Any) -> Any:
+        assert isinstance(values, MultiRotationScan)
+        start_img = 0.0
+        for scan in values.rotation_scans:
+            scan.nexus_vds_start_img = int(start_img)
+            start_img += scan.scan_width_deg / values.rotation_increment_deg
         return values
 
     @property

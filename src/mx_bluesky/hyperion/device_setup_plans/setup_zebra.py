@@ -5,23 +5,24 @@ import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
 from blueapi.core import MsgGenerator
 from dodal.devices.zebra import (
+    AUTO_SHUTTER_GATE,
+    AUTO_SHUTTER_INPUT,
     DISCONNECT,
     IN1_TTL,
     IN3_TTL,
     IN4_TTL,
-    OR1,
+    PC_GATE,
     PC_PULSE,
     TTL_DETECTOR,
     TTL_PANDA,
-    TTL_SHUTTER,
     TTL_XSPRESS3,
     ArmDemand,
     EncEnum,
     I03Axes,
     RotationDirection,
-    SoftInState,
     Zebra,
 )
+from dodal.devices.zebra_controlled_shutter import ZebraShutter, ZebraShutterControl
 
 from mx_bluesky.hyperion.log import LOGGER
 
@@ -57,13 +58,34 @@ def arm_zebra(zebra: Zebra):
     yield from bps.abs_set(zebra.pc.arm, ArmDemand.ARM, wait=True)
 
 
-def disarm_zebra(zebra: Zebra):
-    yield from bps.abs_set(zebra.pc.arm, ArmDemand.DISARM, wait=True)
+def tidy_up_zebra_after_rotation_scan(
+    zebra: Zebra,
+    zebra_shutter: ZebraShutter,
+    group="tidy_up_zebra_after_rotation",
+    wait=True,
+):
+    yield from bps.abs_set(zebra.pc.arm, ArmDemand.DISARM, group=group)
+    yield from bps.abs_set(
+        zebra_shutter.control_mode, ZebraShutterControl.MANUAL, group=group
+    )
+    if wait:
+        yield from bps.wait(group, timeout=ZEBRA_STATUS_TIMEOUT)
+
+
+def set_shutter_auto_input(zebra: Zebra, input: int, group="set_shutter_trigger"):
+    """Set the input that the shutter uses when set to auto.
+
+    For more details see the ZebraShutter device."""
+    auto_shutter_control = zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE]
+    yield from bps.abs_set(
+        auto_shutter_control.sources[AUTO_SHUTTER_INPUT], input, group
+    )
 
 
 @bluesky_retry
 def setup_zebra_for_rotation(
     zebra: Zebra,
+    zebra_shutter: ZebraShutter,
     axis: EncEnum = I03Axes.OMEGA,
     start_angle: float = 0,
     scan_width: float = 360,
@@ -100,8 +122,6 @@ def setup_zebra_for_rotation(
         )
     yield from bps.abs_set(zebra.pc.dir, direction.value, group=group)
     LOGGER.info("ZEBRA SETUP: START")
-    # must be on for shutter trigger to be enabled
-    yield from bps.abs_set(zebra.inputs.soft_in_1, SoftInState.YES, group=group)
     # Set gate start, adjust for shutter opening time if necessary
     LOGGER.info(f"ZEBRA SETUP: degrees to adjust for shutter = {shutter_opening_deg}")
     LOGGER.info(f"ZEBRA SETUP: start angle start: {start_angle}")
@@ -117,8 +137,11 @@ def setup_zebra_for_rotation(
     yield from bps.abs_set(zebra.pc.pulse_start, abs(shutter_opening_s), group=group)
     # Set gate position to be angle of interest
     yield from bps.abs_set(zebra.pc.gate_trigger, axis.value, group=group)
-    # Trigger the shutter with the gate (from PC_GATE & SOFTIN1 -> OR1)
-    yield from bps.abs_set(zebra.output.out_pvs[TTL_SHUTTER], OR1, group=group)
+    # Trigger the shutter with the gate
+    yield from bps.abs_set(
+        zebra_shutter.control_mode, ZebraShutterControl.AUTO, group=group
+    )
+    yield from set_shutter_auto_input(zebra, PC_GATE, group=group)
     # Trigger the detector with a pulse
     yield from bps.abs_set(zebra.output.out_pvs[TTL_DETECTOR], PC_PULSE, group=group)
     # Don't use the fluorescence detector
@@ -130,9 +153,17 @@ def setup_zebra_for_rotation(
 
 
 @bluesky_retry
-def setup_zebra_for_gridscan(zebra: Zebra, group="setup_zebra_for_gridscan", wait=True):
+def setup_zebra_for_gridscan(
+    zebra: Zebra,
+    zebra_shutter: ZebraShutter,
+    group="setup_zebra_for_gridscan",
+    wait=True,
+):
     yield from bps.abs_set(zebra.output.out_pvs[TTL_DETECTOR], IN3_TTL, group=group)
-    yield from bps.abs_set(zebra.output.out_pvs[TTL_SHUTTER], IN4_TTL, group=group)
+    yield from bps.abs_set(
+        zebra_shutter.control_mode, ZebraShutterControl.AUTO, group=group
+    )
+    yield from set_shutter_auto_input(zebra, IN4_TTL, group=group)
     yield from bps.abs_set(zebra.output.out_pvs[TTL_XSPRESS3], DISCONNECT, group=group)
     yield from bps.abs_set(zebra.output.pulse_1.input, DISCONNECT, group=group)
 
@@ -141,34 +172,39 @@ def setup_zebra_for_gridscan(zebra: Zebra, group="setup_zebra_for_gridscan", wai
 
 
 @bluesky_retry
-def set_zebra_shutter_to_manual(
-    zebra: Zebra, group="set_zebra_shutter_to_manual", wait=True
+def tidy_up_zebra_after_gridscan(
+    zebra: Zebra,
+    zebra_shutter: ZebraShutter,
+    group="tidy_up_zebra_after_gridscan",
+    wait=True,
 ) -> MsgGenerator:
     yield from bps.abs_set(zebra.output.out_pvs[TTL_DETECTOR], PC_PULSE, group=group)
-    yield from bps.abs_set(zebra.output.out_pvs[TTL_SHUTTER], OR1, group=group)
+    yield from bps.abs_set(
+        zebra_shutter.control_mode, ZebraShutterControl.MANUAL, group=group
+    )
+    yield from set_shutter_auto_input(zebra, PC_GATE, group=group)
 
     if wait:
         yield from bps.wait(group, timeout=ZEBRA_STATUS_TIMEOUT)
 
 
 @bluesky_retry
-def make_trigger_safe(zebra: Zebra, group="make_zebra_safe", wait=True):
-    yield from bps.abs_set(
-        zebra.inputs.soft_in_1, SoftInState.NO, wait=wait, group=group
-    )
-
-
-@bluesky_retry
 def setup_zebra_for_panda_flyscan(
-    zebra: Zebra, group="setup_zebra_for_panda_flyscan", wait=True
+    zebra: Zebra,
+    zebra_shutter: ZebraShutter,
+    group="setup_zebra_for_panda_flyscan",
+    wait=True,
 ):
     # Forwards eiger trigger signal from panda
     yield from bps.abs_set(zebra.output.out_pvs[TTL_DETECTOR], IN1_TTL, group=group)
 
     # Forwards signal from PPMAC to fast shutter. High while panda PLC is running
-    yield from bps.abs_set(zebra.output.out_pvs[TTL_SHUTTER], IN4_TTL, group=group)
+    yield from bps.abs_set(
+        zebra_shutter.control_mode, ZebraShutterControl.AUTO, group=group
+    )
+    yield from set_shutter_auto_input(zebra, IN4_TTL, group=group)
 
-    yield from bps.abs_set(zebra.output.out_pvs[3], DISCONNECT, group=group)
+    yield from bps.abs_set(zebra.output.out_pvs[TTL_XSPRESS3], DISCONNECT, group=group)
 
     yield from bps.abs_set(
         zebra.output.out_pvs[TTL_PANDA], IN3_TTL, group=group

@@ -4,7 +4,10 @@ import pytest
 from bluesky.run_engine import RunEngine
 from bluesky.simulators import RunEngineSimulator, assert_message_and_return_remaining
 from bluesky.utils import Msg
+from dodal.devices.aperturescatterguard import ApertureScatterguard, ApertureValue
+from dodal.devices.backlight import Backlight, BacklightPosition
 from dodal.devices.detector.detector_motion import ShutterState
+from dodal.devices.smargon import Smargon
 from dodal.devices.synchrotron import SynchrotronMode
 
 from mx_bluesky.hyperion.experiment_plans.pin_centre_then_xray_centre_plan import (
@@ -189,3 +192,112 @@ def test_pin_centre_then_xray_centre_plan_activates_ispyb_callback_before_pin_ti
         msgs, lambda msg: msg.command == "detect_grid_and_do_gridscan"
     )
     assert_message_and_return_remaining(msgs, lambda msg: msg.command == "close_run")
+
+
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.pin_centre_then_xray_centre_plan.pin_tip_centre_plan",
+    autospec=True,
+)
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.pin_centre_then_xray_centre_plan.detect_grid_and_do_gridscan",
+    autospec=True,
+)
+def test_pin_centre_then_xray_centre_plan_sets_up_backlight_and_aperture(
+    mock_detect_grid_and_do_gridscan,
+    mock_pin_tip_centre_plan,
+    backlight: Backlight,
+    aperture_scatterguard: ApertureScatterguard,
+    sim_run_engine: RunEngineSimulator,
+    test_pin_centre_then_xray_centre_params: PinTipCentreThenXrayCentre,
+    test_config_files,
+):
+    mock_detect_grid_and_do_gridscan.return_value = iter(
+        [Msg("detect_grid_and_do_gridscan")]
+    )
+    mock_pin_tip_centre_plan.return_value = iter([Msg("pin_tip_centre_plan")])
+
+    mock_composite = MagicMock()
+    mock_composite.aperture_scatterguard = aperture_scatterguard
+    mock_composite.backlight = backlight
+
+    msgs = sim_run_engine.simulate_plan(
+        pin_centre_then_xray_centre_plan(
+            mock_composite,
+            test_pin_centre_then_xray_centre_params,
+            test_config_files["oav_config_json"],
+        )
+    )
+
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "backlight"
+        and msg.args == (BacklightPosition.IN,)
+        and msg.kwargs["group"] == CONST.WAIT.READY_FOR_OAV,
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "aperture_scatterguard"
+        and msg.args == (ApertureValue.ROBOT_LOAD,)
+        and msg.kwargs["group"] == CONST.WAIT.READY_FOR_OAV,
+    )
+
+    msgs = assert_message_and_return_remaining(
+        msgs, lambda msg: msg.command == "pin_tip_centre_plan"
+    )
+
+
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.pin_centre_then_xray_centre_plan.pin_tip_centre_plan",
+    autospec=True,
+)
+@patch(
+    "mx_bluesky.hyperion.experiment_plans.pin_centre_then_xray_centre_plan.detect_grid_and_do_gridscan",
+    autospec=True,
+)
+def test_pin_centre_then_xray_centre_plan_goes_to_the_starting_chi_and_phi(
+    mock_detect_grid_and_do_gridscan,
+    mock_pin_tip_centre_plan,
+    smargon: Smargon,
+    sim_run_engine: RunEngineSimulator,
+    test_pin_centre_then_xray_centre_params: PinTipCentreThenXrayCentre,
+    test_config_files,
+):
+    mock_detect_grid_and_do_gridscan.return_value = iter(
+        [Msg("detect_grid_and_do_gridscan")]
+    )
+    mock_pin_tip_centre_plan.return_value = iter([Msg("pin_tip_centre_plan")])
+
+    mock_composite = MagicMock()
+    mock_composite.smargon = smargon
+
+    test_pin_centre_then_xray_centre_params.phi_start_deg = 30
+    test_pin_centre_then_xray_centre_params.chi_start_deg = 50
+
+    msgs = sim_run_engine.simulate_plan(
+        pin_centre_then_xray_centre_plan(
+            mock_composite,
+            test_pin_centre_then_xray_centre_params,
+            test_config_files["oav_config_json"],
+        )
+    )
+
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "smargon-phi"
+        and msg.args == (test_pin_centre_then_xray_centre_params.phi_start_deg,)
+        and msg.kwargs["group"] == CONST.WAIT.READY_FOR_OAV,
+    )
+    msgs = assert_message_and_return_remaining(
+        msgs,
+        lambda msg: msg.command == "set"
+        and msg.obj.name == "smargon-chi"
+        and msg.args == (test_pin_centre_then_xray_centre_params.chi_start_deg,)
+        and msg.kwargs["group"] == CONST.WAIT.READY_FOR_OAV,
+    )
+
+    msgs = assert_message_and_return_remaining(
+        msgs, lambda msg: msg.command == "pin_tip_centre_plan"
+    )

@@ -22,7 +22,7 @@ from dodal.devices.zocalo import ZocaloStartInfo
 from ophyd.sim import NullStatus
 from ophyd.status import Status
 from ophyd_async.core import set_mock_value
-from ophyd_async.panda._table import DatasetTable
+from ophyd_async.fastcs.panda import DatasetTable
 
 from mx_bluesky.hyperion.device_setup_plans.read_hardware_for_setup import (
     read_hardware_during_collection,
@@ -120,7 +120,7 @@ def ispyb_plan(test_fgs_params: ThreeDGridScan):
     @bpp.run_decorator(  # attach experiment metadata to the start document
         md={
             "subplan_name": CONST.PLAN.GRIDSCAN_OUTER,
-            "hyperion_parameters": test_fgs_params.json(),
+            "hyperion_parameters": test_fgs_params.model_dump_json(),
         }
     )
     def standalone_read_hardware_for_ispyb(

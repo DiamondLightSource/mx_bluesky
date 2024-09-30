@@ -25,7 +25,7 @@ dependencies = [
     "matplotlib",
     "nexgen",
     "numpy",
-    "opencv-python",
+    "opencv-python",               # Needed for I24 ssx moveonclick. To be changed to headless once this is moved to separate ui. 
     "opentelemetry-distro",
     "opentelemetry-exporter-otlp",
     "pydantic",
@@ -40,12 +40,12 @@ dependencies = [
     # These dependencies may be issued as pre-release versions and should have a pin constraint
     # as by default pip-install will not upgrade to a pre-release.
     # 
-    "blueapi == 0.4.5a1",
+    "blueapi >= 0.5.0",
     "daq-config-server >= 0.1.1",
     "ophyd == 1.9.0",
     "ophyd-async >= 0.3a5",
     "bluesky >= 1.13.0a4",
-    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git",
+    "dls-dodal @ git+https://github.com/DiamondLightSource/dodal.git@main",
 ]
 
 
@@ -58,7 +58,8 @@ requires-python = ">=3.11"
 dev = [
     "black",
     "build",
-    "copier",
+    # Commented out due to dependency version conflict with pydantic 1.x
+    # "copier",
     "diff-cover",
     "GitPython",
     "ipython",
@@ -114,6 +115,7 @@ markers = [
     "s03: marks tests as requiring the s03 simulator running (deselect with '-m \"not s03\"')",
     "dlstbx: marks tests as requiring dlstbx (deselect with '-m \"not dlstbx\"')",
     "skip_log_setup: marks tests so that loggers are not setup before the test.",
+    "skip_in_pycharm: marks test as not working in pycharm testrunner",
 ]
 addopts = """
     --tb=native -vv --doctest-modules --doctest-glob="*.rst"
@@ -121,10 +123,7 @@ addopts = """
 # https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
 filterwarnings = [
     "error",
-    # Ignore deprecation warning from zocalo (https://github.com/DiamondLightSource/python-zocalo/issues/256)
-    "ignore::DeprecationWarning:zocalo",
-    "ignore::DeprecationWarning:pkg_resources",
-    # Ignore incorrect errors  from bluesky (remove when https://github.com/bluesky/bluesky/issues/1797 is released)
+    # Ignore incorrect errors from bluesky (remove when https://github.com/bluesky/bluesky/issues/1797 is released)
     "ignore:((.|\n)*)was never iterated.*:RuntimeWarning",
     # Ignore deprecation warning from sqlalchemy
     "ignore::sqlalchemy.exc.MovedIn20Warning",
@@ -136,6 +135,10 @@ filterwarnings = [
     "ignore:(.*)unclosed file(.*)name='(.*)dodal.log'(.*):ResourceWarning",
     "ignore:(.*)unclosed <socket(.*):ResourceWarning",
     "ignore:(.*)unclosed event loop(.*):ResourceWarning",
+    # Ignore pydantic 2 issues from blueapi, see https://github.com/DiamondLightSource/blueapi/issues/622
+    "ignore::DeprecationWarning:blueapi",
+    # Ignore deprecation warning from python-workflows https://github.com/DiamondLightSource/python-workflows/issues/180
+    "ignore:.*pkg_resources.*:DeprecationWarning",
 ]
 # Doctest python code in docs, python code in src docstrings, test functions in tests
 testpaths = "docs src tests/unit_tests"
