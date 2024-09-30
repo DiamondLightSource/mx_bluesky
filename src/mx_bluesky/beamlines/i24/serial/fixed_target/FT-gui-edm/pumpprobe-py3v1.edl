@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 2970
-y 362
+x 830
+y 200
 w 900
 h 700
 font "arial-medium-r-18.0"
@@ -707,7 +707,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser1off\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser1off\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -749,7 +749,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser1on\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser1on\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -976,7 +976,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser2off\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser2off\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -1018,7 +1018,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser2on\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser2on\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -1334,7 +1334,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser1burn\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser1burn\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
@@ -1376,7 +1376,7 @@ botShadowColor index 14
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser2burn\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run laser_control '\{\"laser_setting\":\"laser2burn\",\"pmac\":\"pmac\"\}'"
 }
 endObjectProperties
 
