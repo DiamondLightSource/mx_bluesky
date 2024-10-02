@@ -238,7 +238,6 @@ def robot_load_composite(
     panda_fast_grid_scan,
 ) -> RobotLoadThenCentreComposite:
     set_mock_value(dcm.energy_in_kev.user_readback, 11.105)
-    aperture_scatterguard = aperture_scatterguard
     smargon.stub_offsets.set = MagicMock(return_value=NullStatus())
     aperture_scatterguard.set = MagicMock(return_value=NullStatus())
     return RobotLoadThenCentreComposite(

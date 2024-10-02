@@ -77,7 +77,7 @@ class SmargonSpeedException(Exception):
     pass
 
 
-class CrystalNotFoundException(Exception):
+class CrystalNotFoundException(WarningException):
     """Raised if grid detection completed normally but no crystal was found."""
 
     pass
@@ -211,7 +211,6 @@ def run_gridscan_and_move(
                     xray_centre
                 )
             else:
-                xray_centre = initial_xyz
                 LOGGER.warning("No X-ray centre received")
                 raise CrystalNotFoundException()
             if bbox_size is not None:

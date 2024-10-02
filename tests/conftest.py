@@ -5,6 +5,7 @@ import logging
 import sys
 import threading
 from collections.abc import Callable, Generator, Sequence
+from contextlib import ExitStack
 from functools import partial
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -42,6 +43,7 @@ from dodal.devices.smargon import Smargon
 from dodal.devices.synchrotron import Synchrotron, SynchrotronMode
 from dodal.devices.thawer import Thawer
 from dodal.devices.undulator import Undulator
+from dodal.devices.util.test_utils import patch_motor
 from dodal.devices.util.test_utils import patch_motor as oa_patch_motor
 from dodal.devices.webcam import Webcam
 from dodal.devices.xbpm_feedback import XBPMFeedback
@@ -433,7 +435,9 @@ def vfm(RE):
     vfm.bragg_to_lat_lookup_table_path = (
         "tests/test_data/test_beamline_vfm_lat_converter.txt"
     )
-    return vfm
+    with ExitStack() as stack:
+        stack.enter_context(patch_motor(vfm.x_mm))
+        yield vfm
 
 
 @pytest.fixture
@@ -451,7 +455,15 @@ def lower_gonio(RE):
 def vfm_mirror_voltages():
     voltages = i03.vfm_mirror_voltages(fake_with_ophyd_sim=True)
     voltages.voltage_lookup_table_path = "tests/test_data/test_mirror_focus.json"
-    yield voltages
+    with ExitStack() as stack:
+        [
+            stack.enter_context(context_mgr)
+            for context_mgr in [
+                patch.object(vc, "set") for vc in voltages.voltage_channels.values()
+            ]
+        ]
+
+        yield voltages
     beamline_utils.clear_devices()
 
 

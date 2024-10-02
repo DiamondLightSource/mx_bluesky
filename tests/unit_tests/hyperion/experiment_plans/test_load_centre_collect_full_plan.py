@@ -38,16 +38,6 @@ def find_a_pin(pin_tip_detection):
     return set_good_position
 
 
-def dont_find_pin(pin_tip_detection):
-    def set_invalid_position():
-        set_mock_value(
-            pin_tip_detection.triggered_tip, PinTipDetection.INVALID_POSITION
-        )
-        return NullStatus()
-
-    return set_invalid_position
-
-
 @pytest.fixture
 def composite(
     robot_load_composite, fake_create_rotation_devices, sim_run_engine

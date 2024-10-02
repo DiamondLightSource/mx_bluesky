@@ -211,7 +211,6 @@ def zocalo_env():
     os.environ["ZOCALO_CONFIG"] = "/dls_sw/apps/zocalo/live/configuration.yaml"
 
 
-# noinspection PyUnreachableCode
 @pytest.fixture
 def grid_detect_then_xray_centre_composite(
     fast_grid_scan,
@@ -274,10 +273,6 @@ def grid_detect_then_xray_centre_composite(
             zocalo.bbox_sizes, numpy.array([[10, 10, 10]], dtype=numpy.uint64)
         )
         set_mock_value(ophyd_pin_tip_detection.triggered_tip, (tip_x_px, tip_y_px))
-
-    @AsyncStatus.wrap
-    async def mock_complete_status():
-        pass
 
     @AsyncStatus.wrap
     async def mock_zocalo_complete():
@@ -349,7 +344,7 @@ def composite_for_rotation_scan(
         SynchrotronMode.USER,
     )
     set_mock_value(
-        fake_create_rotation_devices.synchrotron.top_up_start_countdown,  # pyright: ignore
+        fake_create_rotation_devices.synchrotron.top_up_start_countdown,
         -1,
     )
     fake_create_rotation_devices.s4_slit_gaps.xgap.user_readback.sim_put(  # pyright: ignore

@@ -1,18 +1,14 @@
 from __future__ import annotations
 
 import os
-import re
 from collections.abc import Callable
-from contextlib import ExitStack
-from decimal import Decimal
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from bluesky.run_engine import RunEngine
 from dodal.devices.oav.oav_parameters import OAVParameters
 from dodal.devices.synchrotron import SynchrotronMode
-from dodal.devices.util.test_utils import patch_motor
 from ophyd_async.core import set_mock_value
 
 from mx_bluesky.hyperion.experiment_plans.load_centre_collect_full_plan import (
@@ -31,8 +27,12 @@ from mx_bluesky.hyperion.external_interaction.callbacks.xray_centre.ispyb_callba
 from mx_bluesky.hyperion.parameters.constants import CONST
 from mx_bluesky.hyperion.parameters.load_centre_collect import LoadCentreCollect
 
+from ...conftest import (
+    DATA_COLLECTION_COLUMN_MAP,
+    compare_actual_and_expected,
+    compare_comment,
+)
 from .conftest import raw_params_from_file
-from .test_ispyb_dev_connection import DATA_COLLECTION_COLUMN_MAP
 
 
 @pytest.fixture
@@ -86,17 +86,7 @@ def load_centre_collect_composite(
 
     set_mock_value(composite.dcm.bragg_in_degrees.user_readback, 5)
 
-    with ExitStack() as stack:
-        [
-            stack.enter_context(context_mgr)
-            for context_mgr in [
-                patch.object(vc, "set")
-                for vc in vfm_mirror_voltages.voltage_channels.values()
-            ]
-            + [patch_motor(vfm.x_mm)]
-        ]
-
-        yield composite
+    yield composite
 
 
 GRID_DC_1_EXPECTED_VALUES = {
@@ -148,7 +138,7 @@ ROTATION_DC_EXPECTED_VALUES = {
     "axisEnd": 370,
     # "chiStart": 0, mx-bluesky 325
     "wavelength": 0.71,
-    "beamSizeAtSampleX": 0.1,
+    "beamSizeAtSampleX": 0.02,
     "beamSizeAtSampleY": 0.02,
     "exposureTime": 0.004,
     "undulatorGap1": 1.11,
@@ -161,18 +151,7 @@ ROTATION_DC_EXPECTED_VALUES = {
     "xtalSnapshotFullPath4": "/tmp/snapshot5.png",
 }
 
-ROTATION_DC_2_EXPECTED_VALUES = {
-    "axisStart": 10,
-    "axisEnd": 370,
-    # "chiStart": 30, mx-bluesky 325
-    "wavelength": 0.71,
-    "beamSizeAtSampleX": 0.1,
-    "beamSizeAtSampleY": 0.02,
-    "exposureTime": 0.004,
-    "undulatorGap1": 1.11,
-    "synchrotronMode": SynchrotronMode.USER.value,
-    "slitGapHorizontal": 0.123,
-    "slitGapVertical": 0.234,
+ROTATION_DC_2_EXPECTED_VALUES = ROTATION_DC_EXPECTED_VALUES | {
     "xtalSnapshotFullPath1": "/tmp/snapshot6.png",
     "xtalSnapshotFullPath2": "/tmp/snapshot7.png",
     "xtalSnapshotFullPath3": "/tmp/snapshot8.png",
@@ -271,35 +250,5 @@ def test_execute_load_centre_collect_full_plan(
     compare_comment(
         fetch_datacollection_attribute,
         ispyb_rotation_cb.ispyb_ids.data_collection_ids[0],
-        "Sample position (µm): (675, 737, -381) Hyperion Rotation Scan -   Aperture: ApertureValue.LARGE. ",
+        "Sample position (µm): (675, 737, -381) Hyperion Rotation Scan -   Aperture: ApertureValue.SMALL. ",
     )
-
-
-def compare_actual_and_expected(
-    id, expected_values, fetch_datacollection_attribute, column_map: dict | None = None
-):
-    results = "\n"
-    for k, v in expected_values.items():
-        actual = fetch_datacollection_attribute(
-            id, column_map[k.lower()] if column_map else k
-        )
-        if isinstance(actual, Decimal):
-            actual = float(actual)
-        if isinstance(v, float):
-            actual_v = actual == pytest.approx(v)
-        else:
-            actual_v = actual == v
-        if not actual_v:
-            results += f"expected {k} {v} == {actual}\n"
-    assert results == "\n", results
-
-
-def compare_comment(
-    fetch_datacollection_attribute, data_collection_id, expected_comment
-):
-    actual_comment = fetch_datacollection_attribute(
-        data_collection_id, DATA_COLLECTION_COLUMN_MAP["comments"]
-    )
-    match = re.search(" Zocalo processing took", actual_comment)
-    truncated_comment = actual_comment[: match.start()] if match else actual_comment
-    assert truncated_comment == expected_comment
