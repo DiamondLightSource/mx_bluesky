@@ -90,7 +90,7 @@ def get_current_datacollection_comment(Session: Callable, dcid: int) -> str:
 
 
 def get_datacollections(Session: Callable, dcg_id: int) -> Sequence[int]:
-    with Session.begin() as session:
+    with Session.begin() as session:  # type: ignore
         query = session.query(DataCollection.dataCollectionId).filter(
             DataCollection.dataCollectionGroupId == dcg_id
         )

@@ -142,8 +142,8 @@ def oav_for_system_test(test_config_files):
         unpatched_method(zoom, 1024, 768)
 
     # Grid snapshots
-    oav.grid_snapshot.x_size.sim_put(1024)
-    oav.grid_snapshot.y_size.sim_put(768)
+    oav.grid_snapshot.x_size.sim_put(1024)  # type: ignore
+    oav.grid_snapshot.y_size.sim_put(768)  # type: ignore
     oav.grid_snapshot.top_left_x.set(50)
     oav.grid_snapshot.top_left_y.set(100)
     oav.grid_snapshot.box_width.set(0.1 * 1000 / 1.25)  # size in pixels
