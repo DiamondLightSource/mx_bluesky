@@ -192,7 +192,7 @@ def main(beamline: str, options: Options):
                     mx_repo, path_to_create_venv, path_to_dls_dev_env
                 )
             else:
-                setup_venv(path_to_create_venv, mx_repo.deploy_location)
+                setup_venv(path_to_dls_dev_env, mx_repo.deploy_location)
 
     # If on beamline I24 also deploy the screens to run ssx collections
     if beamline == "i24":
