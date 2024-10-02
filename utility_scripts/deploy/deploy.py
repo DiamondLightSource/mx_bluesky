@@ -191,7 +191,7 @@ def main(beamline: str, options: Options):
             # SSH into control machine if not in dev mode
             if options.use_control_machine and release_area != DEV_DEPLOY_LOCATION:
                 _create_environment_from_control_machine(
-                    mx_repo, path_to_create_venv, path_to_dls_dev_env
+                    mx_repo, path_to_create_venv, path_to_dls_dev_env, beamline
                 )
             else:
                 setup_venv(path_to_dls_dev_env, mx_repo.deploy_location)
