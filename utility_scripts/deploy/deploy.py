@@ -21,7 +21,7 @@ VERSION_PATTERN_COMPILED = re.compile(
     f"^{VERSION_PATTERN}$", re.VERBOSE | re.IGNORECASE
 )
 
-DEV_DEPLOY_LOCATION = "/scratch/30day_tmp/hyperion_release_test/bluesky"
+DEV_DEPLOY_LOCATION = "/scratch/30day_tmp/mx-bluesky_release_test/bluesky"
 
 help_message = f"""
 To deploy mx_bluesky on a specific beamline, using the control machine to create the \
