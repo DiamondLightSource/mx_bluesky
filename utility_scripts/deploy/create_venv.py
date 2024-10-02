@@ -17,7 +17,7 @@ def setup_venv(path_to_create_venv_script, deployment_directory):
     os.chdir(deployment_directory)
     print(f"Setting up environment in {deployment_directory}")
 
-    run_process_and_print_output(f".{path_to_create_venv_script}")
+    run_process_and_print_output(path_to_create_venv_script)
     # with Popen(
     #     path_to_create_venv_script, stdout=PIPE, bufsize=1, universal_newlines=True
     # ) as p:
