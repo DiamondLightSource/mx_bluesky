@@ -10,15 +10,7 @@ from typing import NamedTuple
 from git import Repo
 from packaging.version import VERSION_PATTERN, Version
 
-help_message = """
-To deploy mx_bluesky on a specific beamline, pass only the --beamline argument.
-This will put the latest release in /dls_sw/ixx/software/bluesky/mx_bluesky_v#.#.# and \
-set the permissions accordingly. \n
-To run in dev mode instead, only the --dev-path should be passed, a test release will \
-be placed in {dev_path}/mxbluesky_release_test/bluesky. \n
-Finally, if both a --beamline and a --dev-path are specified, a beamline-specific test \
-deployment will be put in the test directory.
-"""  # TODO change
+usage = "python %(prog)s beamline [options]"
 
 recognised_beamlines = ["i03", "i04", "i24"]
 
@@ -27,6 +19,15 @@ VERSION_PATTERN_COMPILED = re.compile(
 )
 
 DEV_DEPLOY_LOCATION = "/scratch/30day_tmp/hyperion_release_test/bluesky"
+
+help_message = f"""
+To deploy mx_bluesky on a specific beamline, using the control machine to create the \
+environment and without kubernetes, only the beamline argument needs to be passed.
+This will put the latest release in /dls_sw/ixx/software/bluesky/mx_bluesky_v#.#.# and \
+set the permissions accordingly. \n
+To run in dev mode, pass also the --dev option. This will place a test release in \
+{DEV_DEPLOY_LOCATION}. \n
+"""
 
 
 class Options(NamedTuple):
@@ -108,8 +109,8 @@ def main(beamline: str, options: Options):
 def _parse_options() -> tuple[str, Options]:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
-        prog="deploy_mx_bluesky",
         description=__doc__,
+        usage=usage,
         epilog=help_message,
     )
     parser.add_argument(
