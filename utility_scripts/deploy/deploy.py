@@ -180,10 +180,10 @@ def main(beamline: str, options: Options):
     if not options.kubernetes:
         if mx_repo.name == "mx-bluesky":
             path_to_dls_dev_env = os.path.join(
-                mx_repo.deploy_location, "utility_scripts/dls_dev_env.sh"
+                mx_repo.deploy_location, "src/utility_scripts/dls_dev_env.sh"
             )
             path_to_create_venv = os.path.join(
-                mx_repo.deploy_location, "utility_scripts/deploy/create_venv.py"
+                mx_repo.deploy_location, "src/utility_scripts/deploy/create_venv.py"
             )
 
             # SSH into control machine if not in dev mode
