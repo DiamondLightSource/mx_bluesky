@@ -6,13 +6,15 @@ import bluesky.preprocessors as bpp
 from blueapi.core import MsgGenerator
 from dodal.devices.zebra import (
     AUTO_SHUTTER_GATE,
-    AUTO_SHUTTER_INPUT,
+    AUTO_SHUTTER_INPUT_1,
+    AUTO_SHUTTER_INPUT_2,
     DISCONNECT,
     IN1_TTL,
     IN3_TTL,
     IN4_TTL,
     PC_GATE,
     PC_PULSE,
+    SOFT_IN1,
     TTL_DETECTOR,
     TTL_PANDA,
     TTL_XSPRESS3,
@@ -78,7 +80,7 @@ def set_shutter_auto_input(zebra: Zebra, input: int, group="set_shutter_trigger"
     For more details see the ZebraShutter device."""
     auto_shutter_control = zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE]
     yield from bps.abs_set(
-        auto_shutter_control.sources[AUTO_SHUTTER_INPUT], input, group
+        auto_shutter_control.sources[AUTO_SHUTTER_INPUT_1], input, group
     )
 
 
@@ -141,6 +143,11 @@ def setup_zebra_for_rotation(
     yield from bps.abs_set(
         zebra_shutter.control_mode, ZebraShutterControl.AUTO, group=group
     )
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE].sources[AUTO_SHUTTER_INPUT_2],
+        SOFT_IN1,
+        group=group,
+    )
     yield from set_shutter_auto_input(zebra, PC_GATE, group=group)
     # Trigger the detector with a pulse
     yield from bps.abs_set(zebra.output.out_pvs[TTL_DETECTOR], PC_PULSE, group=group)
@@ -159,11 +166,23 @@ def setup_zebra_for_gridscan(
     group="setup_zebra_for_gridscan",
     wait=True,
 ):
-    yield from bps.abs_set(zebra.output.out_pvs[TTL_DETECTOR], IN3_TTL, group=group)
+    # Set shutter to auto mode
     yield from bps.abs_set(
         zebra_shutter.control_mode, ZebraShutterControl.AUTO, group=group
     )
+
+    # Set the 'auto' AND gate to have an input controlled by the zebra shutter control mode
+    yield from bps.abs_set(
+        zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE].sources[AUTO_SHUTTER_INPUT_2],
+        SOFT_IN1,
+        group=group,
+    )
+
+    # Set the 'auto' AND gate to have an input controlled by the GPIO motion controller signal
     yield from set_shutter_auto_input(zebra, IN4_TTL, group=group)
+
+    yield from bps.abs_set(zebra.output.out_pvs[TTL_DETECTOR], IN3_TTL, group=group)
+
     yield from bps.abs_set(zebra.output.out_pvs[TTL_XSPRESS3], DISCONNECT, group=group)
     yield from bps.abs_set(zebra.output.pulse_1.input, DISCONNECT, group=group)
 
