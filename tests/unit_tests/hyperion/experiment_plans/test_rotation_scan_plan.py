@@ -598,7 +598,7 @@ def test_rotation_scan_turns_shutter_to_auto_with_pc_gate_then_back_to_manual(
     msgs = assert_message_and_return_remaining(
         msgs,
         lambda msg: msg.command == "set"
-        and msg.obj.name == "zebra-logic_gates-and_gates-2-sources-1"
+        and msg.obj.name == "zebra-logic_gates-and_gates-2-sources-2"
         and msg.args[0] == PC_GATE,  # type:ignore
     )
     msgs = assert_message_and_return_remaining(

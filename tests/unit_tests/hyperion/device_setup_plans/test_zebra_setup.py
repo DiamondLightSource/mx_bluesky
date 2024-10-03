@@ -5,7 +5,7 @@ from bluesky import plan_stubs as bps
 from dodal.beamlines import i03
 from dodal.devices.zebra import (
     AUTO_SHUTTER_GATE,
-    AUTO_SHUTTER_INPUT_1,
+    AUTO_SHUTTER_INPUT_2,
     IN1_TTL,
     IN3_TTL,
     IN4_TTL,
@@ -37,10 +37,10 @@ def zebra_shutter(RE):
     return i03.sample_shutter(fake_with_ophyd_sim=True)
 
 
-async def _get_shutter_input(zebra: Zebra):
+async def _get_shutter_input_1(zebra: Zebra):
     return (
         await zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE]
-        .sources[AUTO_SHUTTER_INPUT_1]
+        .sources[AUTO_SHUTTER_INPUT_2]
         .get_value()
     )
 
@@ -51,13 +51,13 @@ async def test_zebra_set_up_for_panda_gridscan(
     RE(setup_zebra_for_panda_flyscan(zebra, zebra_shutter, wait=True))
     assert await zebra.output.out_pvs[TTL_DETECTOR].get_value() == IN1_TTL
     assert await zebra.output.out_pvs[TTL_PANDA].get_value() == IN3_TTL
-    assert await _get_shutter_input(zebra) == IN4_TTL
+    assert await _get_shutter_input_1(zebra) == IN4_TTL
 
 
 async def test_zebra_set_up_for_gridscan(RE, zebra: Zebra, zebra_shutter: ZebraShutter):
     RE(setup_zebra_for_gridscan(zebra, zebra_shutter, wait=True))
     assert await zebra.output.out_pvs[TTL_DETECTOR].get_value() == IN3_TTL
-    assert await _get_shutter_input(zebra) == IN4_TTL
+    assert await _get_shutter_input_1(zebra) == IN4_TTL
 
 
 async def test_zebra_set_up_for_rotation(RE, zebra: Zebra, zebra_shutter: ZebraShutter):
@@ -69,7 +69,7 @@ async def test_zebra_set_up_for_rotation(RE, zebra: Zebra, zebra_shutter: ZebraS
 async def test_zebra_cleanup(RE, zebra: Zebra, zebra_shutter: ZebraShutter):
     RE(tidy_up_zebra_after_gridscan(zebra, zebra_shutter, wait=True))
     assert await zebra.output.out_pvs[TTL_DETECTOR].get_value() == PC_PULSE
-    assert await _get_shutter_input(zebra) == PC_GATE
+    assert await _get_shutter_input_1(zebra) == PC_GATE
 
 
 class MyException(Exception):
