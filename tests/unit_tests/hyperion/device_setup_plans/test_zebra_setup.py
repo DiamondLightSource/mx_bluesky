@@ -5,7 +5,7 @@ from bluesky import plan_stubs as bps
 from dodal.beamlines import i03
 from dodal.devices.zebra import (
     AUTO_SHUTTER_GATE,
-    AUTO_SHUTTER_INPUT,
+    AUTO_SHUTTER_INPUT_1,
     IN1_TTL,
     IN3_TTL,
     IN4_TTL,
@@ -40,7 +40,7 @@ def zebra_shutter(RE):
 async def _get_shutter_input(zebra: Zebra):
     return (
         await zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE]
-        .sources[AUTO_SHUTTER_INPUT]
+        .sources[AUTO_SHUTTER_INPUT_1]
         .get_value()
     )
 
