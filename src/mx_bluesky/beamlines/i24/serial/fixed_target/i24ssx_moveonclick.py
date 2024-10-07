@@ -41,13 +41,17 @@ def _calculate_zoom_calibrator(oav: OAV):
 
 
 def _move_on_mouse_click_plan(
-    oav: OAV, pmac: PMAC, beam_centre: Sequence[int], clicked_position: Sequence[int]
+    oav: OAV,
+    pmac: PMAC,
+    clicked_position: Sequence[int],
+    # oav: OAV, pmac: PMAC, beam_centre: Sequence[int], clicked_position: Sequence[int]
 ):
     """A plan that calculates the zoom calibrator and moves to the clicked \
         position coordinates.
     """
     zoomcalibrator = yield from _calculate_zoom_calibrator(oav)
-    beamX, beamY = beam_centre
+    # beamX, beamY = beam_centre
+    beamX, beamY = yield from _get_beam_centre(oav)
     x, y = clicked_position
     xmove = -1 * (beamX - x) * zoomcalibrator
     ymove = -1 * (beamY - y) * zoomcalibrator
@@ -64,14 +68,15 @@ def onMouse(event, x, y, flags, param):
         RE = param[0]
         pmac = param[1]
         oav = param[2]
-        beamX, beamY = yield from _get_beam_centre(oav)
+        # beamX, beamY = yield from _get_beam_centre(oav)
         logger.info(f"Clicked X and Y {x} {y}")
-        RE(_move_on_mouse_click_plan(oav, pmac, (beamX, beamY), (x, y)))
+        RE(_move_on_mouse_click_plan(oav, pmac, (x, y)))  # (beamX, beamY), (x, y)))
 
 
-def update_ui(oav, frame):
+def update_ui(oav, frame, RE):
     # Get beam x and y values
-    beamX, beamY = yield from _get_beam_centre(oav)
+    beamX, beamY = RE(_get_beam_centre(oav)).plan_result
+    # beamX, beamY = yield from _get_beam_centre(oav)
 
     # Overlay text and beam centre
     cv.ellipse(
@@ -166,7 +171,7 @@ def start_viewer(oav: OAV, pmac: PMAC, RE: RunEngine, oav1: str = OAV1_CAM):
     while success:
         success, frame = cap.read()
 
-        update_ui(oav, frame)
+        update_ui(oav, frame, RE)
 
         k = cv.waitKey(1)
         if k == 113:  # Q
@@ -214,7 +219,7 @@ def start_viewer(oav: OAV, pmac: PMAC, RE: RunEngine, oav1: str = OAV1_CAM):
 
 
 if __name__ == "__main__":
-    RE = RunEngine()
+    RE = RunEngine(call_returns_result=True)
     # Get devices out of dodal
     oav: OAV = i24.oav()
     pmac: PMAC = i24.pmac()
