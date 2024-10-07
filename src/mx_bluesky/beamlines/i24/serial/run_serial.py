@@ -11,7 +11,7 @@ def get_location(default: str = "dev") -> str:
 
 
 def get_edm_path() -> Path:
-    return Path(__file__).parents[4] / "edm_serial"
+    return Path(__file__).parents[5] / "edm_serial"
 
 
 def _get_file_path() -> Path:
