@@ -147,6 +147,15 @@ class WithOptionalEnergyChange(BaseModel):
 
 class WithVisit(BaseModel):
     visit: str = Field(min_length=1)
+    zocalo_environment: str = Field(default=CONST.ZOCALO_ENV)
+    beamline: str = Field(default=CONST.I03.BEAMLINE, pattern=r"BL\d{2}[BIJS]")
+    det_dist_to_beam_converter_path: str = Field(
+        default=CONST.PARAM.DETECTOR.BEAM_XY_LUT_PATH
+    )
+    insertion_prefix: str = Field(
+        default=CONST.I03.INSERTION_PREFIX, pattern=r"SR\d{2}[BIJS]"
+    )
+    detector_distance_mm: float | None = Field(default=None, gt=0)
 
 
 class DiffractionExperiment(
@@ -157,16 +166,7 @@ class DiffractionExperiment(
     file_name: str
     exposure_time_s: float = Field(gt=0)
     comment: str = Field(default="")
-    beamline: str = Field(default=CONST.I03.BEAMLINE, pattern=r"BL\d{2}[BIJS]")
-    insertion_prefix: str = Field(
-        default=CONST.I03.INSERTION_PREFIX, pattern=r"SR\d{2}[BIJS]"
-    )
-    det_dist_to_beam_converter_path: str = Field(
-        default=CONST.PARAM.DETECTOR.BEAM_XY_LUT_PATH
-    )
-    zocalo_environment: str = Field(default=CONST.ZOCALO_ENV)
     trigger_mode: TriggerMode = Field(default=TriggerMode.FREE_RUN)
-    detector_distance_mm: float | None = Field(default=None, gt=0)
     run_number: int | None = Field(default=None, ge=0)
     selected_aperture: ApertureValue | None = Field(default=None)
     transmission_frac: float = Field(default=0.1)
