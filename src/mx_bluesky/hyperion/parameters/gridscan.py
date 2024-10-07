@@ -72,7 +72,7 @@ class GridCommon(
             use_roi_mode=self.use_roi_mode,
             det_dist_to_beam_converter_path=self.det_dist_to_beam_converter_path,
             trigger_mode=self.trigger_mode,
-            enable_dev_shm=self.use_gpu,
+            enable_dev_shm=self.use_gpu or self.use_cpu_and_gpu_zocalo,
             **optional_args,
         )
 
