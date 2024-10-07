@@ -5,8 +5,6 @@ from bluesky.run_engine import RunEngine
 from bluesky.simulators import RunEngineSimulator, assert_message_and_return_remaining
 from bluesky.utils import Msg
 from dodal.devices.robot import SampleLocation
-from ophyd.sim import NullStatus
-from ophyd_async.core import set_mock_value
 
 from mx_bluesky.hyperion.experiment_plans.grid_detect_then_xray_centre_plan import (
     GridDetectThenXRayCentreComposite,
@@ -21,72 +19,6 @@ from mx_bluesky.hyperion.parameters.gridscan import (
 )
 
 from ....conftest import assert_none_matching, raw_params_from_file
-
-
-@pytest.fixture
-def robot_load_composite(
-    smargon,
-    dcm,
-    robot,
-    aperture_scatterguard,
-    oav,
-    webcam,
-    thawer,
-    lower_gonio,
-    eiger,
-    xbpm_feedback,
-    flux,
-    zocalo,
-    panda,
-    backlight,
-    attenuator,
-    pin_tip,
-    fast_grid_scan,
-    detector_motion,
-    synchrotron,
-    s4_slit_gaps,
-    undulator,
-    zebra,
-    panda_fast_grid_scan,
-    vfm,
-    vfm_mirror_voltages,
-    undulator_dcm,
-    sample_shutter,
-) -> RobotLoadThenCentreComposite:
-    composite: RobotLoadThenCentreComposite = RobotLoadThenCentreComposite(
-        smargon=smargon,
-        dcm=dcm,
-        robot=robot,
-        aperture_scatterguard=aperture_scatterguard,
-        oav=oav,
-        webcam=webcam,
-        lower_gonio=lower_gonio,
-        thawer=thawer,
-        eiger=eiger,
-        xbpm_feedback=xbpm_feedback,
-        flux=flux,
-        zocalo=zocalo,
-        panda=panda,
-        backlight=backlight,
-        attenuator=attenuator,
-        pin_tip_detection=pin_tip,
-        zebra_fast_grid_scan=fast_grid_scan,
-        detector_motion=detector_motion,
-        synchrotron=synchrotron,
-        s4_slit_gaps=s4_slit_gaps,
-        undulator=undulator,
-        zebra=zebra,
-        panda_fast_grid_scan=panda_fast_grid_scan,
-        vfm=vfm,
-        vfm_mirror_voltages=vfm_mirror_voltages,
-        undulator_dcm=undulator_dcm,
-        sample_shutter=sample_shutter,
-    )
-    set_mock_value(composite.dcm.energy_in_kev.user_readback, 11.105)
-    composite.aperture_scatterguard = aperture_scatterguard
-    composite.smargon.stub_offsets.set = MagicMock(return_value=NullStatus())
-    composite.aperture_scatterguard.set = MagicMock(return_value=NullStatus())
-    return composite
 
 
 @pytest.fixture
