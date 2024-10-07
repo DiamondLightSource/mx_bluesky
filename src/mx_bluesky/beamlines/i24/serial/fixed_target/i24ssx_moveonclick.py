@@ -11,7 +11,7 @@ import cv2 as cv
 from bluesky.run_engine import RunEngine
 from dodal.beamlines import i24
 from dodal.devices.i24.pmac import PMAC
-from dodal.devices.oav.oav_detector import OAV
+from dodal.devices.oav.oav_async import OAV
 
 from mx_bluesky.beamlines.i24.serial.fixed_target import (
     i24ssx_Chip_Manager_py3v1 as manager,
@@ -28,7 +28,9 @@ def _get_beam_centre(oav: OAV):
     Args:
         oav (OAV): the OAV device.
     """
-    return oav.parameters.beam_centre_i, oav.parameters.beam_centre_j
+    beam_x = yield from bps.rd(oav.beam_centre_i)
+    beam_y = yield from bps.rd(oav.beam_centre_j)
+    return beam_x, beam_y
 
 
 def _calculate_zoom_calibrator(oav: OAV):
@@ -62,14 +64,14 @@ def onMouse(event, x, y, flags, param):
         RE = param[0]
         pmac = param[1]
         oav = param[2]
-        beamX, beamY = _get_beam_centre(oav)
+        beamX, beamY = yield from _get_beam_centre(oav)
         logger.info(f"Clicked X and Y {x} {y}")
         RE(_move_on_mouse_click_plan(oav, pmac, (beamX, beamY), (x, y)))
 
 
 def update_ui(oav, frame):
     # Get beam x and y values
-    beamX, beamY = _get_beam_centre(oav)
+    beamX, beamY = yield from _get_beam_centre(oav)
 
     # Overlay text and beam centre
     cv.ellipse(
