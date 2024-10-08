@@ -75,8 +75,8 @@ def tidy_up_zebra_after_rotation_scan(
 
 
 def set_shutter_auto_input(zebra: Zebra, input: int, group="set_shutter_trigger"):
-    """Set the signal that controls the shutter when set to auto. We use the second input to the
-    Zebra's AND2 gate for this input. Shutter must be in auto mode for this input to take control
+    """Set the signal that controls the shutter. We use the second input to the
+    Zebra's AND2 gate for this input. ZebraShutter control mode must be in auto for this input to take control
 
     For more details see the ZebraShutter device."""
     auto_shutter_control = zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE]
