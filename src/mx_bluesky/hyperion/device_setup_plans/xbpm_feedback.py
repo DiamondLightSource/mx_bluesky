@@ -12,20 +12,22 @@ def _check_and_pause_feedback(
     attenuator: Attenuator,
     desired_transmission_fraction: float,
 ):
-    """Checks that the xbpm is in position before collection then turns it off.
+    """Checks that the xbpm is in position before then turning it off and setting a new
+    transmission.
 
     Args:
         xbpm_feedback (XBPMFeedback): The XBPM device that is responsible for keeping
                                       the beam in position
         attenuator (Attenuator): The attenuator used to set transmission
-        desired_transmission_fraction (float): The desired transmission for the collection
+        desired_transmission_fraction (float): The desired transmission to set after
+                                               turning XBPM feedback off.
 
     """
     yield from bps.mv(attenuator, 1.0)
-    LOGGER.info("Waiting for XBPM feedback before collection")
+    LOGGER.info("Waiting for XBPM feedback to be stable")
     yield from bps.trigger(xbpm_feedback, wait=True)
     LOGGER.info(
-        "XPBM feedback in position, pausing and setting transmission for collection"
+        f"XPBM feedback in position, pausing and setting transmission to {desired_transmission_fraction}"
     )
     yield from bps.mv(xbpm_feedback.pause_feedback, Pause.PAUSE)
     yield from bps.mv(attenuator, desired_transmission_fraction)
@@ -52,7 +54,8 @@ def transmission_and_xbpm_feedback_for_collection_wrapper(
     desired_transmission_fraction: float,
 ):
     """Sets the transmission for the data collection, ensuring the xbpm feedback is valid
-    this wrapper should be run around every data collection.
+    this wrapper should be run around every data collection or movement that may disrupt
+    the XBPM feedback.
 
     XBPM feedback isn't reliable during collections due to:
      * Objects (e.g. attenuator) crossing the beam can cause large (incorrect) feedback movements

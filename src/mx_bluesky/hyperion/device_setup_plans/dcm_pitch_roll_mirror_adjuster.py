@@ -87,7 +87,7 @@ def adjust_dcm_pitch_roll_vfm_from_lut(
     bragg_deg = yield from bps.rd(dcm.bragg_in_degrees.user_readback)
     LOGGER.info(f"Read Bragg angle = {bragg_deg} degrees")
     dcm_pitch_adjuster = lookup_table_adjuster(
-        linear_interpolation_lut(undulator_dcm.dcm_pitch_converter_lookup_table_path),
+        linear_interpolation_lut(undulator_dcm.pitch_energy_table_path),
         dcm.pitch_in_mrad,
         bragg_deg,
     )
@@ -97,7 +97,7 @@ def adjust_dcm_pitch_roll_vfm_from_lut(
 
     # DCM Roll
     dcm_roll_adjuster = lookup_table_adjuster(
-        linear_interpolation_lut(undulator_dcm.dcm_roll_converter_lookup_table_path),
+        linear_interpolation_lut(undulator_dcm.roll_energy_table_path),
         dcm.roll_in_mrad,
         bragg_deg,
     )

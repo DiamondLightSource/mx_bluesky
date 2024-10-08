@@ -4,12 +4,14 @@ import json
 import logging
 import sys
 import threading
-from collections.abc import Generator, Sequence
+from collections.abc import Callable, Generator, Sequence
+from contextlib import ExitStack
 from functools import partial
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import bluesky.plan_stubs as bps
+import numpy
 import numpy as np
 import pytest
 from bluesky.run_engine import RunEngine
@@ -41,6 +43,7 @@ from dodal.devices.smargon import Smargon
 from dodal.devices.synchrotron import Synchrotron, SynchrotronMode
 from dodal.devices.thawer import Thawer
 from dodal.devices.undulator import Undulator
+from dodal.devices.util.test_utils import patch_motor
 from dodal.devices.util.test_utils import patch_motor as oa_patch_motor
 from dodal.devices.webcam import Webcam
 from dodal.devices.xbpm_feedback import XBPMFeedback
@@ -280,6 +283,10 @@ def smargon(RE: RunEngine) -> Generator[Smargon, None, None]:
     set_mock_value(smargon.z.user_readback, 0.0)
     set_mock_value(smargon.x.high_limit_travel, 2)
     set_mock_value(smargon.x.low_limit_travel, -2)
+    set_mock_value(smargon.y.high_limit_travel, 2)
+    set_mock_value(smargon.y.low_limit_travel, -2)
+    set_mock_value(smargon.z.high_limit_travel, 2)
+    set_mock_value(smargon.z.low_limit_travel, -2)
 
     with (
         patch_async_motor(smargon.omega),
@@ -294,8 +301,7 @@ def smargon(RE: RunEngine) -> Generator[Smargon, None, None]:
 
 
 @pytest.fixture
-def zebra():
-    RunEngine()
+def zebra(RE):
     zebra = i03.zebra(fake_with_ophyd_sim=True)
 
     def mock_side(*args, **kwargs):
@@ -346,8 +352,19 @@ def oav(test_config_files):
     parameters = OAVConfigParams(
         test_config_files["zoom_params_file"], test_config_files["display_config"]
     )
+    parameters.micronsPerXPixel = 2.87
+    parameters.micronsPerYPixel = 2.87
     oav = i03.oav(fake_with_ophyd_sim=True, params=parameters)
     oav.snapshot.trigger = MagicMock(return_value=NullStatus())
+    oav.zoom_controller.zrst.set("1.0x")
+    oav.zoom_controller.onst.set("2.0x")
+    oav.zoom_controller.twst.set("3.0x")
+    oav.zoom_controller.thst.set("5.0x")
+    oav.zoom_controller.frst.set("7.0x")
+    oav.zoom_controller.fvst.set("9.0x")
+    oav.proc.port_name.sim_put("proc")  # type: ignore
+    oav.cam.port_name.sim_put("CAM")  # type: ignore
+    oav.grid_snapshot.trigger = MagicMock(return_value=NullStatus())
     return oav
 
 
@@ -404,7 +421,12 @@ def dcm(RE):
     dcm = i03.dcm(fake_with_ophyd_sim=True)
     set_mock_value(dcm.energy_in_kev.user_readback, 12.7)
     set_mock_value(dcm.pitch_in_mrad.user_readback, 1)
-    return dcm
+    with (
+        oa_patch_motor(dcm.roll_in_mrad),
+        oa_patch_motor(dcm.pitch_in_mrad),
+        oa_patch_motor(dcm.offset_in_mm),
+    ):
+        yield dcm
 
 
 @pytest.fixture
@@ -413,7 +435,9 @@ def vfm(RE):
     vfm.bragg_to_lat_lookup_table_path = (
         "tests/test_data/test_beamline_vfm_lat_converter.txt"
     )
-    return vfm
+    with ExitStack() as stack:
+        stack.enter_context(patch_motor(vfm.x_mm))
+        yield vfm
 
 
 @pytest.fixture
@@ -431,7 +455,15 @@ def lower_gonio(RE):
 def vfm_mirror_voltages():
     voltages = i03.vfm_mirror_voltages(fake_with_ophyd_sim=True)
     voltages.voltage_lookup_table_path = "tests/test_data/test_mirror_focus.json"
-    yield voltages
+    with ExitStack() as stack:
+        [
+            stack.enter_context(context_mgr)
+            for context_mgr in [
+                patch.object(vc, "set") for vc in voltages.voltage_channels.values()
+            ]
+        ]
+
+        yield voltages
     beamline_utils.clear_devices()
 
 
@@ -439,10 +471,10 @@ def vfm_mirror_voltages():
 def undulator_dcm(RE, dcm):
     undulator_dcm = i03.undulator_dcm(fake_with_ophyd_sim=True)
     undulator_dcm.dcm = dcm
-    undulator_dcm.dcm_roll_converter_lookup_table_path = (
+    undulator_dcm.roll_energy_table_path = (
         "tests/test_data/test_beamline_dcm_roll_converter.txt"
     )
-    undulator_dcm.dcm_pitch_converter_lookup_table_path = (
+    undulator_dcm.pitch_energy_table_path = (
         "tests/test_data/test_beamline_dcm_pitch_converter.txt"
     )
     yield undulator_dcm
@@ -452,7 +484,7 @@ def undulator_dcm(RE, dcm):
 @pytest.fixture
 def webcam(RE) -> Generator[Webcam, Any, Any]:
     webcam = i03.webcam(fake_with_ophyd_sim=True)
-    with patch.object(webcam, "_write_image"):
+    with patch.object(webcam, "_get_and_write_image"):
         yield webcam
 
 
@@ -593,7 +625,7 @@ def fake_create_rotation_devices(
     xbpm_feedback: XBPMFeedback,
 ):
     set_mock_value(smargon.omega.max_velocity, 131)
-    oav.zoom_controller.onst.sim_put("1.0x")  # type: ignore
+    oav.zoom_controller.zrst.sim_put("1.0x")  # type: ignore
     oav.zoom_controller.fvst.sim_put("5.0x")  # type: ignore
 
     return RotationScanComposite(
@@ -692,6 +724,11 @@ async def async_status_done():
 def mock_gridscan_kickoff_complete(gridscan: FastGridScanCommon):
     gridscan.kickoff = MagicMock(return_value=async_status_done)
     gridscan.complete = MagicMock(return_value=async_status_done)
+
+
+@pytest.fixture
+def panda_fast_grid_scan(RE):
+    return i03.panda_fast_grid_scan(fake_with_ophyd_sim=True)
 
 
 @pytest.fixture
@@ -838,7 +875,7 @@ class DocumentCapturer:
         matches_fields: dict[str, Any] = {},  # noqa
         does_exist: bool = True,
     ):
-        """Assert that a matching doc has been recieved by the sim,
+        """Assert that a matching doc has been received by the sim,
         and returns the first match if it is meant to exist"""
         matches = DocumentCapturer.get_matches(docs, name, has_fields, matches_fields)
         if does_exist:
@@ -891,3 +928,27 @@ def feature_flags():
     return FeatureFlags(
         **{field_name: False for field_name in FeatureFlags.model_fields.keys()}
     )
+
+
+def assert_none_matching(
+    messages: list[Msg],
+    predicate: Callable[[Msg], bool],
+):
+    assert not list(filter(predicate, messages))
+
+
+def pin_tip_edge_data():
+    tip_x_px = 100
+    tip_y_px = 200
+    microns_per_pixel = 2.87  # from zoom levels .xml
+    grid_width_px = int(400 / microns_per_pixel)
+    target_grid_height_px = 70
+    top_edge_data = ([0] * tip_x_px) + (
+        [(tip_y_px - target_grid_height_px // 2)] * grid_width_px
+    )
+    bottom_edge_data = [0] * tip_x_px + [
+        (tip_y_px + target_grid_height_px // 2)
+    ] * grid_width_px
+    top_edge_array = numpy.array(top_edge_data, dtype=numpy.uint32)
+    bottom_edge_array = numpy.array(bottom_edge_data, dtype=numpy.uint32)
+    return tip_x_px, tip_y_px, top_edge_array, bottom_edge_array
