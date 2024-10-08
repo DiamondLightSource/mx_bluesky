@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, call
 
 import pytest
 from bluesky import plan_stubs as bps
@@ -62,27 +62,25 @@ async def test_zebra_set_up_for_panda_gridscan(
     RE(setup_zebra_for_panda_flyscan(zebra, zebra_shutter, wait=True))
     assert await zebra.output.out_pvs[TTL_DETECTOR].get_value() == IN1_TTL
     assert await zebra.output.out_pvs[TTL_PANDA].get_value() == IN3_TTL
+    assert await zebra_shutter.control_mode.get_value() == ZebraShutterControl.AUTO
     assert await _get_shutter_input_2(zebra) == IN4_TTL
+    assert await _get_shutter_input_1(zebra) == SOFT_IN1
 
 
 async def test_zebra_set_up_for_gridscan(RE, zebra: Zebra, zebra_shutter: ZebraShutter):
-    with patch(
-        "mx_bluesky.hyperion.device_setup_plans.setup_zebra.configure_zebra_and_shutter_for_auto_shutter"
-    ) as mock_config_shutter:
-        RE(setup_zebra_for_gridscan(zebra, zebra_shutter, wait=True))
-        assert await zebra.output.out_pvs[TTL_DETECTOR].get_value() == IN3_TTL
-        assert await _get_shutter_input_2(zebra) == IN4_TTL
-        mock_config_shutter.assert_called_once()
+    RE(setup_zebra_for_gridscan(zebra, zebra_shutter, wait=True))
+    assert await zebra.output.out_pvs[TTL_DETECTOR].get_value() == IN3_TTL
+    assert await _get_shutter_input_2(zebra) == IN4_TTL
+    assert await zebra_shutter.control_mode.get_value() == ZebraShutterControl.AUTO
+    assert await _get_shutter_input_1(zebra) == SOFT_IN1
 
 
 async def test_zebra_set_up_for_rotation(RE, zebra: Zebra, zebra_shutter: ZebraShutter):
-    with patch(
-        "mx_bluesky.hyperion.device_setup_plans.setup_zebra.configure_zebra_and_shutter_for_auto_shutter"
-    ) as mock_config_shutter:
-        RE(setup_zebra_for_rotation(zebra, zebra_shutter, wait=True))
-        assert await zebra.pc.gate_trigger.get_value() == I03Axes.OMEGA.value
-        assert await zebra.pc.gate_width.get_value() == pytest.approx(360, 0.01)
-        mock_config_shutter.assert_called_once()
+    RE(setup_zebra_for_rotation(zebra, zebra_shutter, wait=True))
+    assert await zebra.pc.gate_trigger.get_value() == I03Axes.OMEGA.value
+    assert await zebra.pc.gate_width.get_value() == pytest.approx(360, 0.01)
+    assert await zebra_shutter.control_mode.get_value() == ZebraShutterControl.AUTO
+    assert await _get_shutter_input_1(zebra) == SOFT_IN1
 
 
 async def test_zebra_cleanup(RE, zebra: Zebra, zebra_shutter: ZebraShutter):
@@ -130,15 +128,5 @@ async def test_configure_zebra_and_shutter_for_auto(
 ):
     RE(configure_zebra_and_shutter_for_auto_shutter(zebra, zebra_shutter, IN4_TTL))
     assert await zebra_shutter.control_mode.get_value() == ZebraShutterControl.AUTO
-    assert (
-        await zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE]
-        .sources[AUTO_SHUTTER_INPUT_1]
-        .get_value()
-        == SOFT_IN1
-    )
-    assert (
-        await zebra.logic_gates.and_gates[AUTO_SHUTTER_GATE]
-        .sources[AUTO_SHUTTER_INPUT_2]
-        .get_value()
-        == IN4_TTL
-    )
+    assert await _get_shutter_input_1(zebra) == SOFT_IN1
+    assert await _get_shutter_input_2(zebra) == IN4_TTL
