@@ -47,8 +47,12 @@ def thaw_and_stream_to_redis(
         }
     )
     def _thaw_and_stream_to_redis():
-        yield from bps.mv(oav_to_redis_forwarder.sample_id, sample_id)
-        yield from bps.mv(oav_to_redis_forwarder.selected_source, Source.FULL_SCREEN)
+        yield from bps.mv(
+            oav_to_redis_forwarder.sample_id,
+            sample_id,
+            oav_to_redis_forwarder.selected_source,
+            Source.FULL_SCREEN,
+        )
 
         yield from bps.kickoff(oav_to_redis_forwarder, wait=True)
         yield from bps.monitor(smargon.omega.user_readback, name="smargon")
