@@ -93,7 +93,7 @@ def configure_zebra_and_shutter_for_auto_shutter(
 
     When the shutter is in auto/manual, logic in EPICS sets the Zebra's
     SOFT_IN1 to low/high respectively. The Zebra's AND2 gate should be used to control the shutter while in auto mode.
-    To do this, we need (AND2 = SOFT_IN1 AND input), where input is any zebra signal
+    To do this, we need (AND2 = SOFT_IN1 AND input), where input is the zebra signal we want to control the shutter when in auto mode.
     """
     # See https://github.com/DiamondLightSource/dodal/issues/813 for better typing here.
 
