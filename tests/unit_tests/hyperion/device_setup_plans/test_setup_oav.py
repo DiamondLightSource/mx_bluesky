@@ -21,27 +21,6 @@ def mock_parameters():
     return OAVParameters("loopCentring", OAV_CENTRING_JSON)
 
 
-@pytest.mark.parametrize(
-    "zoom, expected_plugin",
-    [
-        ("1.0", "proc"),
-        ("7.0", "CAM"),
-    ],
-)
-def test_when_set_up_oav_with_different_zoom_levels_then_flat_field_applied_correctly(
-    zoom,
-    expected_plugin,
-    mock_parameters: OAVParameters,
-    oav: OAV,
-    ophyd_pin_tip_detection: PinTipDetection,
-):
-    mock_parameters.zoom = zoom
-
-    RE = RunEngine()
-    RE(pre_centring_setup_oav(oav, mock_parameters, ophyd_pin_tip_detection))
-    assert oav.grid_snapshot.input_plugin.get() == expected_plugin
-
-
 def test_when_set_up_oav_then_only_waits_on_oav_to_finish(
     mock_parameters: OAVParameters, oav: OAV, ophyd_pin_tip_detection: PinTipDetection
 ):

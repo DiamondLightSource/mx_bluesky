@@ -233,14 +233,12 @@ async def test_full_rotation_plan_smargon_settings(
 
 async def test_rotation_plan_moves_aperture_correctly(
     run_full_rotation_plan: RotationScanComposite,
-    test_rotation_params: RotationScan,
 ) -> None:
     aperture_scatterguard: ApertureScatterguard = (
         run_full_rotation_plan.aperture_scatterguard
     )
     assert (
-        await aperture_scatterguard.get_current_aperture_position()
-        == ApertureValue.SMALL
+        await aperture_scatterguard.selected_aperture.get_value() == ApertureValue.SMALL
     )
 
 
