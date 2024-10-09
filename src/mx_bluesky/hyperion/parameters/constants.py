@@ -115,6 +115,7 @@ class I03Constants:
     USE_PANDA_FOR_GRIDSCAN = False
     USE_GPU_FOR_GRIDSCAN_ANALYSIS = False
     THAWING_TIME = 20
+    SET_STUB_OFFSETS = False
     USE_CPU_AND_GPU_ZOCALO = False
 
 
