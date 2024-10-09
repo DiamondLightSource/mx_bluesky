@@ -77,6 +77,12 @@ class SmargonSpeedException(Exception):
     pass
 
 
+class CrystalNotFoundException(WarningException):
+    """Raised if grid detection completed normally but no crystal was found."""
+
+    pass
+
+
 @dataclasses.dataclass
 class FlyScanXRayCentreComposite:
     """All devices which are directly or indirectly required by this plan"""
@@ -190,47 +196,50 @@ def run_gridscan_and_move(
 
     LOGGER.info("Grid scan finished, getting results.")
 
-    with TRACER.start_span("wait_for_zocalo"):
-        yield from bps.trigger_and_read(
-            [fgs_composite.zocalo], name=ZOCALO_READING_PLAN_NAME
-        )
-        LOGGER.info("Zocalo triggered and read, interpreting results.")
-        xray_centre, bbox_size = yield from get_processing_result(fgs_composite.zocalo)
-        LOGGER.info(f"Got xray centre: {xray_centre}, bbox size: {bbox_size}")
-        if xray_centre is not None:
-            xray_centre = parameters.FGS_params.grid_position_to_motor_position(
-                xray_centre
+    try:
+        with TRACER.start_span("wait_for_zocalo"):
+            yield from bps.trigger_and_read(
+                [fgs_composite.zocalo], name=ZOCALO_READING_PLAN_NAME
             )
-        else:
-            xray_centre = initial_xyz
-            LOGGER.warning("No X-ray centre received")
-        if bbox_size is not None:
-            with TRACER.start_span("change_aperture"):
-                yield from set_aperture_for_bbox_size(
-                    fgs_composite.aperture_scatterguard, bbox_size
+            LOGGER.info("Zocalo triggered and read, interpreting results.")
+            xray_centre, bbox_size = yield from get_processing_result(
+                fgs_composite.zocalo
+            )
+            LOGGER.info(f"Got xray centre: {xray_centre}, bbox size: {bbox_size}")
+            if xray_centre is not None:
+                xray_centre = parameters.FGS_params.grid_position_to_motor_position(
+                    xray_centre
                 )
-        else:
-            LOGGER.warning("No bounding box size received")
+            else:
+                LOGGER.warning("No X-ray centre received")
+                raise CrystalNotFoundException()
+            if bbox_size is not None:
+                with TRACER.start_span("change_aperture"):
+                    yield from set_aperture_for_bbox_size(
+                        fgs_composite.aperture_scatterguard, bbox_size
+                    )
+            else:
+                LOGGER.warning("No bounding box size received")
 
-    # once we have the results, go to the appropriate position
-    LOGGER.info("Moving to centre of mass.")
-    with TRACER.start_span("move_to_result"):
-        x, y, z = xray_centre
-        yield from move_x_y_z(fgs_composite.sample_motors, x, y, z, wait=True)
+        # once we have the results, go to the appropriate position
+        LOGGER.info("Moving to centre of mass.")
+        with TRACER.start_span("move_to_result"):
+            x, y, z = xray_centre
+            yield from move_x_y_z(fgs_composite.sample_motors, x, y, z, wait=True)
 
-    if parameters.FGS_params.set_stub_offsets:
-        LOGGER.info("Recentring smargon co-ordinate system to this point.")
-        yield from bps.mv(
-            fgs_composite.sample_motors.stub_offsets, StubPosition.CURRENT_AS_CENTER
-        )
+        if parameters.FGS_params.set_stub_offsets:
+            LOGGER.info("Recentring smargon co-ordinate system to this point.")
+            yield from bps.mv(
+                fgs_composite.sample_motors.stub_offsets, StubPosition.CURRENT_AS_CENTER
+            )
+    finally:
+        # Turn off dev/shm streaming to avoid filling disk, see https://github.com/DiamondLightSource/hyperion/issues/1395
+        LOGGER.info("Turning off Eiger dev/shm streaming")
+        yield from bps.abs_set(fgs_composite.eiger.odin.fan.dev_shm_enable, 0)
 
-    # Turn off dev/shm streaming to avoid filling disk, see https://github.com/DiamondLightSource/hyperion/issues/1395
-    LOGGER.info("Turning off Eiger dev/shm streaming")
-    yield from bps.abs_set(fgs_composite.eiger.odin.fan.dev_shm_enable, 0)
-
-    # Wait on everything before returning to GDA (particularly apertures), can be removed
-    # when we do not return to GDA here
-    yield from bps.wait()
+        # Wait on everything before returning to GDA (particularly apertures), can be removed
+        # when we do not return to GDA here
+        yield from bps.wait()
 
 
 @bpp.set_run_key_decorator(CONST.PLAN.GRIDSCAN_MAIN)

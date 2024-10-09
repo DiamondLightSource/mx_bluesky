@@ -28,26 +28,6 @@ from ....conftest import raw_params_from_file
 
 
 @pytest.fixture
-def robot_load_composite(
-    smargon, dcm, robot, aperture_scatterguard, oav, webcam, thawer, lower_gonio, eiger
-) -> RobotLoadAndEnergyChangeComposite:
-    composite: RobotLoadAndEnergyChangeComposite = MagicMock()
-    composite.smargon = smargon
-    composite.dcm = dcm
-    set_mock_value(composite.dcm.energy_in_kev.user_readback, 11.105)
-    composite.robot = robot
-    composite.aperture_scatterguard = aperture_scatterguard
-    composite.smargon.stub_offsets.set = MagicMock(return_value=NullStatus())
-    composite.aperture_scatterguard.set = MagicMock(return_value=NullStatus())
-    composite.oav = oav
-    composite.webcam = webcam
-    composite.lower_gonio = lower_gonio
-    composite.thawer = thawer
-    composite.eiger = eiger
-    return composite
-
-
-@pytest.fixture
 def robot_load_and_energy_change_params():
     params = raw_params_from_file(
         "tests/test_data/parameter_json_files/good_test_robot_load_params.json"
@@ -70,7 +50,7 @@ def dummy_set_energy_plan(energy, composite):
     MagicMock(side_effect=dummy_set_energy_plan),
 )
 def test_when_plan_run_with_requested_energy_specified_energy_change_executes(
-    robot_load_composite: RobotLoadAndEnergyChangeComposite,
+    robot_load_and_energy_change_composite: RobotLoadAndEnergyChangeComposite,
     robot_load_and_energy_change_params: RobotLoadAndEnergyChange,
     sim_run_engine: RunEngineSimulator,
 ):
@@ -81,7 +61,7 @@ def test_when_plan_run_with_requested_energy_specified_energy_change_executes(
     )
     messages = sim_run_engine.simulate_plan(
         robot_load_and_change_energy_plan(
-            robot_load_composite, robot_load_and_energy_change_params
+            robot_load_and_energy_change_composite, robot_load_and_energy_change_params
         )
     )
     assert_message_and_return_remaining(
@@ -94,7 +74,7 @@ def test_when_plan_run_with_requested_energy_specified_energy_change_executes(
     MagicMock(return_value=iter([Msg("set_energy_plan")])),
 )
 def test_robot_load_and_energy_change_doesnt_set_energy_if_not_specified(
-    robot_load_composite: RobotLoadAndEnergyChangeComposite,
+    robot_load_and_energy_change_composite: RobotLoadAndEnergyChangeComposite,
     robot_load_and_energy_change_params_no_energy: RobotLoadAndEnergyChange,
     sim_run_engine: RunEngineSimulator,
 ):
@@ -105,7 +85,7 @@ def test_robot_load_and_energy_change_doesnt_set_energy_if_not_specified(
     )
     messages = sim_run_engine.simulate_plan(
         robot_load_and_change_energy_plan(
-            robot_load_composite,
+            robot_load_and_energy_change_composite,
             robot_load_and_energy_change_params_no_energy,
         )
     )
@@ -147,14 +127,14 @@ def run_simulating_smargon_wait(
     MagicMock(return_value=iter([])),
 )
 def test_given_smargon_disabled_when_plan_run_then_waits_on_smargon(
-    robot_load_composite: RobotLoadAndEnergyChangeComposite,
+    robot_load_and_energy_change_composite: RobotLoadAndEnergyChangeComposite,
     robot_load_and_energy_change_params: RobotLoadAndEnergyChange,
     total_disabled_reads: int,
     sim_run_engine,
 ):
     messages = run_simulating_smargon_wait(
         robot_load_and_energy_change_params,
-        robot_load_composite,
+        robot_load_and_energy_change_composite,
         total_disabled_reads,
         sim_run_engine,
     )
@@ -174,14 +154,14 @@ def test_given_smargon_disabled_when_plan_run_then_waits_on_smargon(
     MagicMock(return_value=iter([])),
 )
 def test_given_smargon_disabled_for_longer_than_timeout_when_plan_run_then_throws_exception(
-    robot_load_composite: RobotLoadAndEnergyChangeComposite,
+    robot_load_and_energy_change_composite: RobotLoadAndEnergyChangeComposite,
     robot_load_and_energy_change_params: RobotLoadAndEnergyChange,
     sim_run_engine,
 ):
     with pytest.raises(TimeoutError):
         run_simulating_smargon_wait(
             robot_load_and_energy_change_params,
-            robot_load_composite,
+            robot_load_and_energy_change_composite,
             1000,
             sim_run_engine,
         )
@@ -225,12 +205,19 @@ def test_given_ispyb_callback_attached_when_robot_load_then_centre_plan_called_t
     start_load: MagicMock,
     update_barcode_and_snapshots: MagicMock,
     end_load: MagicMock,
-    robot_load_composite: RobotLoadAndEnergyChangeComposite,
+    robot_load_and_energy_change_composite: RobotLoadAndEnergyChangeComposite,
     robot_load_and_energy_change_params: RobotLoadAndEnergyChange,
 ):
-    robot_load_composite.oav.snapshot.last_saved_path.put("test_oav_snapshot")  # type: ignore
-    set_mock_value(robot_load_composite.webcam.last_saved_path, "test_webcam_snapshot")
-    robot_load_composite.webcam.trigger = MagicMock(return_value=NullStatus())
+    robot_load_and_energy_change_composite.oav.snapshot.last_saved_path.put(
+        "test_oav_snapshot"
+    )  # type: ignore
+    set_mock_value(
+        robot_load_and_energy_change_composite.webcam.last_saved_path,
+        "test_webcam_snapshot",
+    )
+    robot_load_and_energy_change_composite.webcam.trigger = MagicMock(
+        return_value=NullStatus()
+    )
 
     RE = RunEngine()
     RE.subscribe(RobotLoadISPyBCallback())
@@ -240,7 +227,7 @@ def test_given_ispyb_callback_attached_when_robot_load_then_centre_plan_called_t
 
     RE(
         robot_load_and_change_energy_plan(
-            robot_load_composite, robot_load_and_energy_change_params
+            robot_load_and_energy_change_composite, robot_load_and_energy_change_params
         )
     )
 
@@ -275,7 +262,7 @@ async def test_when_take_snapshots_called_then_filename_and_directory_set_and_de
 
 
 def test_given_lower_gonio_moved_when_robot_load_then_lower_gonio_moved_to_home_and_back(
-    robot_load_composite: RobotLoadAndEnergyChangeComposite,
+    robot_load_and_energy_change_composite: RobotLoadAndEnergyChangeComposite,
     robot_load_and_energy_change_params_no_energy: RobotLoadAndEnergyChange,
     sim_run_engine: RunEngineSimulator,
 ):
@@ -291,7 +278,7 @@ def test_given_lower_gonio_moved_when_robot_load_then_lower_gonio_moved_to_home_
 
     messages = sim_run_engine.simulate_plan(
         robot_load_and_change_energy_plan(
-            robot_load_composite,
+            robot_load_and_energy_change_composite,
             robot_load_and_energy_change_params_no_energy,
         )
     )
@@ -318,7 +305,7 @@ def test_given_lower_gonio_moved_when_robot_load_then_lower_gonio_moved_to_home_
     MagicMock(return_value=iter([])),
 )
 def test_when_plan_run_then_lower_gonio_moved_before_robot_loads_and_back_after_smargon_enabled(
-    robot_load_composite: RobotLoadAndEnergyChangeComposite,
+    robot_load_and_energy_change_composite: RobotLoadAndEnergyChangeComposite,
     robot_load_and_energy_change_params_no_energy: RobotLoadAndEnergyChange,
     sim_run_engine: RunEngineSimulator,
 ):
@@ -334,7 +321,7 @@ def test_when_plan_run_then_lower_gonio_moved_before_robot_loads_and_back_after_
 
     messages = sim_run_engine.simulate_plan(
         robot_load_and_change_energy_plan(
-            robot_load_composite,
+            robot_load_and_energy_change_composite,
             robot_load_and_energy_change_params_no_energy,
         )
     )
@@ -370,7 +357,7 @@ def test_when_plan_run_then_lower_gonio_moved_before_robot_loads_and_back_after_
     MagicMock(return_value=iter([])),
 )
 def test_when_plan_run_then_thawing_turned_on_for_expected_time(
-    robot_load_composite: RobotLoadAndEnergyChangeComposite,
+    robot_load_and_energy_change_composite: RobotLoadAndEnergyChangeComposite,
     robot_load_and_energy_change_params_no_energy: RobotLoadAndEnergyChange,
     sim_run_engine: RunEngineSimulator,
 ):
@@ -384,7 +371,7 @@ def test_when_plan_run_then_thawing_turned_on_for_expected_time(
 
     messages = sim_run_engine.simulate_plan(
         robot_load_and_change_energy_plan(
-            robot_load_composite,
+            robot_load_and_energy_change_composite,
             robot_load_and_energy_change_params_no_energy,
         )
     )
