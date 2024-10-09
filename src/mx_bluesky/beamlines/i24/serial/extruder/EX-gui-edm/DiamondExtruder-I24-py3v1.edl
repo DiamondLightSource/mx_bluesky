@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 1018
-y 277
+x 1006
+y 192
 w 700
 h 900
 font "arial-medium-r-18.0"
@@ -370,7 +370,7 @@ font "arial-medium-r-24.0"
 buttonLabel "Start"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run run_extruder_plan"
+  0 "blueapi -c CONFIG_LOCATION controller run run_extruder_plan '\{\"zebra\":\"zebra\",\"aperture\":\"aperture\",\"backlight\":\"backlight\",\"beamstop\":\"beamstop\",\"detector_stage\":\"detector_motion\",\"shutter\":\"shutter\",\"dcm\":\"dcm\"\}'"
 }
 endObjectProperties
 
@@ -832,7 +832,7 @@ botShadowColor index 11
 font "arial-medium-r-18.0"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run initialise_extruder"
+  0 "blueapi -c CONFIG_LOCATION controller run initialise_extruder '\{\"detector_stage\":\"detector_motion\"\}'"
 }
 endObjectProperties
 
@@ -2179,7 +2179,7 @@ font "arial-medium-r-20.0"
 buttonLabel "Laser On"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run laser_check '\{\"mode\":\"laseron\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run laser_check '\{\"mode\":\"laseron\",\"zebra\":\"zebra\",\"detector_stage\":\"detector_motion\"\}'"
 }
 endObjectProperties
 
@@ -2201,7 +2201,7 @@ font "arial-medium-r-20.0"
 buttonLabel "Laser Off"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run laser_check '\{\"mode\":\"laseroff\"\}'"
+  0 "blueapi -c CONFIG_LOCATION controller run laser_check '\{\"mode\":\"laseroff\",\"zebra\":\"zebra\",\"detector_stage\":\"detector_motion\"\}'"
 }
 endObjectProperties
 
@@ -2223,7 +2223,7 @@ font "arial-medium-r-18.0"
 buttonLabel "Enter hutch"
 numCmds 1
 command {
-  0 "blueapi -c CONFIG_LOCATION controller run enter_hutch"
+  0 "blueapi -c CONFIG_LOCATION controller run enter_hutch '\{\"detector_stage\":\"detector_motion\"\}'"
 }
 endObjectProperties
 

@@ -3,6 +3,10 @@ from collections.abc import Generator
 from bluesky import plan_stubs as bps
 from bluesky import preprocessors as bpp
 from bluesky.utils import Msg
+from dodal.devices.dcm import DCM
+from dodal.devices.detector import (
+    DetectorParams,
+)
 from dodal.devices.detector.detector_motion import DetectorMotion, ShutterState
 from dodal.devices.eiger import EigerDetector
 
@@ -10,6 +14,13 @@ from mx_bluesky.hyperion.device_setup_plans.position_detector import (
     set_detector_z_position,
     set_shutter,
 )
+
+
+def fill_in_energy_if_not_supplied(dcm: DCM, detector_params: DetectorParams):
+    if not detector_params.expected_energy_ev:
+        actual_energy_ev = 1000 * (yield from bps.rd(dcm.energy_in_kev))
+        detector_params.expected_energy_ev = actual_energy_ev
+    return detector_params
 
 
 def start_preparing_data_collection_then_do_plan(

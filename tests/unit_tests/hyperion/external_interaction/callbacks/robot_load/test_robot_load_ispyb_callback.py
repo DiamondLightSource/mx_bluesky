@@ -14,7 +14,7 @@ from mx_bluesky.hyperion.external_interaction.callbacks.robot_load.ispyb_callbac
 )
 from mx_bluesky.hyperion.parameters.constants import CONST
 
-VISIT_PATH = "/tmp/cm31105-4"
+VISIT = "cm31105-4"
 
 SAMPLE_ID = 231412
 SAMPLE_PUCK = 50
@@ -24,7 +24,7 @@ ACTION_ID = 1098
 metadata = {
     "subplan_name": CONST.PLAN.ROBOT_LOAD,
     "metadata": {
-        "visit_path": VISIT_PATH,
+        "visit": VISIT,
         "sample_id": SAMPLE_ID,
         "sample_puck": SAMPLE_PUCK,
         "sample_pin": SAMPLE_PIN,
