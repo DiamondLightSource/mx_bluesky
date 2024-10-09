@@ -4,7 +4,7 @@ import bluesky.plan_stubs as bps
 import cv2 as cv
 import pytest
 from dodal.devices.i24.pmac import PMAC
-from dodal.devices.oav.oav_detector import OAV
+from dodal.devices.oav.oav_async import OAV
 from ophyd_async.core import get_mock_put
 
 from mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick import (
@@ -57,7 +57,7 @@ def test_onMouse_gets_beam_position_and_sends_correct_str(
     RE,
 ):
     fake_zoom_calibrator.side_effect = [fake_generator(ZOOMCALIBRATOR)]
-    fake_get_beam_pos.side_effect = [beam_position]
+    fake_get_beam_pos.side_effect = [fake_generator(beam_position)]
     fake_oav: OAV = MagicMock(spec=OAV)
     onMouse(cv.EVENT_LBUTTONUP, 0, 0, "", param=[RE, pmac, fake_oav])
     mock_pmac_str = get_mock_put(pmac.pmac_string)
@@ -78,6 +78,7 @@ def test_calculate_zoom_calibrator(
 ):
     fake_read.side_effect = [fake_generator(zoom_percentage)]
     fake_oav: OAV = MagicMock(spec=OAV)
+    fake_oav.zoom_controller = MagicMock()
     res = RE(_calculate_zoom_calibrator(fake_oav)).plan_result  # type: ignore
 
     assert res == pytest.approx(expected_calibrator, abs=1e-3)
@@ -87,11 +88,11 @@ def test_calculate_zoom_calibrator(
 @patch(
     "mx_bluesky.beamlines.i24.serial.fixed_target.i24ssx_moveonclick._get_beam_centre"
 )
-def test_update_ui_uses_correct_beam_centre_for_ellipse(fake_beam_pos, fake_cv):
+def test_update_ui_uses_correct_beam_centre_for_ellipse(fake_beam_pos, fake_cv, RE):
     mock_frame = MagicMock()
     mock_oav = MagicMock()
-    fake_beam_pos.side_effect = [(15, 10)]
-    update_ui(mock_oav, mock_frame)
+    fake_beam_pos.side_effect = [fake_generator([15, 10])]
+    update_ui(mock_oav, mock_frame, RE)
     fake_cv.ellipse.assert_called_once()
     fake_cv.ellipse.assert_has_calls(
         [call(ANY, (15, 10), (12, 8), 0.0, 0.0, 360, (0, 255, 255), thickness=2)]
