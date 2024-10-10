@@ -99,7 +99,7 @@ def grid_detection_plan(
 
     # The FGS uses -90 so we need to match it
     for angle in [0, -90]:
-        yield from bps.mv(smargon.omega, angle)
+        yield from bps.mv(smargon.omega, angle)  # type: ignore # See: https://github.com/bluesky/bluesky/issues/1809
         # need to wait for the OAV image to update
         # See #673 for improvements
         yield from bps.sleep(CONST.HARDWARE.OAV_REFRESH_DELAY)

@@ -100,7 +100,7 @@ def prepare_for_robot_load(
         group="prepare_robot_load",
     )
 
-    yield from bps.mv(smargon.stub_offsets, StubPosition.RESET_TO_ROBOT_LOAD)
+    yield from bps.mv(smargon.stub_offsets, StubPosition.RESET_TO_ROBOT_LOAD)  # type: ignore # See: https://github.com/bluesky/bluesky/issues/1809
 
     # fmt: off
     yield from bps.mv(smargon.x, 0,
