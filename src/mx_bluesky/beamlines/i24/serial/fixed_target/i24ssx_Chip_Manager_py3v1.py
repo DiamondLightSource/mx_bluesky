@@ -698,7 +698,7 @@ def laser_control(laser_setting: str, pmac: PMAC = inject("pmac")) -> MsgGenerat
         logger.info("Laser 1  on")
         logger.info(f"Burn time is {led_burn_time} s")
         yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_ON, wait=True)
-        yield from bps.sleep(led_burn_time)
+        yield from bps.sleep(float(led_burn_time))
         logger.info("Laser 1 off")
         yield from bps.abs_set(pmac.laser, LaserSettings.LASER_1_OFF, wait=True)
 
@@ -707,7 +707,7 @@ def laser_control(laser_setting: str, pmac: PMAC = inject("pmac")) -> MsgGenerat
         logger.info("Laser 2 on")
         logger.info(f"burntime {led_burn_time} s")
         yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_ON, wait=True)
-        yield from bps.sleep(led_burn_time)
+        yield from bps.sleep(float(led_burn_time))
         logger.info("Laser 2 off")
         yield from bps.abs_set(pmac.laser, LaserSettings.LASER_2_OFF, wait=True)
 
