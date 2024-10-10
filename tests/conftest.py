@@ -452,18 +452,14 @@ def lower_gonio(RE):
 
 
 @pytest.fixture
-def vfm_mirror_voltages():
-    voltages = i03.vfm_mirror_voltages(fake_with_ophyd_sim=True)
+def mirror_voltages():
+    voltages = i03.mirror_voltages(fake_with_ophyd_sim=True)
     voltages.voltage_lookup_table_path = "tests/test_data/test_mirror_focus.json"
-    with ExitStack() as stack:
-        [
-            stack.enter_context(context_mgr)
-            for context_mgr in [
-                patch.object(vc, "set") for vc in voltages.voltage_channels.values()
-            ]
-        ]
-
-        yield voltages
+    for vc in voltages.vertical_voltages.values():
+        vc.set = MagicMock(return_value=NullStatus())
+    for vc in voltages.horizontal_voltages.values():
+        vc.set = MagicMock(return_value=NullStatus())
+    yield voltages
     beamline_utils.clear_devices()
 
 

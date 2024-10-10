@@ -4,7 +4,7 @@ import bluesky.plan_stubs as bps
 from dodal.devices.focusing_mirror import (
     FocusingMirrorWithStripes,
     MirrorStripe,
-    VFMMirrorVoltages,
+    MirrorVoltages,
 )
 from dodal.devices.undulator_dcm import UndulatorDCM
 from dodal.devices.util.adjuster_plans import lookup_table_adjuster
@@ -21,7 +21,7 @@ DCM_GROUP = "DCM_GROUP"
 def _apply_and_wait_for_voltages_to_settle(
     stripe: MirrorStripe,
     mirror: FocusingMirrorWithStripes,
-    mirror_voltages: VFMMirrorVoltages,
+    mirror_voltages: MirrorVoltages,
 ):
     with open(mirror_voltages.voltage_lookup_table_path) as lut_file:
         json_obj = json.load(lut_file)
@@ -35,12 +35,10 @@ def _apply_and_wait_for_voltages_to_settle(
         stripe_key = "rh"
     elif stripe == MirrorStripe.PLATINUM:
         stripe_key = "pt"
-    else:
-        raise ValueError(f"Unsupported stripe '{stripe}'")
 
     required_voltages = sample_data[stripe_key][mirror_key]
     for voltage_channel, required_voltage in zip(
-        mirror_voltages.voltage_channels.values(), required_voltages, strict=False
+        mirror_voltages.vertical_voltages.values(), required_voltages, strict=False
     ):
         LOGGER.debug(
             f"Applying and waiting for voltage {voltage_channel.name} = {required_voltage}"
@@ -53,7 +51,7 @@ def _apply_and_wait_for_voltages_to_settle(
 
 
 def adjust_mirror_stripe(
-    energy_kev, mirror: FocusingMirrorWithStripes, mirror_voltages: VFMMirrorVoltages
+    energy_kev, mirror: FocusingMirrorWithStripes, mirror_voltages: MirrorVoltages
 ):
     """Feedback should be OFF prior to entry, in order to prevent
     feedback from making unnecessary corrections while beam is being adjusted."""
@@ -72,7 +70,7 @@ def adjust_mirror_stripe(
 def adjust_dcm_pitch_roll_vfm_from_lut(
     undulator_dcm: UndulatorDCM,
     vfm: FocusingMirrorWithStripes,
-    vfm_mirror_voltages: VFMMirrorVoltages,
+    mirror_voltages: MirrorVoltages,
     energy_kev,
 ):
     """Beamline energy-change post-adjustments : Adjust DCM and VFM directly from lookup tables.
@@ -119,7 +117,7 @@ def adjust_dcm_pitch_roll_vfm_from_lut(
     # not sure how we check this
 
     # VFM Stripe selection
-    yield from adjust_mirror_stripe(energy_kev, vfm, vfm_mirror_voltages)
+    yield from adjust_mirror_stripe(energy_kev, vfm, mirror_voltages)
     yield from bps.wait(DCM_GROUP)
 
     # VFM Adjust - for I03 this table always returns the same value
