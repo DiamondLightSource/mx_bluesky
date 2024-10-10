@@ -20,7 +20,6 @@ DCM_GROUP = "DCM_GROUP"
 
 def _apply_and_wait_for_voltages_to_settle(
     stripe: MirrorStripe,
-    mirror: FocusingMirrorWithStripes,
     mirror_voltages: MirrorVoltages,
 ):
     with open(mirror_voltages.voltage_lookup_table_path) as lut_file:
@@ -28,7 +27,6 @@ def _apply_and_wait_for_voltages_to_settle(
 
     # sample mode is the only mode supported
     sample_data = json_obj["sample"]
-    mirror_key = mirror.name.lower()
     if stripe == MirrorStripe.BARE:
         stripe_key = "bare"
     elif stripe == MirrorStripe.RHODIUM:
@@ -36,16 +34,21 @@ def _apply_and_wait_for_voltages_to_settle(
     elif stripe == MirrorStripe.PLATINUM:
         stripe_key = "pt"
 
-    required_voltages = sample_data[stripe_key][mirror_key]
-    for voltage_channel, required_voltage in zip(
-        mirror_voltages.vertical_voltages.values(), required_voltages, strict=False
-    ):
-        LOGGER.debug(
-            f"Applying and waiting for voltage {voltage_channel.name} = {required_voltage}"
-        )
-        yield from bps.abs_set(
-            voltage_channel, required_voltage, group=MIRROR_VOLTAGE_GROUP
-        )
+    for mirror_key, channels in {
+        "hfm": mirror_voltages.horizontal_voltages,
+        "vfm": mirror_voltages.vertical_voltages,
+    }.items():
+        required_voltages = sample_data[stripe_key][mirror_key]
+
+        for voltage_channel, required_voltage in zip(
+            channels.values(), required_voltages, strict=True
+        ):
+            LOGGER.debug(
+                f"Applying and waiting for voltage {voltage_channel.name} = {required_voltage}"
+            )
+            yield from bps.abs_set(
+                voltage_channel, required_voltage, group=MIRROR_VOLTAGE_GROUP
+            )
 
     yield from bps.wait(group=MIRROR_VOLTAGE_GROUP)
 
@@ -64,7 +67,7 @@ def adjust_mirror_stripe(
     yield from bps.trigger(mirror.apply_stripe)
 
     LOGGER.info("Adjusting mirror voltages...")
-    yield from _apply_and_wait_for_voltages_to_settle(stripe, mirror, mirror_voltages)
+    yield from _apply_and_wait_for_voltages_to_settle(stripe, mirror_voltages)
 
 
 def adjust_dcm_pitch_roll_vfm_from_lut(

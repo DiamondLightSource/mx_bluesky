@@ -18,21 +18,27 @@ from mx_bluesky.hyperion.device_setup_plans.dcm_pitch_roll_mirror_adjuster impor
 )
 
 
-def test_apply_and_wait_for_voltages_to_settle_happy_path(
+def test_when_bare_mirror_stripe_selected_then_expected_voltages_set(
     RE: RunEngine,
     mirror_voltages: MirrorVoltages,
-    vfm: FocusingMirrorWithStripes,
 ):
     RE(
         dcm_pitch_roll_mirror_adjuster._apply_and_wait_for_voltages_to_settle(
-            MirrorStripe.BARE, vfm, mirror_voltages
+            MirrorStripe.BARE, mirror_voltages
         )
     )
 
     for channel, expected_voltage in zip(
         mirror_voltages.vertical_voltages.values(),
         [140, 100, 70, 30, 30, -65, 24, 15],
-        strict=False,
+        strict=True,
+    ):
+        channel.set.assert_called_once_with(expected_voltage)  # type: ignore
+
+    for channel, expected_voltage in zip(
+        mirror_voltages.horizontal_voltages.values(),
+        [1, 107, 15, 139, 41, 165, 11, 6, 166, -65, 0, -38, 179, 128],
+        strict=True,
     ):
         channel.set.assert_called_once_with(expected_voltage)  # type: ignore
 
@@ -122,16 +128,16 @@ def test_adjust_dcm_pitch_roll_vfm_from_lut(
         messages[1:],
         lambda msg: msg.command == "trigger" and msg.obj.name == "vfm-apply_stripe",
     )
-    for channel, expected_voltage in (
-        (0, 124),
-        (1, 114),
-        (2, 34),
-        (3, 49),
-        (4, 19),
-        (5, -116),
-        (6, 4),
-        (7, -46),
+    for channel, expected_voltage in enumerate(
+        [11, 117, 25, 149, 51, 145, -9, -14, 146, -10, 55, 17, 144, 93]
     ):
+        messages = assert_message_and_return_remaining(
+            messages[1:],
+            lambda msg: msg.command == "set"
+            and msg.obj.name == f"mirror_voltages-horizontal_voltages-{channel}"
+            and msg.args == (expected_voltage,),
+        )
+    for channel, expected_voltage in enumerate([124, 114, 34, 49, 19, -116, 4, -46]):
         messages = assert_message_and_return_remaining(
             messages[1:],
             lambda msg: msg.command == "set"
